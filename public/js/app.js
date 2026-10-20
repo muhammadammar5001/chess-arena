@@ -3010,6 +3010,18 @@ class App {
   }
 
 
+  equipCosmetic(type, id) {
+    if (type === 'board') {
+      document.body.dataset.boardTheme = id;
+      localStorage.setItem('owl_board_theme', id);
+      this.showToast('Equipped ' + id + ' board!');
+    } else if (type === 'table') {
+      document.body.dataset.tableTheme = id;
+      localStorage.setItem('owl_table_theme', id);
+      this.showToast('Equipped ' + id + ' table!');
+    }
+  }
+
   showShopScreen() {
     this.updateBottomNav('shop');
     this.showScreen('screen-shop');
@@ -3026,15 +3038,15 @@ class App {
         let name = i < 5 ? names[i] : 'Player_' + (1000 + i);
         let rating = 2500 - (i * 12);
         let rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-        html += `<div class="ranking-card">
+        html += `<div class="ranking-card" style="background: linear-gradient(180deg, #4A2E1B 0%, #2A170C 100%); border: 1.5px solid #8C6538; border-radius: 12px; padding: 12px 18px; margin-bottom: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: space-between;">
           <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
-            <div style="font-size: 20px; font-weight: 800; width: 32px; text-align: center; color: ${i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : 'rgba(0,0,0,0.4)'};">${i+1}</div>
+            <div style="font-family: 'Georgia', serif; font-size: 20px; font-weight: 800; width: 32px; text-align: center; color: ${i === 0 ? '#FFD700' : i === 1 ? '#E0E0E0' : i === 2 ? '#CD7F32' : '#C99700'};">${i+1}</div>
             <div style="display: flex; flex-direction: column;">
-              <div class="ranking-name" style="font-weight: 700; color: #101130; font-size: 16px; letter-spacing: 0.5px;">${name}</div>
-              <div style="font-size: 13px; color: rgba(16,17,48,0.7); font-weight: 600; margin-top: 4px;">Rating: <span style="color: #101130; font-weight: 800;">${rating}</span></div>
+              <div class="ranking-name" style="font-family: 'Georgia', serif; font-weight: 700; color: #FDF7EC; font-size: 16px; letter-spacing: 0.5px;">${name}</div>
+              <div style="font-size: 13px; color: #D6BD9B; font-weight: 600; margin-top: 2px;">Rating: <span style="color: #FFD54F; font-weight: 800;">${rating}</span></div>
             </div>
           </div>
-          <div style="font-size: 24px; filter: drop-shadow(0 0 8px rgba(255,215,0,0.5));">
+          <div style="font-size: 22px; filter: drop-shadow(0 0 6px rgba(201,151,0,0.5));">
             ${i < 3 ? '🏆' : ''}
           </div>
         </div>`;
@@ -3121,6 +3133,8 @@ class App {
 
 
   toggleWalletPanel() {
+    this.showProfileScreen();
+    return;
     const panel = document.getElementById("wallet-panel");
     const backdrop = document.getElementById("wallet-panel-backdrop");
     if (!panel || !backdrop) return;
