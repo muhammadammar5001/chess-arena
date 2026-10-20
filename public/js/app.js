@@ -1520,7 +1520,11 @@ class App {
           if (piece) {
           const pieceEl = document.createElement('span');
           pieceEl.className = `piece ${piece.color}-piece`;
-          pieceEl.textContent = this.pieceSymbols[piece.color][piece.type];
+          if (typeof PieceSVGs !== 'undefined' && PieceSVGs.getPiece) {
+            pieceEl.innerHTML = PieceSVGs.getPiece(piece.color, piece.type);
+          } else {
+            pieceEl.textContent = this.pieceSymbols[piece.color][piece.type];
+          }
           square.appendChild(pieceEl);
         }
 
