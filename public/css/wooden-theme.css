@@ -239,3 +239,335 @@ body, .screen, .fantasy-home-screen {
   box-shadow: 0 0 8px var(--danger-glow) !important;
   animation: checkPulse 0.8s infinite alternate !important;
 }
+/* ==========================================================================
+   PHASE 5 & 6: WOODEN COMPONENT KIT & SCREENS OVERHAUL
+   ========================================================================== */
+
+/* --- Top Header (Home Screen) --- */
+.fantasy-header {
+  background: linear-gradient(180deg, rgba(46, 26, 15, 0.95) 0%, rgba(32, 18, 11, 0.85) 100%) !important;
+  border-bottom: 2px solid var(--board-inlay) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  padding: 10px 16px !important;
+}
+
+.fantasy-profile {
+  background: linear-gradient(180deg, #3A2315 0%, #24140B 100%) !important;
+  border: 1.5px solid var(--brass) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 6px 12px !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15) !important;
+}
+
+.fantasy-avatar-wrapper img {
+  border: 2px solid var(--brass) !important;
+  border-radius: 50% !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5) !important;
+}
+
+.fantasy-username {
+  color: var(--parchment-light) !important;
+  font-family: var(--font-serif) !important;
+  font-weight: 700 !important;
+}
+
+.fantasy-rating {
+  color: var(--brass-light) !important;
+  font-size: 11px !important;
+}
+
+/* Guest Coin Chip (Replacing Crypto Wallet Chip) */
+.fantasy-wallet-chip {
+  background: linear-gradient(180deg, #4A2E1B 0%, #2A170C 100%) !important;
+  border: 1.5px solid var(--brass) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--brass-light) !important;
+  box-shadow: var(--shadow-wood-raised) !important;
+  font-family: var(--font-serif) !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 14px !important;
+}
+
+.btn-settings {
+  background: linear-gradient(145deg, #4A2E1B, #20120B) !important;
+  border: 1.5px solid var(--brass) !important;
+  border-radius: var(--radius-round) !important;
+  color: var(--brass-light) !important;
+  box-shadow: var(--shadow-brass) !important;
+}
+
+/* --- Hero Banner & Brand Plaque --- */
+.fantasy-hero-card {
+  background: linear-gradient(180deg, #382113 0%, #1D0F08 100%) !important;
+  border: 3px solid var(--board-inlay) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-plaque) !important;
+  margin: 14px 16px !important;
+  overflow: hidden !important;
+  text-align: center !important;
+}
+
+.fantasy-title-block {
+  padding: 16px 12px 14px 12px !important;
+  background: linear-gradient(180deg, rgba(46, 26, 15, 0.9) 0%, rgba(20, 10, 5, 0.95) 100%) !important;
+  border-top: 2px solid var(--board-inlay) !important;
+}
+
+.fantasy-brand-title {
+  color: var(--parchment-light) !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(201, 151, 0, 0.3) !important;
+  letter-spacing: 1.5px !important;
+}
+
+.fantasy-brand-tagline {
+  color: var(--brass-light) !important;
+  font-family: var(--font-serif) !important;
+  font-size: 11px !important;
+  letter-spacing: 1px !important;
+}
+
+/* --- Mode Switch: Carved Groove with Sliding Wood Tab --- */
+.mode-toggle-container {
+  background: #170A04 !important;
+  border: 2px solid #5B3721 !important;
+  border-radius: 30px !important;
+  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.7) !important;
+  padding: 4px !important;
+  margin: 12px auto !important;
+  max-width: 320px !important;
+}
+
+.mode-toggle-btn {
+  font-family: var(--font-serif) !important;
+  font-weight: 700 !important;
+  color: var(--text-muted) !important;
+  border-radius: 24px !important;
+  transition: all 0.2s ease !important;
+}
+
+.mode-toggle-btn.active {
+  background: linear-gradient(180deg, var(--walnut-light) 0%, var(--walnut) 100%) !important;
+  color: var(--parchment-light) !important;
+  border: 1.5px solid var(--brass) !important;
+  box-shadow: var(--shadow-wood-raised) !important;
+}
+
+/* --- Big Play Plank Button --- */
+#btn-main-play, .btn-lime {
+  background: linear-gradient(180deg, #6E4426 0%, #462815 100%) !important;
+  border: 2px solid var(--brass) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-wood-raised) !important;
+  color: var(--parchment-light) !important;
+  font-family: var(--font-serif) !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1px !important;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.8) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  padding: 14px 28px !important;
+  margin: 16px auto !important;
+  width: 90% !important;
+  max-width: 360px !important;
+}
+
+#btn-main-play:active, .btn-lime:active {
+  transform: translateY(2px) !important;
+  box-shadow: var(--shadow-wood-pressed) !important;
+}
+
+/* --- In-Game Match Header & Player Pills --- */
+.ingame-match-header {
+  background: transparent !important;
+  padding: 8px 12px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.ingame-player-pill {
+  background: linear-gradient(180deg, #3A2315 0%, #1F1108 100%) !important;
+  border: 1.5px solid var(--brass) !important;
+  border-radius: 28px !important;
+  box-shadow: var(--shadow-wood-raised) !important;
+  padding: 4px 12px !important;
+}
+
+.ingame-player-avatar {
+  border: 1.5px solid var(--brass) !important;
+  border-radius: 50% !important;
+}
+
+.ingame-player-name {
+  color: var(--parchment-light) !important;
+  font-family: var(--font-serif) !important;
+  font-weight: 700 !important;
+}
+
+.ingame-player-rating {
+  color: var(--brass-light) !important;
+  font-size: 11px !important;
+}
+
+/* --- In-Game Timers Row --- */
+.ingame-timers-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 4px 16px 8px 16px !important;
+}
+
+.timer-pill {
+  background: linear-gradient(180deg, #2D1A0E 0%, #140A05 100%) !important;
+  border: 1.5px solid var(--brass) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6) !important;
+  color: var(--brass-light) !important;
+  font-family: var(--font-serif) !important;
+  font-weight: 700 !important;
+  font-size: 16px !important;
+  padding: 5px 14px !important;
+  min-width: 65px !important;
+  text-align: center !important;
+}
+
+.turn-status-badge {
+  background: linear-gradient(180deg, #4A2E1B 0%, #2A170C 100%) !important;
+  border: 1px solid var(--brass) !important;
+  border-radius: 16px !important;
+  color: var(--parchment-light) !important;
+  font-family: var(--font-serif) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  padding: 4px 14px !important;
+  box-shadow: var(--shadow-brass) !important;
+}
+
+.turn-status-badge.your-turn {
+  border-color: var(--highlight) !important;
+  color: #FFFDE7 !important;
+  box-shadow: 0 0 10px rgba(255, 213, 79, 0.5) !important;
+}
+
+/* --- In-Game Action Bar & Medallion Buttons (Phase 6) --- */
+.ingame-action-bar {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 10px 12px !important;
+  margin-top: 6px !important;
+}
+
+.btn-game-pill {
+  background: linear-gradient(180deg, #4A2E1B 0%, #2A170C 100%) !important;
+  border: 1.5px solid var(--brass) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--parchment-light) !important;
+  box-shadow: var(--shadow-wood-raised) !important;
+  font-family: var(--font-serif) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  padding: 8px 14px !important;
+  min-height: 42px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: transform 0.08s ease, box-shadow 0.08s ease !important;
+}
+
+.btn-game-pill:active {
+  transform: translateY(2px) !important;
+  box-shadow: var(--shadow-wood-pressed) !important;
+}
+
+/* Skill Armed / Active Glow Ring */
+.btn-game-pill.active-skill {
+  border-color: var(--highlight) !important;
+  box-shadow: 0 0 12px rgba(255, 213, 79, 0.7), inset 0 0 6px rgba(255, 213, 79, 0.4) !important;
+}
+
+/* Skill Disabled / Expended */
+.btn-game-pill.disabled {
+  opacity: 0.45 !important;
+  filter: grayscale(80%) !important;
+  box-shadow: none !important;
+  border-color: #55331E !important;
+  cursor: not-allowed !important;
+}
+
+/* --- Move Notation Ticker --- */
+.move-ticker-container {
+  background: #170A04 !important;
+  border: 1px solid #4A2E1B !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--brass-light) !important;
+  font-family: var(--font-serif) !important;
+  font-size: 11px !important;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.6) !important;
+}
+
+/* --- Bottom Navigation Bar --- */
+.fantasy-bottom-nav, .bottom-nav {
+  background: linear-gradient(180deg, rgba(46, 26, 15, 0.98) 0%, rgba(20, 10, 5, 0.98) 100%) !important;
+  border-top: 2px solid var(--board-inlay) !important;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.6) !important;
+}
+
+.nav-tab {
+  color: var(--text-muted) !important;
+  font-family: var(--font-serif) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.nav-tab.active {
+  color: var(--brass-light) !important;
+  text-shadow: 0 0 6px rgba(201, 151, 0, 0.5) !important;
+}
+
+/* --- Modals & Popups --- */
+.modal {
+  background: rgba(10, 5, 2, 0.82) !important;
+  backdrop-filter: none !important;
+}
+
+.modal-content, .modal-box {
+  background: linear-gradient(180deg, #351F12 0%, #1A0D07 100%) !important;
+  border: 3px solid var(--board-inlay) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-plaque) !important;
+  color: var(--parchment-light) !important;
+}
+
+.modal-title, .screen-title {
+  color: var(--parchment-light) !important;
+  font-family: var(--font-serif) !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.7) !important;
+}
+
+.modal-desc, .screen-desc {
+  color: var(--text-muted) !important;
+}
+
+/* Toast Plaque Notification */
+.toast, #toast-container > div {
+  background: linear-gradient(180deg, #4A2E1B 0%, #2A170C 100%) !important;
+  border: 1.5px solid var(--brass) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-wood-raised) !important;
+  color: var(--parchment-light) !important;
+  font-family: var(--font-serif) !important;
+  font-weight: 700 !important;
+}

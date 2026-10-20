@@ -69,10 +69,9 @@
         </div>
 
         <div class="fantasy-header-actions">
-          <div class="fantasy-wallet-chip" onclick="app.connectWallet()" id="btn-connect-wallet" title="Connect Wallet" style="background: #ccff00; color: #101130; font-weight: 700; cursor: pointer;">
-            <span class="wallet-icon">💎</span>
-            <span class="wallet-balance" id="wallet-balance">Connect</span>
-            
+          <div class="fantasy-wallet-chip" onclick="app.showProfileScreen()" id="btn-connect-wallet" title="Your Coins">
+            <span class="wallet-icon">&#x1FA99;</span>
+            <span class="wallet-balance" id="wallet-balance">1,000 Coins</span>
           </div>
           
           <button class="btn-settings" onclick="app.toggleFriendsList()" title="Friends">
@@ -236,7 +235,7 @@
     <div class="screen-inner">
       <button class="back-btn" onclick="app.onStakeBackClick()">← Back</button>
       <h2 id="stake-screen-title" class="screen-title">Stake to Play</h2>
-      <p id="stake-screen-desc" class="screen-desc" style="margin-bottom: 24px;">Select the amount of USDT to wager. Winner takes the pool!</p>
+      <p id="stake-screen-desc" class="screen-desc" style="margin-bottom: 24px;">Select the amount of coins to play for. Winner takes the pool!</p>
       
       <div class="stake-options">
         <button class="stake-btn" onclick="app.selectStake(1)">
@@ -562,7 +561,7 @@
         <!-- Active Prize Pool -->
         <div id="active-prize-pool" class="active-prize-pool hidden">
           <span>🏆 Prize Pool:</span>
-          <span id="game-prize-amount" class="prize-value-small">100 $OWL</span>
+          <span id="game-prize-amount" class="prize-value-small">100 Coins</span>
         </div>
 
         <!-- Move History Ticker -->
@@ -1078,15 +1077,15 @@
         </div>
         <div class="detail-row">
           <span class="detail-label">Required Stake</span>
-          <span class="detail-value stake-highlight" id="join-room-stake-display">50 $OWL</span>
+          <span class="detail-value stake-highlight" id="join-room-stake-display">50 Coins</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">Total Prize Pool</span>
-          <span class="detail-value pool-highlight" id="join-room-pool-display">100 $OWL</span>
+          <span class="detail-value pool-highlight" id="join-room-pool-display">100 Coins</span>
         </div>
         <div class="detail-row divider-row">
           <span class="detail-label">Your Balance</span>
-          <span class="detail-value" id="join-user-balance-display">1,250 $OWL</span>
+          <span class="detail-value" id="join-user-balance-display">1,250 Coins</span>
         </div>
       </div>
 
@@ -1112,7 +1111,7 @@
       <div style="font-size: 32px; margin-bottom: 8px;">🏆</div>
       <h3 style=" font-size: 20px; color: #caa674; margin-bottom: 6px;">Owl's Gambit Arena</h3>
       <p style="color: #94a3b8; font-size: 13px; line-height: 1.5; margin-bottom: 16px;">
-        Season 1 Championship with a <strong style="color: #f1dfbe;">50,000 $OWL</strong> prize pool opens soon! Spectate live matches or sharpen your play in Practice mode.
+        Season 1 Championship with a <strong style="color: #f1dfbe;">50,000 Coins</strong> prize pool opens soon! Spectate live matches or sharpen your play in Practice mode.
       </p>
       <div class="confirm-buttons" style="flex-direction: column; gap: 8px;">
         <button class="btn btn-primary btn-small" style="width: 100%;" onclick="app.hideModal('modal-tournaments'); app.showModal('modal-spectate');">
@@ -1143,7 +1142,7 @@
       <div class="profile-stats-grid">
         <div class="stat-box">
           <span class="stat-num" id="profile-wallet-balance">1,250</span>
-          <span class="stat-label">$OWL Balance</span>
+          <span class="stat-label">Coin Balance</span>
         </div>
         <div class="stat-box">
           <span class="stat-num">48</span>
@@ -1235,6 +1234,7 @@
   <script src="/js/multiplayer.js?v=639262545462453427"></script>
   <script src="/js/ai-engine.js?v=639262545462453427"></script>
   <script src="/js/pieces.js"></script>
+  <script src="/js/ad-service.js"></script>
   <script src="/js/app.js?v=639262545462453427"></script>
   
 
@@ -1632,7 +1632,7 @@
       <img src="/assets/shadow_owl_avatar.jpg" class="invite-avatar" id="invite-sender-avatar" />
       <div class="invite-info">
         <span class="invite-title"><strong id="invite-sender-name">ShadowOwl</strong> invited you to play!</span>
-        <span class="invite-details"><span id="invite-amount">50 $USDT</span> match • <span id="invite-mode">Standard</span> Mode</span>
+        <span class="invite-details"><span id="invite-amount">50 Coins</span> match • <span id="invite-mode">Standard</span> Mode</span>
       </div>
     </div>
     <div class="invite-actions">

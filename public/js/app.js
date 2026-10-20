@@ -67,6 +67,13 @@ class App {
   }
 
   init() {
+    if (!this.walletAddress) {
+      this.walletAddress = localStorage.getItem('owl_guest_id') || ('guest_' + Math.floor(1000 + Math.random() * 9000));
+      localStorage.setItem('owl_guest_id', this.walletAddress);
+    }
+    if (window.AdService) {
+      window.AdService.init();
+    }
     // Ensure abilities loaded from localStorage are displayed on UI immediately
     this.updateHomeAbilitiesDisplay();
 
