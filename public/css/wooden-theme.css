@@ -421,3 +421,384 @@ body, html, .screen, .fantasy-home-screen, .discover-shell, .abilities-shell, .g
   background: #2E7D32 !important;
   border-color: #81C784 !important;
 }
+
+
+/* ==========================================================================
+   SETTINGS MODAL: CARVED WALNUT PLAQUE WITH BRASS INLAY
+   ========================================================================== */
+.modal-overlay {
+  background: rgba(10, 5, 2, 0.85) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+#modal-settings .modal-content,
+.settings-modal,
+.modal-content {
+  background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
+  border: 2.5px solid #C99700 !important;
+  border-radius: 16px !important;
+  box-shadow: 
+    0 24px 50px rgba(0, 0, 0, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.6) !important;
+  color: #FDF7EC !important;
+  font-family: 'Georgia', serif !important;
+  padding: 24px !important;
+  max-width: 360px !important;
+}
+
+.settings-modal h3,
+.modal-content h3 {
+  font-family: 'Georgia', serif !important;
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  color: #FFD54F !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+  border-bottom: 1px solid #5A351D !important;
+  padding-bottom: 12px !important;
+  margin-bottom: 18px !important;
+  letter-spacing: 0.5px !important;
+}
+
+.setting-item {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  background: rgba(26, 14, 8, 0.7) !important;
+  border: 1px solid #5A351D !important;
+  border-radius: 10px !important;
+  padding: 10px 14px !important;
+  margin-bottom: 12px !important;
+  color: #FDF7EC !important;
+  font-family: 'Georgia', serif !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+}
+
+.setting-item span {
+  color: #FDF7EC !important;
+}
+
+.setting-item .btn,
+#btn-toggle-sound,
+#btn-toggle-music {
+  background: linear-gradient(180deg, #5A351D 0%, #2A170C 100%) !important;
+  border: 1.5px solid #C99700 !important;
+  color: #FFD54F !important;
+  border-radius: 8px !important;
+  font-family: 'Georgia', serif !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  padding: 8px 14px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.setting-item .btn:hover,
+#btn-toggle-sound:hover,
+#btn-toggle-music:hover {
+  background: linear-gradient(180deg, #6E4426 0%, #3B2012 100%) !important;
+  border-color: #FFD54F !important;
+  transform: translateY(-1px) !important;
+}
+
+.settings-modal .btn-tertiary {
+  background: linear-gradient(180deg, #4A2E1B 0%, #1A0D06 100%) !important;
+  border: 1.5px solid #8C6538 !important;
+  color: #FDF7EC !important;
+  border-radius: 8px !important;
+  font-family: 'Georgia', serif !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  padding: 10px !important;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.settings-modal .btn-tertiary:hover {
+  background: linear-gradient(180deg, #5A351D 0%, #24140B 100%) !important;
+  border-color: #C99700 !important;
+  color: #FFD54F !important;
+}
+
+/* ==========================================================================
+   PROFILE SCREEN: WARM WALNUT & BRASS TABLET
+   Zero White Pills, Zero Slate Blue
+   ========================================================================== */
+#screen-profile {
+  background: radial-gradient(circle at 50% 30%, #422616 0%, #24140B 60%, #120904 100%) !important;
+  color: #FDF7EC !important;
+}
+
+.profile-hero-card {
+  background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
+  border: 2px solid #C99700 !important;
+  border-radius: 16px !important;
+  padding: 16px 20px !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+
+.profile-hero-avatar-wrap {
+  position: relative !important;
+}
+
+.profile-hero-avatar {
+  border: 3px solid #C99700 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8) !important;
+}
+
+.profile-hero-name {
+  color: #FFD54F !important;
+  font-family: 'Georgia', serif !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+  font-size: 22px !important;
+}
+
+.profile-hero-level {
+  color: #EBD2A5 !important;
+  background: rgba(201, 151, 0, 0.2) !important;
+  border: 1px solid #C99700 !important;
+  border-radius: 6px !important;
+  padding: 2px 8px !important;
+  font-family: 'Georgia', serif !important;
+  font-weight: 700 !important;
+}
+
+.stats-quad-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 8px !important;
+  background: linear-gradient(180deg, #3B2214 0%, #201108 100%) !important;
+  border: 2px solid #C99700 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  padding: 14px 10px !important;
+  margin-bottom: 20px !important;
+}
+
+.quad-stat-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+.quad-stat-num {
+  font-family: 'Georgia', serif !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #FFD54F !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8) !important;
+}
+
+.quad-stat-label {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: #C4A482 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  margin-top: 3px !important;
+}
+
+.profile-section-title-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 12px !important;
+}
+
+.profile-section-title {
+  font-family: 'Georgia', serif !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #FFD54F !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+}
+
+.match-history-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: linear-gradient(180deg, #442918 0%, #2A170C 100%) !important;
+  border: 1.5px solid #8C6538 !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  margin-bottom: 10px !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  color: #FDF7EC !important;
+}
+
+.match-history-item:hover {
+  border-color: #C99700 !important;
+  transform: translateY(-1px) !important;
+}
+
+.match-opp-name {
+  font-family: 'Georgia', serif !important;
+  font-weight: 700 !important;
+  color: #FDF7EC !important;
+  font-size: 14px !important;
+}
+
+.match-opp-rating {
+  font-size: 12px !important;
+  color: #C4A482 !important;
+}
+
+.match-timestamp {
+  font-size: 11px !important;
+  color: #A98C72 !important;
+}
+
+/* ==========================================================================
+   NOTIFICATIONS & INVITATIONS: WOODEN SCROLL PLAQUE
+   ========================================================================== */
+.invite-popup,
+#game-invite-popup {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
+  border: 2.5px solid #C99700 !important;
+  border-radius: 16px !important;
+  padding: 22px !important;
+  z-index: 999999 !important;
+  color: #FDF7EC !important;
+  box-shadow: 
+    0 24px 60px rgba(0, 0, 0, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  width: 90% !important;
+  max-width: 360px !important;
+  font-family: 'Georgia', serif !important;
+}
+
+.invite-popup.hidden {
+  display: none !important;
+}
+
+.invite-popup .btn-accept {
+  background: linear-gradient(180deg, #C99700 0%, #996D00 100%) !important;
+  border: 1.5px solid #FFD54F !important;
+  color: #1F1008 !important;
+  border-radius: 8px !important;
+  padding: 10px 18px !important;
+  font-family: 'Georgia', serif !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  transition: all 0.2s ease !important;
+}
+
+.invite-popup .btn-accept:hover {
+  background: linear-gradient(180deg, #E5AE00 0%, #B27E00 100%) !important;
+  transform: translateY(-1px) !important;
+}
+
+.invite-popup .btn-reject {
+  background: linear-gradient(180deg, #5A351D 0%, #2A170C 100%) !important;
+  border: 1.5px solid #8C6538 !important;
+  color: #FDF7EC !important;
+  border-radius: 8px !important;
+  padding: 10px 18px !important;
+  font-family: 'Georgia', serif !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+  transition: all 0.2s ease !important;
+}
+
+.invite-popup .btn-reject:hover {
+  border-color: #C99700 !important;
+  color: #FFD54F !important;
+}
+
+.toast,
+#toast {
+  background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
+  border: 1.5px solid #C99700 !important;
+  border-radius: 12px !important;
+  color: #FFD54F !important;
+  font-family: 'Georgia', serif !important;
+  font-weight: 700 !important;
+  padding: 12px 24px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* ==========================================================================
+   IN-GAME CHAT & TACTILE EMOTES: TAVERN WOODEN FEED
+   ========================================================================== */
+.chat-messages,
+#chat-messages {
+  background: rgba(26, 14, 8, 0.9) !important;
+  border: 1.5px solid #5A351D !important;
+  border-radius: 10px !important;
+  padding: 10px !important;
+  color: #EBD2A5 !important;
+  font-family: 'Georgia', serif !important;
+  font-size: 13px !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7) !important;
+}
+
+.chat-input-wrapper {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: center !important;
+  margin-top: 8px !important;
+}
+
+.chat-input,
+#chat-input {
+  background: rgba(18, 9, 4, 0.95) !important;
+  border: 1.5px solid #8C6538 !important;
+  border-radius: 8px !important;
+  color: #FDF7EC !important;
+  font-family: 'Georgia', serif !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  outline: none !important;
+}
+
+.chat-input:focus,
+#chat-input:focus {
+  border-color: #C99700 !important;
+  box-shadow: 0 0 8px rgba(201, 151, 0, 0.4) !important;
+}
+
+.chat-send-btn,
+#btn-chat-send {
+  background: linear-gradient(180deg, #C99700 0%, #996D00 100%) !important;
+  border: 1.5px solid #FFD54F !important;
+  color: #1F1008 !important;
+  border-radius: 8px !important;
+  font-family: 'Georgia', serif !important;
+  font-weight: 800 !important;
+  padding: 8px 14px !important;
+  cursor: pointer !important;
+}
+
+.emote-btn,
+.tactile-emote-chip {
+  background: linear-gradient(180deg, #442918 0%, #2A170C 100%) !important;
+  border: 1.5px solid #8C6538 !important;
+  border-radius: 8px !important;
+  color: #FDF7EC !important;
+  padding: 6px 12px !important;
+  font-family: 'Georgia', serif !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.15s ease !important;
+}
+
+.emote-btn:hover,
+.tactile-emote-chip:hover {
+  border-color: #C99700 !important;
+  color: #FFD54F !important;
+  transform: translateY(-1px) !important;
+}

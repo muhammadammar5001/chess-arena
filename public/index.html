@@ -27,21 +27,44 @@
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
-  background: #1e1e38 !important;
-  border: 3px solid #b5b0ff !important;
-  border-radius: 12px !important;
-  padding: 24px !important;
+  background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
+  border: 3px solid #C99700 !important;
+  border-radius: 16px !important;
+  padding: 22px !important;
   z-index: 999999 !important;
-  color: white !important;
-  box-shadow: 0 0 30px rgba(181, 176, 255, 0.8) !important;
+  color: #FDF7EC !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 16px !important;
   width: 90% !important;
-  max-width: 350px !important;
+  max-width: 360px !important;
+  font-family: 'Georgia', serif !important;
 }
 .invite-popup.hidden {
   display: none !important;
+}
+.invite-popup .btn-accept {
+  background: linear-gradient(180deg, #C99700 0%, #996D00 100%) !important;
+  border: 1.5px solid #FFD54F !important;
+  color: #1F1008 !important;
+  border-radius: 8px !important;
+  padding: 10px 18px !important;
+  font-family: 'Georgia', serif !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+}
+.invite-popup .btn-reject {
+  background: linear-gradient(180deg, #5A351D 0%, #2A170C 100%) !important;
+  border: 1.5px solid #C99700 !important;
+  color: #FDF7EC !important;
+  border-radius: 8px !important;
+  padding: 10px 18px !important;
+  font-family: 'Georgia', serif !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5) !important;
 }
 </style>
 
@@ -99,7 +122,7 @@
         </div>
         <div class="fantasy-title-block">
           <h1 class="fantasy-brand-title" style="font-family: 'Cinzel', serif; font-size: 32px;">OWL'S GAMBIT</h1>
-          <p style="font-size: 11px; font-weight: 600; color: #B5B0FF; margin: 2px 0 4px 0; letter-spacing: 0.5px; opacity: 0.8;">by RobinOwls</p>
+          <p style="font-size: 11px; font-weight: 600; color: #F5D36C; margin: 2px 0 4px 0; letter-spacing: 0.5px; opacity: 0.8;">by RobinOwls</p>
           <p class="fantasy-brand-tagline">🌿 PLAY • COMPETE • EXPLORE</p>
         </div>
       </div>
@@ -321,7 +344,7 @@
         <!-- Friend List -->
         <button class="play-mode-card" onclick="app.toggleFriendsList()">
           <div class="play-mode-icon-box" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#101130" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#20120B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
@@ -336,7 +359,7 @@
         <!-- Create Room -->
         <button class="play-mode-card" onclick="app.onCreateRoomClick()">
           <div class="play-mode-icon-box" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#101130" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#20120B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                 <circle cx="9" cy="7" r="4"></circle>
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -356,7 +379,7 @@
         <!-- Join Room -->
         <div class="play-mode-card join-expand-card" id="join-room-card">
           <div class="play-mode-icon-box" style="background: rgba(168,85,247,0.12); border-color: rgba(168,85,247,0.3);">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="26" height="26">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#C99700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="26" height="26">
               <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
               <polyline points="10 17 15 12 10 7"/>
               <line x1="15" y1="12" x2="3" y2="12"/>
@@ -419,7 +442,7 @@
         <!-- Play with Friend -->
         <button class="play-mode-card" onclick="app.showScreen('screen-room')">
           <div class="play-mode-icon-box" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#101130" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#20120B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                 <circle cx="9" cy="7" r="4"></circle>
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -436,7 +459,7 @@
         <!-- Practice vs AI -->
         <button class="play-mode-card" onclick="app.showAIDifficultySelect()">
           <div class="play-mode-icon-box" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#101130" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#20120B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
                 <rect x="9" y="9" width="6" height="6"></rect>
                 <line x1="9" y1="1" x2="9" y2="4"></line>
@@ -631,20 +654,22 @@
         </div>
       </div> <!-- end game-container -->
 
-    <div class="chat-container">
-      <div class="chat-header">
-        <span>Live Chat</span>
-        <button class="close-btn mobile-only" onclick="app.toggleChat()">✕</button>
+    <div class="chat-container" style="background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%); border: 2.5px solid #C99700; border-radius: 14px; padding: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.8); color: #FDF7EC;">
+      <div class="chat-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #5A351D; padding-bottom: 8px; margin-bottom: 12px;">
+        <span style="font-family: 'Georgia', serif; font-weight: 700; color: #FFD54F;">Tactile Emotes</span>
+        <button class="close-btn mobile-only" onclick="app.toggleChat()" style="background: none; border: none; color: #FFD54F; font-size: 18px; cursor: pointer;">✕</button>
       </div>
-      <div class="chat-messages" id="chat-messages">
-        <!-- Messages will go here -->
+      <!-- Preset Emote Medallions -->
+      <div class="emote-buttons-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px;">
+        <button class="btn-plank" onclick="app.sendEmote('👋 Good luck!')" style="font-size: 12px; padding: 10px;">👋 Good luck!</button>
+        <button class="btn-plank" onclick="app.sendEmote('👏 Nice move!')" style="font-size: 12px; padding: 10px;">👏 Nice move!</button>
+        <button class="btn-plank" onclick="app.sendEmote('😅 Oops!')" style="font-size: 12px; padding: 10px;">😅 Oops!</button>
+        <button class="btn-plank" onclick="app.sendEmote('🤝 Good Game!')" style="font-size: 12px; padding: 10px;">🤝 Good Game!</button>
       </div>
-      <form class="chat-input-area" onsubmit="event.preventDefault(); app.sendChatMessage();">
-        <input type="text" id="chat-input" placeholder="Type a message..." maxlength="100" autocomplete="off">
-        <button type="submit" id="btn-send-chat">Send</button>
-      </form>
+      <div class="chat-messages" id="chat-messages" style="max-height: 120px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 8px; border: 1px solid #5A351D; font-size: 12px; color: #EBD2A5;">
+        <!-- Emote messages -->
+      </div>
     </div>
-
     </div> <!-- end game-layout-wrapper -->
   </div>
 
@@ -729,19 +754,19 @@
 
       <div class="profile-hero-card" style="display: flex; flex-direction: row; align-items: center; justify-content: flex-start; text-align: left; gap: 20px; margin: 10px 0 24px 0; padding: 0 10px;">
         <div class="profile-hero-avatar-wrap" style="width: 80px; height: 80px; margin: 0; flex-shrink: 0; position: relative;">
-          <img src="/assets/10.jpg" alt="OwlRider" class="profile-hero-avatar" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #101130; object-fit: cover;">
+          <img src="/assets/10.jpg" alt="OwlRider" class="profile-hero-avatar" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #20120B; object-fit: cover;">
         </div>
         <div style="display: flex; flex-direction: column; justify-content: center; flex: 1;">
           <div style="display: flex; align-items: center; gap: 8px;">
             <h3 class="profile-hero-name" style="margin: 0; font-size: 24px; font-weight: 800; color: #ffffff;">OwlRider</h3>
-            <span onclick="app.handleAuthRequireUsername(app.walletAddress)" style="cursor: pointer; font-size: 16px; opacity: 0.7; margin-left: 8px;" title="Edit Username"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #b5b0ff; margin-bottom: -3px;"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></span>
+            <span onclick="app.handleAuthRequireUsername(app.walletAddress)" style="cursor: pointer; font-size: 16px; opacity: 0.7; margin-left: 8px;" title="Edit Username"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #F5D36C; margin-bottom: -3px;"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></span>
             <svg class="nft-verified-badge" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" title="NFT Holder">
-              <path d="M10.8753 1.95687C11.5369 1.48833 12.4631 1.48833 13.1247 1.95687L14.7397 3.09995C15.0487 3.31885 15.426 3.42065 15.8073 3.38814L17.7818 3.21981C18.5912 3.15082 19.3364 3.69343 19.5759 4.47545L20.1585 6.3776C20.2701 6.7419 20.4994 7.05739 20.8087 7.27216L22.4158 8.38804C23.0747 8.8455 23.3283 9.71261 23.0256 10.4727L22.2872 12.3275C22.1457 12.683 22.1457 13.082 22.2872 13.4375L23.0256 15.2923C23.3283 16.0524 23.0747 16.9195 22.4158 17.377L20.8087 18.4928C20.4994 18.7076 20.2701 19.0231 20.1585 19.3874L19.5759 21.2895C19.3364 22.0716 18.5912 22.6142 17.7818 22.5452L15.8073 22.3769C15.426 22.3444 15.0487 22.4462 14.7397 22.6651L13.1247 23.8081C12.4631 24.2767 11.5369 24.2767 10.8753 23.8081L9.26027 22.6651C8.95128 22.4462 8.57404 22.3444 8.19266 22.3769L6.21824 22.5452C5.40879 22.6142 4.66359 22.0716 4.42413 21.2895L3.84152 19.3874C3.72993 19.0231 3.50058 18.7076 3.19128 18.4928L1.58416 17.377C0.925292 16.9195 0.671714 16.0524 0.974443 15.2923L1.71279 13.4375C1.85434 13.082 1.85434 12.683 1.71279 12.3275L0.974443 10.4727C0.671714 9.71261 0.925292 8.8455 1.58416 8.38804L3.19128 7.27216C3.50058 7.05739 3.72993 6.7419 3.84152 6.3776L4.42413 4.47545C4.66359 3.69343 5.40879 3.15082 6.21824 3.21981L8.19266 3.38814C8.57404 3.42065 8.95128 3.31885 9.26027 3.09995L10.8753 1.95687Z" fill="#3b82f6"/>
+              <path d="M10.8753 1.95687C11.5369 1.48833 12.4631 1.48833 13.1247 1.95687L14.7397 3.09995C15.0487 3.31885 15.426 3.42065 15.8073 3.38814L17.7818 3.21981C18.5912 3.15082 19.3364 3.69343 19.5759 4.47545L20.1585 6.3776C20.2701 6.7419 20.4994 7.05739 20.8087 7.27216L22.4158 8.38804C23.0747 8.8455 23.3283 9.71261 23.0256 10.4727L22.2872 12.3275C22.1457 12.683 22.1457 13.082 22.2872 13.4375L23.0256 15.2923C23.3283 16.0524 23.0747 16.9195 22.4158 17.377L20.8087 18.4928C20.4994 18.7076 20.2701 19.0231 20.1585 19.3874L19.5759 21.2895C19.3364 22.0716 18.5912 22.6142 17.7818 22.5452L15.8073 22.3769C15.426 22.3444 15.0487 22.4462 14.7397 22.6651L13.1247 23.8081C12.4631 24.2767 11.5369 24.2767 10.8753 23.8081L9.26027 22.6651C8.95128 22.4462 8.57404 22.3444 8.19266 22.3769L6.21824 22.5452C5.40879 22.6142 4.66359 22.0716 4.42413 21.2895L3.84152 19.3874C3.72993 19.0231 3.50058 18.7076 3.19128 18.4928L1.58416 17.377C0.925292 16.9195 0.671714 16.0524 0.974443 15.2923L1.71279 13.4375C1.85434 13.082 1.85434 12.683 1.71279 12.3275L0.974443 10.4727C0.671714 9.71261 0.925292 8.8455 1.58416 8.38804L3.19128 7.27216C3.50058 7.05739 3.72993 6.7419 3.84152 6.3776L4.42413 4.47545C4.66359 3.69343 5.40879 3.15082 6.21824 3.21981L8.19266 3.38814C8.57404 3.42065 8.95128 3.31885 9.26027 3.09995L10.8753 1.95687Z" fill="#C99700"/>
               <path fill-rule="evenodd" clip-rule="evenodd" d="M17.1593 9.45892C17.5252 9.8711 17.488 10.5022 17.0759 10.8681L10.7425 16.5045C10.5367 16.6875 10.2673 16.7826 9.99285 16.77C9.71836 16.7573 9.46083 16.6384 9.27361 16.4357L6.94028 13.9118C6.56214 13.5027 6.58721 12.8643 6.99634 12.4862C7.40546 12.108 8.04386 12.1331 8.42199 12.5422L9.95764 14.2043L15.5407 9.24357C15.9529 8.87771 16.584 8.91494 16.9501 9.32712L17.1593 9.45892Z" fill="white"/>
             </svg>
           </div>
           <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
-            <span class="profile-hero-level" style="font-size: 14px; color: #ccff00; font-weight: 700; margin: 0;">Lvl 12</span>
+            <span class="profile-hero-level" style="font-size: 14px; color: #FFD54F; font-weight: 700; margin: 0;">Lvl 12</span>
             <span id="profile-wallet-address" style="font-size: 13px; color: rgba(255,255,255,0.6); font-family: 'Space Mono', monospace; display: none;"></span>
           </div>
           <button id="btn-disconnect-wallet" onclick="app.disconnectWallet()" style="display: none; margin-top: 8px; width: fit-content; background: rgba(255, 59, 48, 0.1); border: 1px solid rgba(255, 59, 48, 0.3); color: #ff3b30; padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
@@ -1135,7 +1160,7 @@
         <img src="/assets/10.jpg" alt="OwlRider" class="profile-avatar-large">
         <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
     <h3 class="profile-name" id="main-profile-name">OwlRider</h3>
-    <span onclick="app.handleAuthRequireUsername(app.walletAddress)" style="cursor: pointer; font-size: 16px; opacity: 0.7;" title="Edit Username"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #b5b0ff; margin-bottom: -3px;"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></span>
+    <span onclick="app.handleAuthRequireUsername(app.walletAddress)" style="cursor: pointer; font-size: 16px; opacity: 0.7;" title="Edit Username"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #F5D36C; margin-bottom: -3px;"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></span>
   </div>
         <span class="profile-rank-badge">Silver Tier • 1240 ELO</span>
       </div>
@@ -1359,8 +1384,8 @@
           </div>
         </div>
         <div class="wallet-asset-item">
-          <div class="wallet-asset-icon" style="background: linear-gradient(135deg, #b5b0ff, #8b86e8);">
-            <span style="font-size:12px; font-weight:800; color:#101130;">OWL</span>
+          <div class="wallet-asset-icon" style="background: linear-gradient(135deg, #F5D36C, #8b86e8);">
+            <span style="font-size:12px; font-weight:800; color:#20120B;">OWL</span>
           </div>
           <div class="wallet-asset-info">
             <span class="wallet-asset-name">Owl's Gambit</span>
@@ -1611,9 +1636,9 @@
       </div>
       <div style="display: flex; gap: 8px;">
         <input type="text" id="add-friend-input" placeholder="Add username..." style="flex:1; padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4); color: white; font-size: 13px; outline: none;">
-        <button onclick="app.sendFriendRequest()" style="background: #b5b0ff; color: #101130; border: none; border-radius: 6px; padding: 0 12px; font-weight: bold; cursor: pointer;">Add</button>
+        <button onclick="app.sendFriendRequest()" style="background: #F5D36C; color: #20120B; border: none; border-radius: 6px; padding: 0 12px; font-weight: bold; cursor: pointer;">Add</button>
       </div>
-      <button onclick="app.showFriendRequests()" id="btn-friend-requests" style="width: 100%; padding: 8px; background: rgba(181, 176, 255, 0.1); color: #b5b0ff; border: 1px solid rgba(181, 176, 255, 0.3); border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+      <button onclick="app.showFriendRequests()" id="btn-friend-requests" style="width: 100%; padding: 8px; background: rgba(181, 176, 255, 0.1); color: #F5D36C; border: 1px solid rgba(181, 176, 255, 0.3); border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
         <span>Friend Requests</span>
         <span id="friend-requests-badge" style="background: #ef4444; color: white; font-size: 11px; padding: 2px 6px; border-radius: 10px; display: none;">0</span>
       </button>
@@ -1643,14 +1668,14 @@
 
   
   <!-- Username Prompt Modal -->
-  <div id="username-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 99999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
-    <div style="background: #101130; border: 2px solid #b5b0ff; border-radius: 12px; padding: 24px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 0 20px rgba(181, 176, 255, 0.3);">
-      <h2 id="username-modal-title" style="color: #b5b0ff; margin-top: 0; font-family: 'Outfit', sans-serif;">Create Profile</h2>
+  <div id="username-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 99999; display: flex; align-items: center; justify-content: center; backdrop-filter: none;">
+    <div style="background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%); border: 2px solid #C99700; border-radius: 12px; padding: 24px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 0 20px rgba(181, 176, 255, 0.3);">
+      <h2 id="username-modal-title" style="color: #F5D36C; margin-top: 0; font-family: 'Outfit', sans-serif;">Create Profile</h2>
       <p id="username-modal-subtitle" style="color: rgba(255,255,255,0.7); margin-bottom: 20px; font-size: 14px;">Welcome! Please choose a unique username.</p>
-      <input type="text" id="username-input" placeholder="e.g. ShadowOwl" style="width: 100%; box-sizing: border-box; padding: 12px; margin-bottom: 20px; background: rgba(0,0,0,0.5); border: 1px solid #b5b0ff; color: white; border-radius: 8px; font-size: 16px; outline: none;">
+      <input type="text" id="username-input" placeholder="e.g. ShadowOwl" style="width: 100%; box-sizing: border-box; padding: 12px; margin-bottom: 20px; background: rgba(0,0,0,0.5); border: 1px solid #F5D36C; color: white; border-radius: 8px; font-size: 16px; outline: none;">
       <div style="display: flex; gap: 10px;">
-        <button id="btn-cancel-username" style="width: 100%; padding: 12px; background: transparent; color: #b5b0ff; border: 1px solid #b5b0ff; border-radius: 8px; font-size: 16px; cursor: pointer; transition: transform 0.1s;">Cancel</button>
-        <button id="btn-submit-username" style="width: 100%; padding: 12px; background: #b5b0ff; color: #101130; font-weight: bold; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: transform 0.1s;">Save</button>
+        <button id="btn-cancel-username" style="width: 100%; padding: 12px; background: transparent; color: #F5D36C; border: 1px solid #F5D36C; border-radius: 8px; font-size: 16px; cursor: pointer; transition: transform 0.1s;">Cancel</button>
+        <button id="btn-submit-username" style="width: 100%; padding: 12px; background: #F5D36C; color: #20120B; font-weight: bold; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: transform 0.1s;">Save</button>
       </div>
     </div>
   </div>
@@ -1658,10 +1683,10 @@
 
 
   <!-- Friend Requests Modal -->
-  <div id="friend-requests-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 99999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
-    <div style="background: #101130; border: 2px solid #b5b0ff; border-radius: 12px; padding: 24px; width: 90%; max-width: 400px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(181, 176, 255, 0.3);">
+  <div id="friend-requests-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 99999; display: flex; align-items: center; justify-content: center; backdrop-filter: none;">
+    <div style="background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%); border: 2px solid #C99700; border-radius: 12px; padding: 24px; width: 90%; max-width: 400px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(181, 176, 255, 0.3);">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="color: #b5b0ff; margin: 0; font-family: 'Outfit', sans-serif;">Incoming Requests</h2>
+        <h2 style="color: #F5D36C; margin: 0; font-family: 'Outfit', sans-serif;">Incoming Requests</h2>
         <button onclick="document.getElementById('friend-requests-modal').classList.add('hidden')" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
       </div>
       <div id="friend-requests-list" style="overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">

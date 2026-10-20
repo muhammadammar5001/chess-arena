@@ -2674,7 +2674,7 @@ class App {
     const abilities = this.selectedAbilities || ['swap', 'freeze'];
     abilities.forEach(ab => {
       if (iconMap[ab]) {
-        html += `<img src="${iconMap[ab]}" style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #101130; object-fit: cover; background: #fff;">`;
+        html += `<img src="${iconMap[ab]}" style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #20120B; object-fit: cover; background: #fff;">`;
       }
     });
     container.innerHTML = html;
@@ -2998,6 +2998,30 @@ class App {
     if (mainProfileName) mainProfileName.textContent = user.username;
   }
 
+  sendEmote(text) {
+    if (this.multiplayer && this.multiplayer.ws && this.roomCode) {
+      this.multiplayer.send({ type: 'chat_message', roomCode: this.roomCode, message: text });
+    }
+    const msgBox = document.getElementById('chat-messages');
+    if (msgBox) {
+      const p = document.createElement('div');
+      p.style.margin = '4px 0';
+      p.style.color = '#FFD54F';
+      p.textContent = `You: ${text}`;
+      msgBox.appendChild(p);
+      msgBox.scrollTop = msgBox.scrollHeight;
+    }
+    this.showToast(text);
+  }
+
+  toggleCoords() {
+    this.showCoords = this.showCoords === false ? true : false;
+    const labels = document.querySelectorAll('.coord-label');
+    labels.forEach(l => l.style.display = this.showCoords ? '' : 'none');
+    const btn = document.getElementById('btn-toggle-coords');
+    if (btn) btn.textContent = this.showCoords ? '🔤 Coords: On' : '🔤 Coords: Off';
+  }
+
   showToast(message) {
     const toast = document.getElementById('toast');
     toast.textContent = message;
@@ -3061,8 +3085,8 @@ class App {
     // Reset Header Button
     const btn = document.getElementById('btn-connect-wallet');
     if (btn) {
-      btn.style.background = '#ccff00';
-      btn.style.color = '#101130';
+      btn.style.background = '#C99700';
+      btn.style.color = '#20120B';
       btn.onclick = () => this.connectWallet();
       const bal = document.getElementById('wallet-balance');
       if(bal) bal.textContent = 'Connect';
@@ -3263,7 +3287,7 @@ class App {
           <span style="font-weight: bold; color: white;">${req.username}</span>
           <div style="display: flex; gap: 8px;">
             <button onclick="app.respondFriendRequest('${req.id}', 'declined')" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 6px 12px; border-radius: 6px; cursor: pointer;">Reject</button>
-            <button onclick="app.respondFriendRequest('${req.id}', 'accepted')" style="background: #b5b0ff; color: #101130; font-weight: bold; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer;">Accept</button>
+            <button onclick="app.respondFriendRequest('${req.id}', 'accepted')" style="background: #F5D36C; color: #20120B; font-weight: bold; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer;">Accept</button>
           </div>
         </div>
       `;
