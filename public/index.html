@@ -1,0 +1,1713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Owl's Gambit — Free online PvP chess game. Play against friends with room codes or challenge the AI.">
+  <meta name="theme-color" content="#000000">
+  <title>Owl's Gambit — Chess</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css?v=1791063570183">
+<style>
+    #username-modal.hidden { display: none !important; }
+    #username-modal:not(.hidden) { display: flex !important; }
+  </style>
+<style>
+    #friend-requests-modal.hidden { display: none !important; }
+    #friend-requests-modal:not(.hidden) { display: flex !important; }
+  </style>
+
+<style>
+.invite-popup {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  background: #1e1e38 !important;
+  border: 3px solid #b5b0ff !important;
+  border-radius: 12px !important;
+  padding: 24px !important;
+  z-index: 999999 !important;
+  color: white !important;
+  box-shadow: 0 0 30px rgba(181, 176, 255, 0.8) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  width: 90% !important;
+  max-width: 350px !important;
+}
+.invite-popup.hidden {
+  display: none !important;
+}
+</style>
+
+</head>
+<body>
+
+
+
+
+  <!-- ═══════════════ HOME SCREEN (OWL'S GAMBIT) ═══════════════ -->
+  <div id="screen-home" class="screen active fantasy-home-screen">
+    <div class="fantasy-home-shell">
+      
+      <!-- Top Profile & Settings Header -->
+      <header class="fantasy-header">
+        <div class="fantasy-profile" onclick="app.showProfileScreen()">
+          <div class="fantasy-avatar-wrapper">
+            <img src="/assets/10.jpg" alt="OwlRider" class="fantasy-avatar-img">
+            <span class="fantasy-avatar-badge">✓</span>
+          </div>
+          <div class="fantasy-user-meta">
+            <span class="fantasy-username">OwlRider</span>
+            <span class="fantasy-rating">Rating 1240</span>
+          </div>
+        </div>
+
+        <div class="fantasy-header-actions">
+          <div class="fantasy-wallet-chip" onclick="app.connectWallet()" id="btn-connect-wallet" title="Connect Wallet" style="background: #ccff00; color: #101130; font-weight: 700; cursor: pointer;">
+            <span class="wallet-icon">💎</span>
+            <span class="wallet-balance" id="wallet-balance">Connect</span>
+            
+          </div>
+          
+          <button class="btn-settings" onclick="app.toggleFriendsList()" title="Friends">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </button>
+          <button class="btn-settings" onclick="app.showModal('modal-settings')" title="Settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Hero Artwork Card -->
+      <div class="fantasy-hero-card">
+        <div class="fantasy-hero-banner">
+          <img src="/assets/robin_owls_banner.jpg" alt="Owl's Gambit Artwork" class="hero-owl-img">
+          <div class="fantasy-hero-overlay"></div>
+        </div>
+        <div class="fantasy-title-block">
+          <h1 class="fantasy-brand-title" style="font-family: 'Cinzel', serif; font-size: 32px;">OWL'S GAMBIT</h1>
+          <p style="font-size: 11px; font-weight: 600; color: #B5B0FF; margin: 2px 0 4px 0; letter-spacing: 0.5px; opacity: 0.8;">by RobinOwls</p>
+          <p class="fantasy-brand-tagline">🌿 PLAY • COMPETE • EXPLORE</p>
+        </div>
+      </div>
+
+      <!-- Mode Selector -->
+      <div class="mode-toggle-container">
+        <div class="mode-toggle-bg" id="mode-toggle-bg"></div>
+        <button class="mode-toggle-btn active" id="btn-mode-standard" onclick="app.setGameMode('standard')">Standard Mode</button>
+        <button class="mode-toggle-btn" id="btn-mode-robin" onclick="app.setGameMode('robin')">Robin Mode</button>
+      </div>
+
+        <button id="btn-home-loadout" class="loadout-btn hidden" onclick="app.showAbilitiesScreen()" style="min-width: 160px; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+              <line x1="7" y1="7" x2="7.01" y2="7"></line>
+            </svg>
+            Select Abilities
+          </div>
+          <div id="home-selected-abilities" style="display: flex; gap: 4px; align-items: center;">
+            <!-- JS will inject small ability icons here -->
+          </div>
+        </button>
+
+        <!-- Main Action: Play Now button -->
+      <button id="btn-main-play" class="btn-lime" style="margin-bottom: 18px;" onclick="app.showMatchmakingScreen('matchmaking')">
+        <span>Play Now</span>
+        <span class="btn-arrow">›</span>
+      </button>
+
+      <!-- Feature Menu Cards -->
+      <div class="fantasy-menu-list">
+        <button class="fantasy-menu-card" onclick="app.showToast('Marketplace coming soon! 🛒')">
+          <div class="menu-card-left">
+            <div class="menu-icon-box">
+              <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3h18v4H3z"/>
+                <path d="M3 7l2 14h14l2-14"/>
+                <path d="M10 11v6"/>
+                <path d="M14 11v6"/>
+              </svg>
+            </div>
+            <span class="menu-card-label">Marketplace</span>
+          </div>
+          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+
+        <button class="fantasy-menu-card" onclick="app.showToast('Tournaments coming soon! 🏆')">
+          <div class="menu-card-left">
+            <div class="menu-icon-box">
+              <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                <path d="M4 22h16"/>
+                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/>
+              </svg>
+            </div>
+            <span class="menu-card-label">Tournament</span>
+          </div>
+          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+
+        <button class="fantasy-menu-card" onclick="app.showSpectateModal()">
+          <div class="menu-card-left">
+            <div class="menu-icon-box">
+              <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </div>
+            <span class="menu-card-label">Spectate</span>
+          </div>
+          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+      </div>
+      <!-- Bottom Navigation Dock (4 Tabs: Home, Play, Discover, Profile) -->
+      <nav class="fantasy-bottom-nav">
+        <div class="nav-active-glow"></div>
+        <button id="nav-tab-home" class="nav-tab active" onclick="app.goHome()">
+          <span class="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </span>
+          <span class="nav-label">Home</span>
+        </button>
+        <button id="nav-tab-play" class="nav-tab" onclick="app.showLeaderboardScreen()">
+            <span class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20v-8M6 20V8M18 20v-4"/>
+              </svg>
+            </span>
+            <span class="nav-label">Rankings</span>
+          </button>
+        <button id="nav-tab-discover" class="nav-tab" onclick="app.showShopScreen()">
+            <span class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+              </svg>
+            </span>
+            <span class="nav-label">Shop</span>
+          </button>
+        <button id="nav-tab-wallet" class="nav-tab nav-wallet-btn" onclick="app.toggleWalletPanel()">
+          <span class="nav-icon">
+            <img id="nav-wallet-avatar" src="/assets/10.jpg" class="nav-wallet-avatar-img" alt="Profile" style="display:none;">
+            <svg id="nav-wallet-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2"/>
+              <path d="M2 10h20"/>
+              <circle cx="17" cy="15" r="1.5" fill="currentColor"/>
+            </svg>
+          </span>
+          <span class="nav-label" id="nav-wallet-label">Wallet</span>
+        </button>
+      </nav>
+
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ STAKE SCREEN ═══════════════ -->
+  <div id="screen-stake" class="screen">
+    <div class="screen-inner">
+      <button class="back-btn" onclick="app.onStakeBackClick()">← Back</button>
+      <h2 id="stake-screen-title" class="screen-title">Stake to Play</h2>
+      <p id="stake-screen-desc" class="screen-desc" style="margin-bottom: 24px;">Select the amount of USDT to wager. Winner takes the pool!</p>
+      
+      <div class="stake-options">
+        <button class="stake-btn" onclick="app.selectStake(1)">
+          <span class="stake-amount">$1</span>
+        </button>
+        <button class="stake-btn" onclick="app.selectStake(3)">
+          <span class="stake-amount">$3</span>
+        </button>
+        <button class="stake-btn active" onclick="app.selectStake(5)">
+          <span class="stake-amount">$5</span>
+        </button>
+        <button class="stake-btn" onclick="app.selectStake(10)">
+          <span class="stake-amount">$10</span>
+        </button>
+        <button class="stake-btn" onclick="app.selectStake(15)">
+          <span class="stake-amount">$15</span>
+        </button>
+        <button class="stake-btn" onclick="app.selectStake(20)">
+          <span class="stake-amount">$20</span>
+        </button>
+      </div>
+
+      <div class="prize-pool-preview">
+        <span>Total Prize Pool:</span>
+        <span id="preview-prize-pool" class="prize-value">****</span>
+      </div>
+
+      <button id="btn-confirm-stake" class="btn btn-primary" style="margin-top: 32px;" onclick="app.confirmStake()">
+        Confirm &amp; Proceed
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ AI DIFFICULTY SELECT ═══════════════ -->
+  <div id="screen-ai-select" class="screen">
+    <div class="screen-inner">
+      <button class="back-btn" onclick="app.showMatchmakingScreen()">← Back</button>
+      <h2 class="screen-title">Choose Difficulty</h2>
+      <p class="screen-desc">Select your opponent's strength</p>
+
+      <div class="difficulty-cards">
+        <button class="difficulty-card" onclick="app.startAIGame('easy')">
+          <div class="diff-icon">🌱</div>
+          <div class="diff-name">Easy</div>
+          <div class="diff-desc">Beginner friendly</div>
+          <div class="diff-depth">Depth 1</div>
+        </button>
+
+        <button class="difficulty-card" onclick="app.startAIGame('medium')">
+          <div class="diff-icon">⚡</div>
+          <div class="diff-name">Medium</div>
+          <div class="diff-desc">Casual challenge</div>
+          <div class="diff-depth">Depth 3</div>
+        </button>
+
+        <button class="difficulty-card" onclick="app.startAIGame('hard')">
+          <div class="diff-icon">🔥</div>
+          <div class="diff-name">Hard</div>
+          <div class="diff-desc">Expert level</div>
+          <div class="diff-depth">Depth 4</div>
+        </button>
+      </div>
+
+      <div class="color-select">
+        <p class="color-label">Play as</p>
+        <div class="color-options">
+          <button id="color-white" class="color-btn active" onclick="app.selectColor('white')">♔ White</button>
+          <button id="color-black" class="color-btn" onclick="app.selectColor('black')">♚ Black</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ ROOM SCREEN ═══════════════ -->
+  <div id="screen-room" class="screen">
+    <div class="screen-inner">
+      <button class="back-btn" onclick="app.showMatchmakingScreen()">← Back</button>
+      <h2 class="screen-title">Play with Friend</h2>
+      <p class="screen-desc">Create a private room or join a friend's game</p>
+
+      <div class="play-mode-list">
+
+        <!-- Friend List -->
+        <button class="play-mode-card" onclick="app.toggleFriendsList()">
+          <div class="play-mode-icon-box" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#101130" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+          <div class="play-mode-text">
+            <span class="play-mode-title">Friend List</span>
+            <span class="play-mode-desc">Invite a friend directly from your list</span>
+          </div>
+          <svg class="play-mode-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+
+        <!-- Create Room -->
+        <button class="play-mode-card" onclick="app.onCreateRoomClick()">
+          <div class="play-mode-icon-box" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#101130" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+          <div class="play-mode-text">
+            <span class="play-mode-title">Create Room</span>
+            <span class="play-mode-desc">Set stake &amp; get a room code to share</span>
+          </div>
+          <svg class="play-mode-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+
+        
+        
+
+        <!-- Join Room -->
+        <div class="play-mode-card join-expand-card" id="join-room-card">
+          <div class="play-mode-icon-box" style="background: rgba(168,85,247,0.12); border-color: rgba(168,85,247,0.3);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="26" height="26">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+              <polyline points="10 17 15 12 10 7"/>
+              <line x1="15" y1="12" x2="3" y2="12"/>
+            </svg>
+          </div>
+          <div class="play-mode-text">
+            <span class="play-mode-title">Join Room</span>
+            <span class="play-mode-desc">Enter a 6-letter code from your friend</span>
+          </div>
+        </div>
+
+        <!-- Join Room input — expands below -->
+        <div class="join-room-expand" id="join-room-expand">
+          <input type="text" id="room-code-input" class="room-input" placeholder="ENTER CODE"
+            maxlength="6" autocomplete="off" spellcheck="false" style="text-transform: uppercase; letter-spacing: 6px; font-size: 22px; text-align: center;">
+          <button class="btn-lime" style="margin-top: 12px; padding: 14px; width: 100%; border-radius: 9999px;" onclick="app.joinRoom()">
+            <span>Check Room</span>
+            <span class="btn-arrow">›</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Timer control -->
+      <div class="timer-select" style="margin-top: 20px;">
+        <label>Time Control (for room you create)</label>
+        <select id="timer-select">
+          <option value="">No timer</option>
+          <option value="5">5 min</option>
+          <option value="10" selected>10 min</option>
+          <option value="15">15 min</option>
+          <option value="30">30 min</option>
+        </select>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════ PLAY MENU (was Matchmaking) ═══════════════ -->
+  <div id="screen-matchmaking" class="screen">
+    <div class="screen-inner">
+      <button class="back-btn" onclick="app.goHome()">← Back</button>
+      <h2 class="screen-title">Play Now</h2>
+      <p class="screen-desc">Choose how you want to play</p>
+
+      <div class="play-mode-list">
+
+        <!-- Random Match -->
+        <button class="play-mode-card" onclick="app.showStakeScreen('matchmaking')">
+          <div class="play-mode-icon-box" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
+              <img src="/assets/1x/Asset_39.png" width="24" height="24" alt="Random Match" style="object-fit: contain;">
+            </div>
+          <div class="play-mode-text">
+            <span class="play-mode-title">Random Match</span>
+            <span class="play-mode-desc">Get matched with a random online player</span>
+          </div>
+          <svg class="play-mode-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+
+        <!-- Play with Friend -->
+        <button class="play-mode-card" onclick="app.showScreen('screen-room')">
+          <div class="play-mode-icon-box" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#101130" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+          <div class="play-mode-text">
+            <span class="play-mode-title">Play with Friend</span>
+            <span class="play-mode-desc">Create or join a private room</span>
+          </div>
+          <svg class="play-mode-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+
+        <!-- Practice vs AI -->
+        <button class="play-mode-card" onclick="app.showAIDifficultySelect()">
+          <div class="play-mode-icon-box" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#101130" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+                <rect x="9" y="9" width="6" height="6"></rect>
+                <line x1="9" y1="1" x2="9" y2="4"></line>
+                <line x1="15" y1="1" x2="15" y2="4"></line>
+                <line x1="9" y1="20" x2="9" y2="23"></line>
+                <line x1="15" y1="20" x2="15" y2="23"></line>
+                <line x1="20" y1="9" x2="23" y2="9"></line>
+                <line x1="20" y1="14" x2="23" y2="14"></line>
+                <line x1="1" y1="9" x2="4" y2="9"></line>
+                <line x1="1" y1="14" x2="4" y2="14"></line>
+              </svg>
+            </div>
+          <div class="play-mode-text">
+            <span class="play-mode-title">Practice</span>
+            <span class="play-mode-desc">Play against the AI — choose difficulty</span>
+          </div>
+          <svg class="play-mode-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ WAITING / SEARCHING SCREEN ═══════════════ -->
+  <div id="screen-waiting" class="screen">
+    <div class="screen-inner waiting-content">
+
+      <!-- Back button -->
+      <button class="back-circle-btn" onclick="app.cancelWaiting()" style="align-self: flex-start; margin-bottom: 12px;">←</button>
+      <h2 id="waiting-title" class="screen-title" style="margin-bottom: 4px;">Finding opponent...</h2>
+      <p id="waiting-subtitle" class="screen-desc" style="margin-bottom: 24px;">Searching for the best match for you</p>
+
+      <!-- Slot Machine Animation (shown during matchmaking) -->
+      <div id="matchmaking-animation" class="matchmaking-roulette-wrap">
+
+        <!-- VS Layout -->
+        <div class="roulette-vs-row">
+          <!-- Your avatar (static) -->
+          <div class="roulette-player-col">
+            <div class="roulette-avatar-frame you">
+              <img src="/assets/10.jpg" alt="You" class="roulette-avatar-img">
+            </div>
+            <span class="roulette-player-label">You</span>
+            <span class="roulette-player-rating">1240</span>
+          </div>
+
+          <!-- VS Badge -->
+          <div class="roulette-vs-badge">VS</div>
+
+          <!-- Opponent slot machine -->
+          <div class="roulette-player-col">
+            <div class="roulette-slot-frame">
+              <div class="roulette-slot-viewport">
+                <div id="avatar-slot-machine" class="roulette-slot-strip"></div>
+              </div>
+              <div class="roulette-slot-shine"></div>
+            </div>
+            <span class="roulette-player-label" id="match-opponent-name">Searching...</span>
+            <span class="roulette-player-rating" id="match-opponent-rating">???</span>
+          </div>
+        </div>
+
+        <!-- Pulsing search status -->
+        <div class="roulette-status-row">
+          <span class="roulette-dot"></span>
+          <span class="roulette-dot"></span>
+          <span class="roulette-dot"></span>
+        </div>
+
+        <p class="roulette-status-text" id="roulette-status-text">Scanning ranked players...</p>
+      </div>
+
+      <!-- Spinner (shown for room waiting) -->
+      <div id="waiting-spinner-container" class="waiting-spinner hidden"></div>
+
+      <!-- Room code panel (shown only for friend rooms) -->
+      <div id="waiting-room-info" class="hidden">
+        <div class="room-code-display">
+          <span class="code-label">Room Code</span>
+          <span id="display-room-code" class="code-value">------</span>
+          <button class="copy-btn" onclick="app.copyRoomCode()">Copy</button>
+        </div>
+        <p class="screen-desc">Share this code with your friend</p>
+      </div>
+
+      <button id="btn-cancel-waiting" class="btn btn-tertiary btn-small" style="margin-top: 24px;" onclick="app.cancelWaiting()">Cancel Search</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ GAME SCREEN ═══════════════ -->
+  <div id="screen-game" class="screen">
+    <div class="game-layout-wrapper">
+      <div class="game-container">
+
+        <!-- Top match player header -->
+        <div class="ingame-match-header">
+          <div class="ingame-player-pill" id="player-self-tag" style="position: relative;"> <div class="avatar-chat-wrapper" style="position: relative;"> <img src="/assets/10.jpg" alt="You" class="ingame-player-avatar" id="bottom-player-avatar"> <div id="bottom-chat-bubble" class="ingame-chat-bubble"></div> </div>
+            <div class="ingame-player-meta">
+              <span class="ingame-player-name">
+                <span id="bottom-player-name">OwlRider</span>
+                <span class="online-dot-mini"></span>
+              </span>
+              <span class="ingame-player-rating" id="bottom-player-rating">1240</span>
+            </div>
+          </div>
+
+          <div class="ingame-player-pill" id="player-opp-tag" style="position: relative;">
+            <div class="ingame-player-meta" style="align-items: flex-end;">
+              <span class="ingame-player-name">
+                <span id="top-player-name">ShadowOwl</span>
+                <span class="online-dot-mini" ></span>
+              </span>
+              <span class="ingame-player-rating" id="top-player-rating">1180</span>
+            </div>
+            <div class="avatar-chat-wrapper" style="position: relative;"> <img src="/assets/shadow_owl_avatar.jpg" alt="Opponent" class="ingame-player-avatar" id="top-player-avatar"> <div id="top-chat-bubble" class="ingame-chat-bubble"></div> </div> </div> </div> <!-- Timers & Turn status Row -->
+        <div class="ingame-timers-row">
+          <div class="timer-pill" id="bottom-timer">09:42</div>
+          <div class="turn-status-badge your-turn" id="turn-status-badge">Your Turn</div>
+          <div class="timer-pill" id="top-timer">08:37</div>
+        </div>
+
+        <!-- Active Prize Pool -->
+        <div id="active-prize-pool" class="active-prize-pool hidden">
+          <span>🏆 Prize Pool:</span>
+          <span id="game-prize-amount" class="prize-value-small">100 $OWL</span>
+        </div>
+
+        <!-- Move History Ticker -->
+        <div id="move-history-ticker" class="move-ticker-container">
+          <div id="ticker-content" class="ticker-content"></div>
+        </div>
+
+        <!-- Connection status -->
+        <div id="connection-status" class="connection-status hidden">
+          <span class="status-dot"></span>
+          <span class="status-text">Disconnected</span>
+        </div>
+
+        <!-- Chess Board -->
+        <div id="chess-board" class="chess-board"></div>
+
+        <!-- Captured pieces & spectators -->
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 4px;">
+          <div class="captured-pieces" id="top-captured"></div>
+          <div id="spectator-count-container" class="spectator-count" style="display: none;">
+            👁 <span id="spectator-count-text">0</span>
+          </div>
+          <div class="captured-pieces" id="bottom-captured"></div>
+        </div>
+
+        <!-- In-game 4-Button Action Bar -->
+        <div class="ingame-action-bar">
+          <button class="btn-game-pill" id="btn-ingame-undo" onclick="app.undoMove()" title="Undo Move">
+            <span class="btn-icon">↺</span>
+            <span class="btn-label">Undo</span>
+          </button>
+          <button class="btn-game-pill hint-btn" id="btn-ingame-hint" onclick="app.getHint()" title="Get Hint">
+            <span class="btn-icon">💡</span>
+            <span class="btn-label">Hint</span>
+          </button>
+          <button class="btn-game-pill" id="btn-ingame-draw" onclick="app.offerDraw()" title="Offer Draw">
+            <span class="btn-icon">½</span>
+            <span class="btn-label">Draw</span>
+          </button>
+          <button class="btn-game-pill" id="btn-ingame-resign" onclick="app.confirmResign()" title="Resign">
+            <span class="btn-icon">⚐</span>
+            <span class="btn-label">Resign</span>
+          </button>
+          <button class="btn-game-pill hidden" id="btn-leave-spectate" onclick="app.goHome()" title="Leave Match">
+            <span class="btn-icon">🚪</span>
+            <span class="btn-label">Leave</span>
+          </button>
+        </div>
+
+        <!-- Hidden controls for spectate & chat -->
+
+
+        <div class="game-controls">
+          
+          <button id="btn-toggle-chat" class="ctrl-btn mobile-only-flex" onclick="app.toggleChat()" title="Live Chat">
+            <span>💬</span>
+          </button>
+        </div>
+
+        <!-- Move history panel -->
+        <div id="move-history-panel" class="move-history-panel hidden">
+          <div class="history-header">
+            <span>Move History</span>
+            <button class="close-btn" onclick="app.toggleHistory()">✕</button>
+          </div>
+          <div id="move-history-list" class="history-list"></div>
+        </div>
+      </div> <!-- end game-container -->
+
+    <div class="chat-container">
+      <div class="chat-header">
+        <span>Live Chat</span>
+        <button class="close-btn mobile-only" onclick="app.toggleChat()">✕</button>
+      </div>
+      <div class="chat-messages" id="chat-messages">
+        <!-- Messages will go here -->
+      </div>
+      <form class="chat-input-area" onsubmit="event.preventDefault(); app.sendChatMessage();">
+        <input type="text" id="chat-input" placeholder="Type a message..." maxlength="100" autocomplete="off">
+        <button type="submit" id="btn-send-chat">Send</button>
+      </form>
+    </div>
+
+    </div> <!-- end game-layout-wrapper -->
+  </div>
+
+  <!-- ═══════════════ YOUR ABILITIES SCREEN ═══════════════ -->
+  <div id="screen-abilities" class="screen">
+    <div class="abilities-shell">
+      <div class="screen-header-back">
+        <div class="screen-header-left">
+          <button class="back-circle-btn" onclick="app.goHome()" title="Back">←</button>
+          <div class="header-title-block">
+            <h2 class="header-page-title">Your Abilities</h2>
+            <span class="header-page-subtitle">Robin Mode Tactics</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="abilities-hero-wrap">
+        <img src="/assets/owl_abilities_banner.png" alt="Moonlit Owl" class="abilities-circle-img">
+        <h3 class="abilities-heading">Choose 2 Abilities</h3>
+        <p class="abilities-subheading">Each ability can be used once per match.</p>
+      </div>
+
+      <div class="abilities-list">
+        <div class="ability-card selected" id="ability-card-swap" onclick="app.toggleAbility('swap')">
+          <div class="ability-left">
+            <div class="ability-icon-circle" style="background: transparent; border: none; box-shadow: none;"><img src="/assets/Asset 42.png" alt="Tactical Swap" style="width: 40px; height: 40px; object-fit: contain;"></div>
+            <div class="ability-info">
+              <span class="ability-name">Tactical Swap</span>
+              <span class="ability-desc">Swap positions of two of your pieces.</span>
+            </div>
+          </div>
+          <span class="menu-card-chevron">›</span>
+        </div>
+
+        <div class="ability-card selected" id="ability-card-freeze" onclick="app.toggleAbility('freeze')">
+          <div class="ability-left">
+            <div class="ability-icon-circle" style="background: transparent; border: none; box-shadow: none;"><img src="/assets/Asset 43.png" alt="Piece Freeze" style="width: 40px; height: 40px; object-fit: contain;"></div>
+            <div class="ability-info">
+              <span class="ability-name">Piece Freeze</span>
+              <span class="ability-desc">Temporarily disable an opponent's piece.</span>
+            </div>
+          </div>
+          <span class="menu-card-chevron">›</span>
+        </div>
+
+        <div class="ability-card" id="ability-card-second" onclick="app.toggleAbility('second')">
+          <div class="ability-left">
+            <div class="ability-icon-circle" style="background: transparent; border: none; box-shadow: none;"><img src="/assets/Asset 44.png" alt="Second Chance" style="width: 40px; height: 40px; object-fit: contain;"></div>
+            <div class="ability-info">
+              <span class="ability-name">Second Chance</span>
+              <span class="ability-desc">Take back your last move before opponent responds.</span>
+            </div>
+          </div>
+          <span class="menu-card-chevron">›</span>
+        </div>
+      </div>
+
+      <button class="btn-lime" onclick="app.confirmAbilities()">
+        <span>Confirm</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════ FULL PROFILE SCREEN ═══════════════ -->
+  <div id="screen-profile" class="screen">
+    <div class="profile-page-shell">
+      <div class="screen-header-back">
+        <div class="screen-header-left">
+          <button class="back-circle-btn" onclick="app.goHome()" title="Back">←</button>
+          <div class="header-title-block">
+            <h2 class="header-page-title">Profile</h2>
+          </div>
+        </div>
+        <button class="btn-settings" onclick="app.showModal('modal-settings')" title="Settings">
+          ⚙️
+        </button>
+      </div>
+
+      <div class="profile-hero-card" style="display: flex; flex-direction: row; align-items: center; justify-content: flex-start; text-align: left; gap: 20px; margin: 10px 0 24px 0; padding: 0 10px;">
+        <div class="profile-hero-avatar-wrap" style="width: 80px; height: 80px; margin: 0; flex-shrink: 0; position: relative;">
+          <img src="/assets/10.jpg" alt="OwlRider" class="profile-hero-avatar" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #101130; object-fit: cover;">
+        </div>
+        <div style="display: flex; flex-direction: column; justify-content: center; flex: 1;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <h3 class="profile-hero-name" style="margin: 0; font-size: 24px; font-weight: 800; color: #ffffff;">OwlRider</h3>
+            <span onclick="app.handleAuthRequireUsername(app.walletAddress)" style="cursor: pointer; font-size: 16px; opacity: 0.7; margin-left: 8px;" title="Edit Username"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #b5b0ff; margin-bottom: -3px;"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></span>
+            <svg class="nft-verified-badge" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" title="NFT Holder">
+              <path d="M10.8753 1.95687C11.5369 1.48833 12.4631 1.48833 13.1247 1.95687L14.7397 3.09995C15.0487 3.31885 15.426 3.42065 15.8073 3.38814L17.7818 3.21981C18.5912 3.15082 19.3364 3.69343 19.5759 4.47545L20.1585 6.3776C20.2701 6.7419 20.4994 7.05739 20.8087 7.27216L22.4158 8.38804C23.0747 8.8455 23.3283 9.71261 23.0256 10.4727L22.2872 12.3275C22.1457 12.683 22.1457 13.082 22.2872 13.4375L23.0256 15.2923C23.3283 16.0524 23.0747 16.9195 22.4158 17.377L20.8087 18.4928C20.4994 18.7076 20.2701 19.0231 20.1585 19.3874L19.5759 21.2895C19.3364 22.0716 18.5912 22.6142 17.7818 22.5452L15.8073 22.3769C15.426 22.3444 15.0487 22.4462 14.7397 22.6651L13.1247 23.8081C12.4631 24.2767 11.5369 24.2767 10.8753 23.8081L9.26027 22.6651C8.95128 22.4462 8.57404 22.3444 8.19266 22.3769L6.21824 22.5452C5.40879 22.6142 4.66359 22.0716 4.42413 21.2895L3.84152 19.3874C3.72993 19.0231 3.50058 18.7076 3.19128 18.4928L1.58416 17.377C0.925292 16.9195 0.671714 16.0524 0.974443 15.2923L1.71279 13.4375C1.85434 13.082 1.85434 12.683 1.71279 12.3275L0.974443 10.4727C0.671714 9.71261 0.925292 8.8455 1.58416 8.38804L3.19128 7.27216C3.50058 7.05739 3.72993 6.7419 3.84152 6.3776L4.42413 4.47545C4.66359 3.69343 5.40879 3.15082 6.21824 3.21981L8.19266 3.38814C8.57404 3.42065 8.95128 3.31885 9.26027 3.09995L10.8753 1.95687Z" fill="#3b82f6"/>
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M17.1593 9.45892C17.5252 9.8711 17.488 10.5022 17.0759 10.8681L10.7425 16.5045C10.5367 16.6875 10.2673 16.7826 9.99285 16.77C9.71836 16.7573 9.46083 16.6384 9.27361 16.4357L6.94028 13.9118C6.56214 13.5027 6.58721 12.8643 6.99634 12.4862C7.40546 12.108 8.04386 12.1331 8.42199 12.5422L9.95764 14.2043L15.5407 9.24357C15.9529 8.87771 16.584 8.91494 16.9501 9.32712L17.1593 9.45892Z" fill="white"/>
+            </svg>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
+            <span class="profile-hero-level" style="font-size: 14px; color: #ccff00; font-weight: 700; margin: 0;">Lvl 12</span>
+            <span id="profile-wallet-address" style="font-size: 13px; color: rgba(255,255,255,0.6); font-family: 'Space Mono', monospace; display: none;"></span>
+          </div>
+          <button id="btn-disconnect-wallet" onclick="app.disconnectWallet()" style="display: none; margin-top: 8px; width: fit-content; background: rgba(255, 59, 48, 0.1); border: 1px solid rgba(255, 59, 48, 0.3); color: #ff3b30; padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+            Disconnect
+          </button>
+        </div>
+      </div>
+
+      <!-- 4-Stat Metric Box -->
+      <div class="stats-quad-grid">
+        <div class="quad-stat-item">
+          <span class="quad-stat-num">1240</span>
+          <span class="quad-stat-label">Rating</span>
+        </div>
+        <div class="quad-stat-item">
+          <span class="quad-stat-num">38</span>
+          <span class="quad-stat-label">Wins</span>
+        </div>
+        <div class="quad-stat-item">
+          <span class="quad-stat-num">17</span>
+          <span class="quad-stat-label">Losses</span>
+        </div>
+        <div class="quad-stat-item">
+          <span class="quad-stat-num">69%</span>
+          <span class="quad-stat-label">Win Rate</span>
+        </div>
+      </div>
+
+      <!-- Recent Matches List -->
+      <div class="profile-section-title-row">
+        <span class="profile-section-title">Recent Matches</span>
+        <span class="section-link">View All</span>
+      </div>
+
+      <div class="matches-list">
+        <div class="match-history-item">
+          <div class="match-item-left">
+            <img src="/assets/shadow_owl_avatar.jpg" alt="ShadowOwl" class="match-opp-avatar">
+            <div class="match-opp-meta">
+              <span class="match-opp-name">ShadowOwl</span>
+              <span class="match-opp-rating">1240</span>
+            </div>
+          </div>
+          <div class="match-item-right">
+            <span class="elo-delta-pos">+25</span>
+            <span class="match-timestamp">2h ago</span>
+          </div>
+        </div>
+
+        <div class="match-history-item">
+          <div class="match-item-left">
+            <img src="/assets/10.jpg" alt="FeatherStag" class="match-opp-avatar" style="filter: hue-rotate(90deg);">
+            <div class="match-opp-meta">
+              <span class="match-opp-name">FeatherStag</span>
+              <span class="match-opp-rating">1220</span>
+            </div>
+          </div>
+          <div class="match-item-right">
+            <span class="elo-delta-neg">-10</span>
+            <span class="match-timestamp">9h ago</span>
+          </div>
+        </div>
+
+        <div class="match-history-item">
+          <div class="match-item-left">
+            <img src="/assets/10.jpg" alt="MoonOwl" class="match-opp-avatar" style="filter: hue-rotate(180deg);">
+            <div class="match-opp-meta">
+              <span class="match-opp-name">MoonOwl</span>
+              <span class="match-opp-rating">1190</span>
+            </div>
+          </div>
+          <div class="match-item-right">
+            <span class="elo-delta-pos">+20</span>
+            <span class="match-timestamp">1d ago</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="fantasy-bottom-nav">
+        <div class="nav-active-glow"></div>
+          <button class="nav-tab" onclick="app.goHome()"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">Home</span></button>
+          <button class="nav-tab active" onclick="app.showLeaderboardScreen()"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-8M6 20V8M18 20v-4"/></svg></span><span class="nav-label">Rankings</span></button>
+          <button class="nav-tab" onclick="app.showShopScreen()"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span class="nav-label">Shop</span></button>
+          <button  class="nav-tab nav-wallet-btn" onclick="app.toggleWalletPanel()">
+          <span class="nav-icon">
+            <img  src="/assets/10.jpg" class="nav-wallet-avatar-img" alt="Profile" style="display:none;">
+            <svg  width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2"/>
+              <path d="M2 10h20"/>
+              <circle cx="17" cy="15" r="1.5" fill="currentColor"/>
+            </svg>
+          </span>
+          <span class="nav-label" >Wallet</span>
+        </button>
+        </nav>
+    </div>
+</div>
+<div id="screen-shop" class="screen">
+    <div class="discover-shell">
+      <div class="screen-header-back">
+        <div class="screen-header-left">
+          <button class="back-circle-btn" onclick="app.goHome()" title="Back">←</button>
+          <div class="header-title-block">
+            <h2 class="header-page-title">Shop</h2>
+            <span class="header-page-subtitle">Owl's Gambit Ecosystem</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="roadmap-card">
+        <h3 style="font-size: 15px; font-weight: 800; color: #ffffff; margin-bottom: 4px;">Development Progress</h3>
+        <p style="font-size: 11px; color: #94a3b8; margin-bottom: 12px;">Building the future, one feature at a time.</p>
+
+        <div class="roadmap-item">
+          <div class="roadmap-item-left">
+            <span class="roadmap-item-icon">♟️</span>
+            <span class="roadmap-item-title">Core Chess</span>
+          </div>
+          <div class="roadmap-progress-wrap">
+            <div class="roadmap-progress-bar">
+              <div class="roadmap-progress-fill" style="width: 100%;"></div>
+            </div>
+            <span class="roadmap-status-text completed">Completed</span>
+          </div>
+        </div>
+
+        <div class="roadmap-item">
+          <div class="roadmap-item-left">
+            <span class="roadmap-item-icon">📱</span>
+            <span class="roadmap-item-title">Mobile UI</span>
+          </div>
+          <div class="roadmap-progress-wrap">
+            <div class="roadmap-progress-bar">
+              <div class="roadmap-progress-fill" style="width: 90%;"></div>
+            </div>
+            <span class="roadmap-status-text in-progress">In Progress</span>
+          </div>
+        </div>
+
+        <div class="roadmap-item">
+          <div class="roadmap-item-left">
+            <span class="roadmap-item-icon">🌐</span>
+            <span class="roadmap-item-title">Online PvP</span>
+          </div>
+          <div class="roadmap-progress-wrap">
+            <div class="roadmap-progress-bar">
+              <div class="roadmap-progress-fill" style="width: 100%;"></div>
+            </div>
+            <span class="roadmap-status-text completed">Active</span>
+          </div>
+        </div>
+
+        <div class="roadmap-item" style="cursor: pointer;" onclick="app.showAbilitiesScreen()">
+          <div class="roadmap-item-left">
+            <span class="roadmap-item-icon">⚡</span>
+            <span class="roadmap-item-title">Robin Mode</span>
+          </div>
+          <div class="roadmap-progress-wrap">
+            <div class="roadmap-progress-bar">
+              <div class="roadmap-progress-fill" style="width: 60%; background: #818cf8;"></div>
+            </div>
+            <span class="roadmap-status-text in-progress">Preview ›</span>
+          </div>
+        </div>
+
+        <div class="roadmap-item">
+          <div class="roadmap-item-left">
+            <span class="roadmap-item-icon">🖼️</span>
+            <span class="roadmap-item-title">NFT Integration</span>
+          </div>
+          <div class="roadmap-progress-wrap">
+            <div class="roadmap-progress-bar">
+              <div class="roadmap-progress-fill" style="width: 25%;"></div>
+            </div>
+            <span class="roadmap-status-text">Planned</span>
+          </div>
+        </div>
+
+        <div class="roadmap-item" style="cursor: pointer;" onclick="app.showModal('modal-tournaments')">
+          <div class="roadmap-item-left">
+            <span class="roadmap-item-icon">🏆</span>
+            <span class="roadmap-item-title">Tournaments</span>
+          </div>
+          <div class="roadmap-progress-wrap">
+            <div class="roadmap-progress-bar">
+              <div class="roadmap-progress-fill" style="width: 40%; background: #caa674;"></div>
+            </div>
+            <span class="roadmap-status-text">Planned ›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pinned 4-Tab Bottom Dock -->
+      <nav class="fantasy-bottom-nav">
+        <div class="nav-active-glow"></div>
+        <button class="nav-tab" onclick="app.goHome()">
+          <span class="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </span>
+          <span class="nav-label">Home</span>
+        </button>
+        <button class="nav-tab" onclick="app.showLeaderboardScreen()">
+            <span class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20v-8M6 20V8M18 20v-4"/>
+              </svg>
+            </span>
+            <span class="nav-label">Rankings</span>
+          </button>
+        <button class="nav-tab active" onclick="app.showShopScreen()">
+            <span class="nav-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+              </svg>
+            </span>
+            <span class="nav-label">Shop</span>
+          </button>
+        <button  class="nav-tab nav-wallet-btn" onclick="app.toggleWalletPanel()">
+          <span class="nav-icon">
+            <img  src="/assets/10.jpg" class="nav-wallet-avatar-img" alt="Profile" style="display:none;">
+            <svg  width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2"/>
+              <path d="M2 10h20"/>
+              <circle cx="17" cy="15" r="1.5" fill="currentColor"/>
+            </svg>
+          </span>
+          <span class="nav-label" >Wallet</span>
+        </button>
+      </nav>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════ HOW TO PLAY SCREEN ═══════════════ -->
+  <div id="screen-howto" class="screen">
+    <div class="screen-inner howto-content">
+      <button class="back-btn" onclick="app.showScreen('screen-home')">← Back</button>
+      <h2 class="screen-title">How to Play</h2>
+
+      <div class="howto-sections">
+        <div class="howto-section">
+          <h3>♔ Objective</h3>
+          <p>Checkmate your opponent's king — trap it so it cannot escape capture.</p>
+        </div>
+
+        <div class="howto-section">
+          <h3>♟ Pieces</h3>
+          <div class="pieces-grid">
+            <div class="piece-info"><span class="piece-symbol">♔</span><strong>King</strong> — 1 square any direction</div>
+            <div class="piece-info"><span class="piece-symbol">♕</span><strong>Queen</strong> — Any direction, any distance</div>
+            <div class="piece-info"><span class="piece-symbol">♖</span><strong>Rook</strong> — Horizontal & vertical</div>
+            <div class="piece-info"><span class="piece-symbol">♗</span><strong>Bishop</strong> — Diagonals only</div>
+            <div class="piece-info"><span class="piece-symbol">♘</span><strong>Knight</strong> — L-shape, can jump</div>
+            <div class="piece-info"><span class="piece-symbol">♙</span><strong>Pawn</strong> — Forward 1 (2 from start), captures diagonally</div>
+          </div>
+        </div>
+
+        <div class="howto-section">
+          <h3>✨ Special Moves</h3>
+          <p><strong>Castling:</strong> King moves 2 squares toward a rook; the rook jumps over.</p>
+          <p><strong>En Passant:</strong> Capture a pawn that just double-moved past your pawn.</p>
+          <p><strong>Promotion:</strong> A pawn reaching the far rank becomes a Queen, Rook, Bishop, or Knight.</p>
+        </div>
+
+        <div class="howto-section">
+          <h3>📱 Controls</h3>
+          <p>Tap a piece to select it, then tap a highlighted square to move.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PROMOTION MODAL ═══════════════ -->
+  <div id="modal-promotion" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content promotion-modal">
+      <h3>Promote Pawn</h3>
+      <div class="promotion-pieces">
+        <button class="promo-piece" onclick="app.selectPromotion('queen')"><span class="promo-white">♕</span><span class="promo-black">♛</span></button>
+        <button class="promo-piece" onclick="app.selectPromotion('rook')"><span class="promo-white">♖</span><span class="promo-black">♜</span></button>
+        <button class="promo-piece" onclick="app.selectPromotion('bishop')"><span class="promo-white">♗</span><span class="promo-black">♝</span></button>
+        <button class="promo-piece" onclick="app.selectPromotion('knight')"><span class="promo-white">♘</span><span class="promo-black">♞</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ GAME OVER MODAL ═══════════════ -->
+  <div id="modal-gameover" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content gameover-modal">
+      <div id="gameover-icon" class="gameover-icon">♚</div>
+      <h2 id="gameover-title">Game Over</h2>
+      <p id="gameover-reason" class="gameover-reason"></p>
+      <div class="gameover-buttons">
+        <button id="btn-rematch" class="btn btn-primary btn-small" onclick="app.requestRematch()">Rematch</button>
+        <button class="btn btn-tertiary btn-small" onclick="app.goHome()">Home</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ CONFIRM MODAL ═══════════════ -->
+  <div id="modal-confirm" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content confirm-modal">
+      <h3 id="confirm-title">Confirm</h3>
+      <p id="confirm-message">Are you sure?</p>
+      <div class="confirm-buttons">
+        <button class="btn btn-primary btn-small" id="confirm-yes">Yes</button>
+        <button class="btn btn-tertiary btn-small" onclick="app.hideModal('modal-confirm')">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ JOIN ROOM CONFIRM MODAL ═══════════════ -->
+  <div id="modal-join-confirm" class="modal hidden">
+    <div class="modal-overlay" onclick="app.cancelJoinRoom()"></div>
+    <div class="modal-content join-confirm-modal">
+      <div class="join-modal-header">
+        <div class="join-modal-badge">Room Entry</div>
+        <h3 id="join-modal-title">Join Room</h3>
+        <p class="join-modal-subtitle">Review the match stake before joining</p>
+      </div>
+
+      <div class="join-room-details">
+        <div class="detail-row">
+          <span class="detail-label">Room Code</span>
+          <span class="detail-value highlight-code" id="join-room-code-display">------</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Time Control</span>
+          <span class="detail-value" id="join-room-timer-display">10 min</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Required Stake</span>
+          <span class="detail-value stake-highlight" id="join-room-stake-display">50 $OWL</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Total Prize Pool</span>
+          <span class="detail-value pool-highlight" id="join-room-pool-display">100 $OWL</span>
+        </div>
+        <div class="detail-row divider-row">
+          <span class="detail-label">Your Balance</span>
+          <span class="detail-value" id="join-user-balance-display">1,250 $OWL</span>
+        </div>
+      </div>
+
+      <div id="join-balance-warning" class="join-warning hidden">
+        ⚠️ Insufficient balance to match this room's stake.
+      </div>
+
+      <div class="confirm-buttons" style="margin-top: 20px;">
+        <button id="btn-confirm-join-room" class="btn btn-primary btn-small" onclick="app.confirmJoinRoom()">
+          Join & Stake
+        </button>
+        <button class="btn btn-tertiary btn-small" onclick="app.cancelJoinRoom()">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TOURNAMENT MODAL ═══════════════ -->
+  <div id="modal-tournaments" class="modal hidden">
+    <div class="modal-overlay" onclick="app.hideModal('modal-tournaments')"></div>
+    <div class="modal-content confirm-modal" style="max-width: 360px;">
+      <div style="font-size: 32px; margin-bottom: 8px;">🏆</div>
+      <h3 style=" font-size: 20px; color: #caa674; margin-bottom: 6px;">Owl's Gambit Arena</h3>
+      <p style="color: #94a3b8; font-size: 13px; line-height: 1.5; margin-bottom: 16px;">
+        Season 1 Championship with a <strong style="color: #f1dfbe;">50,000 $OWL</strong> prize pool opens soon! Spectate live matches or sharpen your play in Practice mode.
+      </p>
+      <div class="confirm-buttons" style="flex-direction: column; gap: 8px;">
+        <button class="btn btn-primary btn-small" style="width: 100%;" onclick="app.hideModal('modal-tournaments'); app.showModal('modal-spectate');">
+          👁️ Spectate Live Match
+        </button>
+        <button class="btn btn-secondary btn-small" style="width: 100%;" onclick="app.hideModal('modal-tournaments'); app.showAIDifficultySelect();">
+          🛡️ Practice with AI
+        </button>
+        <button class="btn btn-tertiary btn-small" style="width: 100%;" onclick="app.hideModal('modal-tournaments')">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PROFILE MODAL ═══════════════ -->
+  <div id="modal-profile" class="modal hidden">
+    <div class="modal-overlay" onclick="app.hideModal('modal-profile')"></div>
+    <div class="modal-content profile-modal">
+      <div class="profile-header">
+        <img src="/assets/10.jpg" alt="OwlRider" class="profile-avatar-large">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+    <h3 class="profile-name" id="main-profile-name">OwlRider</h3>
+    <span onclick="app.handleAuthRequireUsername(app.walletAddress)" style="cursor: pointer; font-size: 16px; opacity: 0.7;" title="Edit Username"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #b5b0ff; margin-bottom: -3px;"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></span>
+  </div>
+        <span class="profile-rank-badge">Silver Tier • 1240 ELO</span>
+      </div>
+      <div class="profile-stats-grid">
+        <div class="stat-box">
+          <span class="stat-num" id="profile-wallet-balance">1,250</span>
+          <span class="stat-label">$OWL Balance</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-num">48</span>
+          <span class="stat-label">Matches</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-num">65%</span>
+          <span class="stat-label">Win Rate</span>
+        </div>
+      </div>
+      <div class="profile-actions">
+        <button class="btn btn-secondary btn-small" style="width: 100%; margin-bottom: 8px;" onclick="app.hideModal('modal-profile'); app.showScreen('screen-howto');">
+          📖 How to Play & Rules
+        </button>
+        <button class="btn btn-tertiary btn-small" style="width: 100%;" onclick="app.hideModal('modal-profile')">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SETTINGS MODAL ═══════════════ -->
+  <div id="modal-settings" class="modal hidden">
+    <div class="modal-overlay" onclick="app.hideModal('modal-settings')"></div>
+    <div class="modal-content settings-modal">
+      <h3 style="margin-bottom: 16px;">Game Settings</h3>
+      <div class="settings-options">
+        <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <span>Sound Effects</span>
+          <button id="btn-toggle-sound" class="btn btn-secondary btn-small" onclick="app.toggleSound()">
+            🔊 SFX: On
+          </button>
+        </div>
+        <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <span>Background Music</span>
+          <button id="btn-toggle-music" class="btn btn-secondary btn-small" onclick="app.toggleMusic()">
+            🎵 Music: On</button>
+        </div>
+        <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <span>Game Guide</span>
+          <button class="btn btn-secondary btn-small" onclick="app.hideModal('modal-settings'); app.showScreen('screen-howto');">
+            📖 View Rules
+          </button>
+        </div>
+      </div>
+      <div class="confirm-buttons" style="margin-top: 20px;">
+        <button class="btn btn-tertiary btn-small" style="width: 100%;" onclick="app.hideModal('modal-settings')">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SPECTATE MODAL ═══════════════ -->
+  <div id="modal-spectate" class="modal hidden">
+    <div class="modal-overlay" onclick="app.hideModal('modal-spectate')"></div>
+    <div class="modal-content">
+      <h3 style="margin-bottom: 8px;">Spectate Match</h3>
+      <p class="screen-desc" style="margin-bottom: 20px;">Enter a Room Code to watch</p>
+      
+      <input type="text" id="spectate-code-input" class="room-input" placeholder="CODE" maxlength="6" autocomplete="off" oninput="this.value = this.value.toUpperCase()">
+      
+      <div class="confirm-buttons" style="margin-top: 24px;">
+        <button class="btn btn-secondary" onclick="app.hideModal('modal-spectate')">Cancel</button>
+        <button class="btn btn-primary" onclick="app.submitSpectateCode()">Watch</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ DRAW OFFER MODAL ═══════════════ -->
+  <div id="modal-draw-offer" class="modal hidden">
+    <div class="modal-overlay" onclick="app.declineDraw()"></div>
+    <div class="modal-content" style="text-align: center;">
+      <h3 style="margin-bottom: 8px;">Draw Offered</h3>
+      <p class="screen-desc" style="margin-bottom: 24px;">Your opponent is offering a draw.</p>
+      
+      <div class="confirm-buttons">
+        <button class="btn btn-secondary" onclick="app.declineDraw()">Decline</button>
+        <button class="btn btn-primary" onclick="app.acceptDraw()">Accept</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ TOAST ═══════════════ -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- ═══════════════ SCRIPTS ═══════════════ -->
+  <script src="/js/chess-engine.js?v=639262545462453427"></script>
+  <script src="/js/multiplayer.js?v=639262545462453427"></script>
+  <script src="/js/ai-engine.js?v=639262545462453427"></script>
+  <script src="/js/app.js?v=639262545462453427"></script>
+  
+
+  <!-- ═══════════════ LEADERBOARD SCREEN ═══════════════ -->
+  <div id="screen-leaderboard" class="screen">
+    <div class="screen-inner">
+      <div class="screen-header-back">
+        <div class="screen-header-left">
+          <button class="back-circle-btn" onclick="app.goHome()" title="Back">←</button>
+          <div class="header-title-block">
+            <h2 class="header-page-title">Rankings</h2>
+          </div>
+        </div>
+      </div>
+      <div id="leaderboard-list" style="width:100%; overflow-y:auto; flex:1; padding: 0 20px 100px 20px; box-sizing:border-box;">
+        <!-- JS injects ranking cards here -->
+      </div>
+      <!-- Bottom Nav -->
+      <nav class="fantasy-bottom-nav">
+        <div class="nav-active-glow"></div>
+        <button class="nav-tab" onclick="app.goHome()">
+          <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+          <span class="nav-label">Home</span>
+        </button>
+        <button class="nav-tab active" onclick="app.showLeaderboardScreen()">
+          <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-8M6 20V8M18 20v-4"/></svg></span>
+          <span class="nav-label">Rankings</span>
+        </button>
+        <button class="nav-tab" onclick="app.showShopScreen()">
+          <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+          <span class="nav-label">Shop</span>
+        </button>
+        <button class="nav-tab nav-wallet-btn" onclick="app.toggleWalletPanel()">
+          <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="17" cy="15" r="1.5" fill="currentColor"/></svg></span>
+          <span class="nav-label">Wallet</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- ═══ EMBEDDED WALLET PANEL ═══ -->
+  <div id="wallet-panel" class="wallet-panel" style="display:none;">
+    <div class="wallet-panel-inner">
+      <!-- Handle -->
+      <div class="wallet-panel-handle"></div>
+
+      <!-- Header -->
+      <div class="wallet-panel-header">
+        <div class="wallet-avatar-wrap">
+          <img src="/assets/10.jpg" class="wallet-panel-avatar" alt="Avatar">
+          <span class="wallet-verified-dot"></span>
+        </div>
+        <div class="wallet-panel-meta">
+          <span class="wallet-panel-name">OwlRider</span>
+          <span class="wallet-panel-address" id="wp-address">Not Connected</span>
+        </div>
+        <button class="wallet-panel-close" onclick="app.toggleWalletPanel()">✕</button>
+      </div>
+
+      <!-- Balance Card -->
+      <div class="wallet-balance-card">
+        <div class="wbc-label">Total Balance</div>
+        <div class="wbc-amount" id="wp-balance">0.00 ETH</div>
+        <div class="wbc-usd" id="wp-usd">≈ $0.00</div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="wallet-actions-row">
+        <button class="wallet-action-btn" onclick="app.connectWallet()">
+          <div class="wallet-action-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <span>Send</span>
+        </button>
+        <button class="wallet-action-btn" onclick="app.connectWallet()">
+          <div class="wallet-action-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 16 12 21 17 16"/><line x1="12" y1="21" x2="12" y2="9"/></svg>
+          </div>
+          <span>Receive</span>
+        </button>
+        <button class="wallet-action-btn" onclick="app.connectWallet()">
+          <div class="wallet-action-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          </div>
+          <span>Buy</span>
+        </button>
+        <button class="wallet-action-btn" onclick="app.showProfileScreen(); app.toggleWalletPanel();">
+          <div class="wallet-action-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <span>Profile</span>
+        </button>
+      </div>
+
+      <!-- Assets Row -->
+      <div class="wallet-section-title">Assets</div>
+      <div class="wallet-assets-list">
+        <div class="wallet-asset-item">
+          <div class="wallet-asset-icon" style="background: linear-gradient(135deg, #627EEA, #3B5BDB);">
+            <svg width="16" height="16" viewBox="0 0 32 32" fill="white"><path d="M16 3.5L6 17.5l10 5.5 10-5.5z"/><path d="M16 26.5l-10-6 10 5.5 10-5.5z" opacity="0.6"/></svg>
+          </div>
+          <div class="wallet-asset-info">
+            <span class="wallet-asset-name">Ethereum</span>
+            <span class="wallet-asset-sub">ETH</span>
+          </div>
+          <div class="wallet-asset-value">
+            <span class="wallet-asset-amount" id="wp-eth-amount">0.00</span>
+            <span class="wallet-asset-fiat" id="wp-eth-fiat">$0.00</span>
+          </div>
+        </div>
+        <div class="wallet-asset-item">
+          <div class="wallet-asset-icon" style="background: linear-gradient(135deg, #26a17b, #1a7a5c);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><text x="2" y="18" font-size="13" font-weight="900" font-family="Arial">$</text></svg>
+          </div>
+          <div class="wallet-asset-info">
+            <span class="wallet-asset-name">Tether</span>
+            <span class="wallet-asset-sub">USDT</span>
+          </div>
+          <div class="wallet-asset-value">
+            <span class="wallet-asset-amount" id="wp-usdt-amount">—</span>
+            <span class="wallet-asset-fiat" id="wp-usdt-fiat">$—</span>
+          </div>
+        </div>
+        <div class="wallet-asset-item">
+          <div class="wallet-asset-icon" style="background: linear-gradient(135deg, #b5b0ff, #8b86e8);">
+            <span style="font-size:12px; font-weight:800; color:#101130;">OWL</span>
+          </div>
+          <div class="wallet-asset-info">
+            <span class="wallet-asset-name">Owl's Gambit</span>
+            <span class="wallet-asset-sub">OWL Token</span>
+          </div>
+          <div class="wallet-asset-value">
+            <span class="wallet-asset-amount">0</span>
+            <span class="wallet-asset-fiat">$0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connect Button (shown when disconnected) -->
+      <button id="wp-connect-btn" class="wallet-connect-cta" onclick="app.connectWallet(); app.toggleWalletPanel();">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        Connect Wallet
+      </button>
+    </div>
+  </div>
+  <div id="wallet-panel-backdrop" class="wallet-panel-backdrop" style="display:none;" onclick="app.toggleWalletPanel()"></div>
+<div id="screen-victory" class="screen">
+    <div class="victory-shell">
+      <div class="victory-hero-wrap">
+        <img id="victory-hero-img" src="/assets/owl_victory_crowned.png" alt="Victory Hero" class="victory-crowned-hero">
+        <h2 class="victory-heading" id="victory-title-heading">VICTORY</h2>
+        <span class="victory-subheading" id="victory-subheading">Checkmate</span>
+      </div>
+
+      <div class="victory-recap-card">
+        <div class="match-vs-score-row">
+          <div class="recap-player-col">
+            <img id="victory-player-avatar" src="/assets/owl_avatar.jpg" alt="Player" class="recap-player-avatar">
+            <span id="victory-player-name" style="font-size: 12px; font-weight: 700; color: #fff;">OwlRider</span>
+            <span id="victory-player-rating" style="font-size: 10px; color: #94a3b8;">1240</span>
+          </div>
+
+          <div class="recap-score-display" id="victory-score-display">1 - 0</div>
+
+          <div class="recap-player-col">
+            <div style="position: relative; display: inline-block;">
+              <img id="victory-opp-avatar" src="/assets/shadow_owl_avatar.jpg" alt="Opponent" class="recap-player-avatar">
+              <button class="add-friend-btn" id="btn-add-friend-gameover" onclick="app.addFriend(document.getElementById('victory-opp-name').textContent)" title="Add Friend">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="8.5" cy="7" r="4"></circle>
+                  <line x1="20" y1="8" x2="20" y2="14"></line>
+                  <line x1="17" y1="11" x2="23" y2="11"></line>
+                </svg>
+              </button>
+            </div>
+            <span style="font-size: 12px; font-weight: 700; color: #fff;" id="victory-opp-name">ShadowOwl</span>
+            <span style="font-size: 10px; color: #94a3b8;" id="victory-opp-rating">1180</span>
+          </div>
+        </div>
+
+        <div class="recap-meta-list">
+          <div class="recap-meta-row">
+            <span class="recap-meta-label">Game Mode</span>
+            <span class="recap-meta-value" id="victory-meta-mode">Standard</span>
+          </div>
+          <div class="recap-meta-row">
+            <span class="recap-meta-label">Duration</span>
+            <span class="recap-meta-value" id="victory-meta-duration">12 min 34 sec</span>
+          </div>
+          <div class="recap-meta-row">
+            <span class="recap-meta-label">Moves</span>
+            <span class="recap-meta-value" id="victory-meta-moves">42</span>
+          </div>
+          <div class="recap-meta-row">
+            <span class="recap-meta-label">Rating Change</span>
+            <span class="recap-meta-value highlight-green" id="victory-meta-rating">+25</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="victory-actions">
+        <button id="victory-btn-rematch" class="btn-lime" style="margin-bottom: 8px; display: none;" onclick="app.requestRematch()">
+          <span>Rematch</span>
+        </button>
+        <button id="victory-btn-playagain" class="btn-lime" onclick="app.restartGame()">
+          <span>Play Again</span>
+        </button>
+        <button class="btn-secondary-pill" onclick="app.goHome()">
+          <span>Back to Home</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ DISCOVER / ROADMAP SCREEN ═══════════════ -->
+  <div id="screen-discover" class="screen">
+    <div class="discover-shell">
+      <div class="screen-header-back">
+        <div class="screen-header-left">
+          <button class="back-circle-btn" onclick="app.goHome()" title="Back">←</button>
+          <div class="header-title-block">
+            <h2 class="header-page-title">Discover</h2>
+            <span class="header-page-subtitle">Owl's Gambit Ecosystem</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="roadmap-card">
+        <h3 style="font-size: 15px; font-weight: 800; color: #ffffff; margin-bottom: 4px;">Development Progress</h3>
+        <p style="font-size: 11px; color: #94a3b8; margin-bottom: 12px;">Building the future, one feature at a time.</p>
+
+        <div class="roadmap-item">
+          <div class="roadmap-item-left">
+            <span class="roadmap-item-icon">♟️</span>
+            <span class="roadmap-item-title">Core Chess</span>
+          </div>
+          <div class="roadmap-progress-wrap">
+            <div class="roadmap-progress-bar">
+              <div class="roadmap-progress-fill" style="width: 100%;"></div>
+            </div>
+            <span class="roadmap-status-text completed">Completed</span>
+          </div>
+        </div>
+
+        <div class="roadmap-item">
+          <div class="roadmap-item-left">
+            <span class="roadmap-item-icon">📱</span>
+            <span class="roadmap-item-title">Mobile UI</span>
+          </div>
+          <div class="roadmap-progress-wrap">
+            <div class="roadmap-progress-bar">
+              <div class="roadmap-progress-fill" style="width: 90%;"></div>
+            </div>
+            <span class="roadmap-status-text in-progress">In Progress</span>
+          </div>
+        </div>
+
+        <div class="roadmap-item">
+          <div class="roadmap-item-left">
+            <span class="roadmap-item-icon">🌐</span>
+            <span class="roadmap-item-title">Online PvP</span>
+          </div>
+          <div class="roadmap-progress-wrap">
+            <div class="roadmap-progress-bar">
+              <div class="roadmap-progress-fill" style="width: 100%;"></div>
+            </div>
+            <span class="roadmap-status-text completed">Active</span>
+          </div>
+        </div>
+
+        <div class="roadmap-item" style="cursor: pointer;" onclick="app.showAbilitiesScreen()">
+          <div class="roadmap-item-left">
+            <span class="roadmap-item-icon">⚡</span>
+            <span class="roadmap-item-title">Robin Mode</span>
+          </div>
+          <div class="roadmap-progress-wrap">
+            <div class="roadmap-progress-bar">
+              <div class="roadmap-progress-fill" style="width: 60%; background: #818cf8;"></div>
+            </div>
+            <span class="roadmap-status-text in-progress">Preview ›</span>
+          </div>
+        </div>
+
+        <div class="roadmap-item">
+          <div class="roadmap-item-left">
+            <span class="roadmap-item-icon">🖼️</span>
+            <span class="roadmap-item-title">NFT Integration</span>
+          </div>
+          <div class="roadmap-progress-wrap">
+            <div class="roadmap-progress-bar">
+              <div class="roadmap-progress-fill" style="width: 25%;"></div>
+            </div>
+            <span class="roadmap-status-text">Planned</span>
+          </div>
+        </div>
+
+        <div class="roadmap-item" style="cursor: pointer;" onclick="app.showModal('modal-tournaments')">
+          <div class="roadmap-item-left">
+            <span class="roadmap-item-icon">🏆</span>
+            <span class="roadmap-item-title">Tournaments</span>
+          </div>
+          <div class="roadmap-progress-wrap">
+            <div class="roadmap-progress-bar">
+              <div class="roadmap-progress-fill" style="width: 40%; background: #caa674;"></div>
+            </div>
+            <span class="roadmap-status-text">Planned ›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pinned 4-Tab Bottom Dock -->
+      <nav class="fantasy-bottom-nav">
+        <button class="nav-tab" onclick="app.goHome()">
+          <span class="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </span>
+          <span class="nav-label">Home</span>
+        </button>
+        <button class="nav-tab" onclick="app.showMatchmakingScreen('matchmaking')">
+          <span class="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+          </span>
+          <span class="nav-label">Play</span>
+        </button>
+        <button class="nav-tab active" onclick="app.showDiscoverScreen()">
+          <span class="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          <span class="nav-label">Discover</span>
+        </button>
+        <button class="nav-tab" onclick="app.showProfileScreen()">
+          <span class="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </span>
+          <span class="nav-label">Profile</span>
+        </button>
+      </nav>
+
+    </div>
+  </div>
+
+  <!-- Legacy Game Over Modal kept as fallback -->
+  <div id="modal-gameover" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-content gameover-modal">
+      <div id="gameover-icon" class="gameover-icon">♚</div>
+      <h2 id="gameover-title">Game Over</h2>
+      <p id="gameover-reason" class="gameover-reason"></p>
+      <div class="gameover-buttons">
+        <button id="btn-rematch" class="btn btn-primary btn-small" onclick="app.requestRematch()">Rematch</button>
+        <button class="btn btn-tertiary btn-small" onclick="app.goHome()">Home</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Friends Sidebar -->
+  <div id="friends-sidebar" class="friends-sidebar closed">
+    <div class="friends-sidebar-header" style="flex-direction: column; align-items: stretch; gap: 10px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin:0;">Friends</h3>
+        <button onclick="app.toggleFriendsList()" class="btn-close-sidebar" style="margin-left: auto;">&times;</button>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="add-friend-input" placeholder="Add username..." style="flex:1; padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4); color: white; font-size: 13px; outline: none;">
+        <button onclick="app.sendFriendRequest()" style="background: #b5b0ff; color: #101130; border: none; border-radius: 6px; padding: 0 12px; font-weight: bold; cursor: pointer;">Add</button>
+      </div>
+      <button onclick="app.showFriendRequests()" id="btn-friend-requests" style="width: 100%; padding: 8px; background: rgba(181, 176, 255, 0.1); color: #b5b0ff; border: 1px solid rgba(181, 176, 255, 0.3); border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+        <span>Friend Requests</span>
+        <span id="friend-requests-badge" style="background: #ef4444; color: white; font-size: 11px; padding: 2px 6px; border-radius: 10px; display: none;">0</span>
+      </button>
+    </div>
+    <div class="friends-list" id="friends-list-container">
+      <p style="color: rgba(255,255,255,0.5); text-align: center; padding: 20px 0; font-size: 14px;">No friends yet. Add someone above!</p>
+    </div>
+    <div class="demo-incoming-btn-wrap">
+      <button onclick="app.simulateIncomingInvite()" class="btn-demo-incoming" style="width: 100%; margin-top: 20px; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; cursor: pointer;">[Demo] Receive Invite</button>
+    </div>
+  </div>
+
+  <!-- Game Invite Popup Notification -->
+  <div id="game-invite-popup" class="invite-popup hidden">
+    <div class="invite-popup-content">
+      <img src="/assets/shadow_owl_avatar.jpg" class="invite-avatar" id="invite-sender-avatar" />
+      <div class="invite-info">
+        <span class="invite-title"><strong id="invite-sender-name">ShadowOwl</strong> invited you to play!</span>
+        <span class="invite-details"><span id="invite-amount">50 $USDT</span> match • <span id="invite-mode">Standard</span> Mode</span>
+      </div>
+    </div>
+    <div class="invite-actions">
+      <button class="btn-reject" onclick="app.rejectInvite()">Reject</button>
+      <button class="btn-accept" onclick="app.acceptInvite()">Accept</button>
+    </div>
+  </div>
+
+  
+  <!-- Username Prompt Modal -->
+  <div id="username-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 99999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+    <div style="background: #101130; border: 2px solid #b5b0ff; border-radius: 12px; padding: 24px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 0 20px rgba(181, 176, 255, 0.3);">
+      <h2 id="username-modal-title" style="color: #b5b0ff; margin-top: 0; font-family: 'Outfit', sans-serif;">Create Profile</h2>
+      <p id="username-modal-subtitle" style="color: rgba(255,255,255,0.7); margin-bottom: 20px; font-size: 14px;">Welcome! Please choose a unique username.</p>
+      <input type="text" id="username-input" placeholder="e.g. ShadowOwl" style="width: 100%; box-sizing: border-box; padding: 12px; margin-bottom: 20px; background: rgba(0,0,0,0.5); border: 1px solid #b5b0ff; color: white; border-radius: 8px; font-size: 16px; outline: none;">
+      <div style="display: flex; gap: 10px;">
+        <button id="btn-cancel-username" style="width: 100%; padding: 12px; background: transparent; color: #b5b0ff; border: 1px solid #b5b0ff; border-radius: 8px; font-size: 16px; cursor: pointer; transition: transform 0.1s;">Cancel</button>
+        <button id="btn-submit-username" style="width: 100%; padding: 12px; background: #b5b0ff; color: #101130; font-weight: bold; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: transform 0.1s;">Save</button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Friend Requests Modal -->
+  <div id="friend-requests-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 99999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+    <div style="background: #101130; border: 2px solid #b5b0ff; border-radius: 12px; padding: 24px; width: 90%; max-width: 400px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(181, 176, 255, 0.3);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="color: #b5b0ff; margin: 0; font-family: 'Outfit', sans-serif;">Incoming Requests</h2>
+        <button onclick="document.getElementById('friend-requests-modal').classList.add('hidden')" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+      </div>
+      <div id="friend-requests-list" style="overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
+        <p style="color: rgba(255,255,255,0.5); text-align: center; margin: 20px 0;">No incoming requests.</p>
+      </div>
+    </div>
+  </div>
+
+
+  
+  </div>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
