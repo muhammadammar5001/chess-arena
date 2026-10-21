@@ -1,119 +1,53 @@
-﻿/* ==========================================================================
-   WARM WOODEN CHESS DESIGN TOKENS (Superdesign System)
-   Target: YouTube Playables / Playgama Web2 Casual Gaming
+/* ==========================================================================
+   WARM WOODEN CHESS DESIGN TOKENS (SKILL.MD & HAND-CRAFTED CASUAL UI)
+   Target: YouTube Playables / Playgama Hand-Made Quality
    ========================================================================== */
 
 :root {
-  /* --- Core Palette (Tabletop Woods) --- */
-  --walnut-deep: #20120B;        /* Table background, deepest shadows */
-  --walnut: #4A2E1B;             /* Frames, plank panels, base buttons */
-  --walnut-light: #6A4328;       /* Highlight edges of wood planks */
-  --walnut-dark: #2E1A0F;        /* Recessed carved areas */
+  /* --- Exact Core Palette (SKILL.md Section 3) --- */
+  --walnut-deep: #2E1A0F;        /* Table background, deepest shadows, ebony-side UI */
+  --walnut: #5A3720;             /* Frames, plank panels, buttons (base) */
+  --oak-light: #EBD2A5;          /* Light board squares */
+  --oak-dark: #A9733F;           /* Dark board squares */
+  --ivory: #F7EBD2;              /* White pieces, plaque text on dark wood */
+  --ebony: #2A1B13;              /* Black pieces */
+  --brass: #D9A441;              /* Inlays, active states, coin and reward accents */
+  --felt: #2F4A3A;               /* Inset surfaces (score areas, shop shelves) */
+  --good: #4E8F5A;               /* Legal-move marks, success */
+  --danger: #B5412F;             /* Check, resign, errors */
+  --highlight: #F2C94C;          /* Last-move and selected-square tint (~45% opacity) */
 
-  /* Default Board Palette (Classic Oak) */
-  --board-frame: #3E2415;
-  --board-frame-bevel: #5B3721;
-  --board-inlay: #C99700;        /* Brass inlay line around 8x8 */
-  --oak-light: #EBD2A5;          /* Light squares */
+  /* --- Hand-Crafted 2D Component Kit Tokens (Reference UI) --- */
+  --timber-outer: #4E260D;
+  --timber-bevel: #753C17;
+  --timber-inner-dark: #2A1407;
+  --timber-plaque: #7A3D18;
+  --honey-start: #F8C74D;
+  --honey-mid: #E89E20;
+  --honey-end: #CD8011;
+  --honey-rim: #FFDE7A;
+  --honey-ink: #3A1A06;
+  --wood-groove: rgba(217, 164, 65, 0.4);
+
+  /* Board specific helpers */
+  --board-frame: var(--walnut);
+  --board-frame-bevel: #753C17;
+  --board-inlay: var(--brass);
   --oak-light-grain: rgba(169, 115, 63, 0.08);
-  --oak-dark: #A9733F;           /* Dark squares */
   --oak-dark-grain: rgba(46, 26, 15, 0.15);
 
-  /* --- Brass & Metallic Accents --- */
-  --brass: #C99700;
-  --brass-light: #F5D36C;
-  --brass-dark: #8B6508;
-  --brass-shadow: rgba(46, 26, 15, 0.6);
+  /* UI Text & Hierarchy */
+  --text-on-dark: var(--ivory);
+  --text-on-light: var(--walnut-deep);
+  --text-gold: var(--brass);
+  --text-muted: #C4A482;
 
-  /* --- Parchment & UI Cards --- */
-  --parchment: #F5E8D0;
-  --parchment-light: #FAF2E3;
-  --parchment-dark: #E4D2B3;
-  --parchment-border: #8C6A48;
-  --text-on-wood: #FDF9F0;
-  --text-muted: #D1B896;
-  --text-dark: #2B180D;          /* Ink text on parchment */
+  /* Typography */
+  --font-serif: "Georgia", "Times New Roman", serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Nunito", sans-serif;
 
-  /* --- Semantic Accents --- */
-  --good: #388E3C;               /* Valid move indicator */
-  --good-glow: rgba(56, 142, 60, 0.4);
-  --danger: #B71C1C;             /* Check ring, resign, alert */
-  --danger-glow: rgba(183, 28, 28, 0.5);
-  --highlight: #FFD54F;          /* Selected square, last move */
-  --highlight-soft: rgba(255, 213, 79, 0.35);
-  --frozen-ice: #B3E5FC;         /* Freeze skill frost overlay */
-  --frozen-edge: #4FC3F7;
-
-  /* --- Pieces Default (Boxwood & Ebony Staunton) --- */
-  --piece-white-base: #F7EAD0;
-  --piece-white-grad: #DEC29B;
-  --piece-white-rim: #B8966C;
-  --piece-black-base: #2B1D16;
-  --piece-black-grad: #1A100B;
-  --piece-black-rim: #422D22;
-  --piece-shadow: rgba(15, 8, 4, 0.45);
-
-  /* --- Tactile Shadows & 3D Bevels --- */
-  --shadow-table: radial-gradient(circle at 50% 50%, #351C0E 0%, #170A04 100%);
-  --shadow-wood-raised: 
-    0 4px 8px rgba(0, 0, 0, 0.5),
-    0 1px 2px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.4);
-  --shadow-wood-pressed: 
-    0 1px 2px rgba(0, 0, 0, 0.4),
-    inset 0 2px 4px rgba(0, 0, 0, 0.6),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.08);
-  --shadow-plaque: 
-    0 8px 24px rgba(0, 0, 0, 0.6),
-    0 2px 6px rgba(0, 0, 0, 0.4),
-    inset 0 1px 1px rgba(255, 255, 255, 0.25);
-  --shadow-brass: 
-    0 2px 5px rgba(0, 0, 0, 0.35),
-    inset 0 1px 1px rgba(255, 255, 255, 0.6);
-
-  /* --- Spacing & Radii --- */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 14px;
-  --radius-round: 9999px;
-  --font-serif: "Georgia", "Palatino", "Times New Roman", serif;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-}
-
-/* --- Swappable Board Themes --- */
-[data-board-theme="walnut-maple"] {
-  --oak-light: #F2E4CF;
-  --oak-dark: #6B4226;
-  --board-frame: #2D1A0E;
-}
-
-[data-board-theme="cherry-rosewood"] {
-  --oak-light: #F7D8BE;
-  --oak-dark: #802A24;
-  --board-frame: #4A1512;
-}
-
-[data-board-theme="ebony-ivory"] {
-  --oak-light: #FAF5EA;
-  --oak-dark: #262423;
-  --board-frame: #121110;
-}
-
-/* --- Swappable Table Backgrounds --- */
-[data-table-theme="cafe"] {
-  --shadow-table: radial-gradient(circle at 50% 50%, #472D1D 0%, #211309 100%);
-}
-
-[data-table-theme="library"] {
-  --shadow-table: radial-gradient(circle at 50% 50%, #1E2D24 0%, #0D1611 100%);
-}
-
-/* Reduced Motion Support */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+  /* 3D Hand-Crafted Shadows */
+  --shadow-plaque: 0 16px 36px rgba(0, 0, 0, 0.85), inset 0 2px 0 rgba(255, 255, 255, 0.22), inset 0 -4px 0 #220F04;
+  --shadow-btn: 0 5px 10px rgba(0, 0, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.35), inset 0 -3px 0 #8C4707;
+  --shadow-btn-pressed: 0 2px 4px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(0, 0, 0, 0.4);
 }
