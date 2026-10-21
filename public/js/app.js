@@ -1594,7 +1594,7 @@ class App {
     let allowedDCols = [0];
     if (piece.type === 'bishop') {
       allowedDCols = [-2, 2];
-    } else if (piece.type === 'queen' || piece.type === 'king' || piece.type === 'knight') {
+    } else if (piece.type === 'queen') {
       allowedDCols = [0, -2, 2];
     }
 
@@ -1673,6 +1673,8 @@ class App {
                     }
                     this.activeAbility = null;
                     this.jumpPiece = null;
+                    this.selectedSquare = null;
+                    this.legalMoves = [];
                     this.renderBoard();
                     return;
                 } else {

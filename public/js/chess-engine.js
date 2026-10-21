@@ -147,7 +147,7 @@ class ChessEngine {
       let allowedDCols = [0];
       if (piece.type === 'bishop') {
         allowedDCols = [-2, 2];
-      } else if (piece.type === 'queen' || piece.type === 'king' || piece.type === 'knight') {
+      } else if (piece.type === 'queen') {
         allowedDCols = [0, -2, 2];
       }
 
@@ -172,7 +172,7 @@ class ChessEngine {
       }
 
       if (piece.type === 'king') {
-        this.kingPositions[color] = { row: targetRow, col: args.toCol };
+        this.kingPositions[color] = { row: args.toRow, col: args.toCol };
       }
 
       this.moveHistory.push({ notation: 'USE_PEGASUS_JUMP', color: color, ability: 'jump', args: args });
