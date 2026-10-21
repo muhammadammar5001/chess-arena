@@ -32,7 +32,14 @@ class App {
     this.matchType = 'standard'; // 'standard' or 'robin'
     
     try {
-      this.selectedAbilities = JSON.parse(localStorage.getItem('owl_selected_abilities')) || ['swap', 'freeze'];
+      let saved = JSON.parse(localStorage.getItem('owl_selected_abilities'));
+      if (Array.isArray(saved)) {
+        saved = saved.filter(s => ['swap', 'freeze', 'second', 'shield', 'jump'].includes(s));
+        if (saved.length > 2) saved = saved.slice(0, 2);
+        this.selectedAbilities = (saved.length === 2) ? saved : ['swap', 'freeze'];
+      } else {
+        this.selectedAbilities = ['swap', 'freeze'];
+      }
     } catch(e) {
       this.selectedAbilities = ['swap', 'freeze'];
     }
@@ -74,8 +81,8 @@ class App {
     if (window.AdService) {
       window.AdService.init();
     }
-    // Ensure abilities loaded from localStorage are displayed on UI immediately
-    this.updateHomeAbilitiesDisplay();
+    // Ensure abilities loaded from localStorage are displayed and synced on UI immediately
+    this.syncAbilitiesUI();
 
     // Enter key on room code input
     const roomInput = document.getElementById('room-code-input');
@@ -2802,30 +2809,61 @@ class App {
     this.showScreen('screen-discover');
   }
 
+  syncAbilitiesUI() {
+    const valid = ['swap', 'freeze', 'second', 'shield', 'jump'];
+    if (!Array.isArray(this.selectedAbilities)) {
+      this.selectedAbilities = ['swap', 'freeze'];
+    }
+    this.selectedAbilities = this.selectedAbilities.filter(a => valid.includes(a));
+    if (this.selectedAbilities.length > 2) {
+      this.selectedAbilities = this.selectedAbilities.slice(0, 2);
+    }
+    if (this.selectedAbilities.length < 2) {
+      for (const v of valid) {
+        if (!this.selectedAbilities.includes(v)) {
+          this.selectedAbilities.push(v);
+          if (this.selectedAbilities.length === 2) break;
+        }
+      }
+    }
+
+    valid.forEach(id => {
+      const card = document.getElementById(`ability-card-${id}`);
+      if (card) {
+        if (this.selectedAbilities.includes(id)) {
+          card.classList.add('selected');
+        } else {
+          card.classList.remove('selected');
+        }
+      }
+    });
+
+    this.updateHomeAbilitiesDisplay();
+  }
+
   showAbilitiesScreen() {
-    this.selectedAbilities = this.selectedAbilities || ['swap', 'freeze'];
+    this.syncAbilitiesUI();
     this.showScreen('screen-abilities');
   }
 
   toggleAbility(abilityId) {
-    if (!this.selectedAbilities) this.selectedAbilities = ['swap', 'freeze'];
-    setTimeout(() => this.updateHomeAbilitiesDisplay(), 500);
-    const card = document.getElementById(`ability-card-${abilityId}`);
-    if (!card) return;
-
+    const valid = ['swap', 'freeze', 'second', 'shield', 'jump'];
+    if (!valid.includes(abilityId)) return;
+    if (!Array.isArray(this.selectedAbilities)) {
+      this.selectedAbilities = ['swap', 'freeze'];
+    }
     const idx = this.selectedAbilities.indexOf(abilityId);
     if (idx !== -1) {
-      this.selectedAbilities.splice(idx, 1);
-      card.classList.remove('selected');
+      if (this.selectedAbilities.length > 1) {
+        this.selectedAbilities.splice(idx, 1);
+      }
     } else {
       if (this.selectedAbilities.length >= 2) {
-        const oldest = this.selectedAbilities.shift();
-        const oldCard = document.getElementById(`ability-card-${oldest}`);
-        if (oldCard) oldCard.classList.remove('selected');
+        this.selectedAbilities.shift();
       }
       this.selectedAbilities.push(abilityId);
-      card.classList.add('selected');
     }
+    this.syncAbilitiesUI();
   }
 
   
