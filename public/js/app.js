@@ -972,13 +972,15 @@ class App {
             if (ability === 'second') abilityName = 'Second Chance';
             if (ability === 'freeze') abilityName = 'Piece Freeze';
             if (ability === 'swap') abilityName = 'Tactical Swap';
+            if (ability === 'shield') abilityName = 'Divine Shield';
+            if (ability === 'jump') abilityName = 'Pegasus Jump';
             
             this.showToast((color === this.playerColor ? 'You' : 'Opponent') + ' used ' + abilityName + '!');
             if (ability === 'freeze') {
                 this.playSound('freeze');
             }
             
-            if (ability === 'second' || ability === 'freeze' || ability === 'swap') {
+            if (ability === 'second' || ability === 'freeze' || ability === 'swap' || ability === 'jump' || ability === 'shield') {
                 if (ability === 'second') this.lastMove = null;
                 // Move history is rolled back inside engine
                 this.updateMoveHistoryUI();
