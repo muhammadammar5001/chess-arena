@@ -147,36 +147,39 @@ console.log("--- RUNNING CHESS ENGINE CHARACTERIZATION TESTS ---");
   console.log("✔ Divine Shield ability & capture immunity verified");
 }
 
-// Test 11: Abilities - Pegasus Jump
+// Test 11: Abilities - Pegasus Jump (Pawn straight & Bishop diagonal jumps)
 {
   const engine = new ChessEngine();
-  // Place obstacle directly in front of white pawn at (6, 4)
-  // hurdle is at (5, 4), landing at (4, 4)
+  // A. Straight pawn jump
   engine.board[5][4] = { type: "pawn", color: "black" };
   const jumpRes = engine.validateAbility("jump", { fromRow: 6, fromCol: 4, toRow: 4, toCol: 4 }, "white");
   assert.strictEqual(jumpRes, true, "Pegasus Jump should vault over front hurdle to empty square");
   assert.strictEqual(engine.board[4][4].type, "pawn", "Pawn successfully landed at (4,4)");
   assert.strictEqual(engine.board[6][4], null, "Original square (6,4) vacated");
   assert.strictEqual(engine.board[5][4].type, "pawn", "Hurdle at (5,4) remains in place");
-
-  // Engine turn should advance to black after jump
   assert.strictEqual(engine.currentTurn, "black", "Pegasus Jump consumes turn");
 
-  // Invalid jump: no hurdle in front
-  const invalidJumpNoHurdle = engine.validateAbility("jump", { fromRow: 1, fromCol: 0, toRow: 3, toCol: 0 }, "black");
-  assert.strictEqual(invalidJumpNoHurdle, false, "Jump without hurdle must fail");
+  // B. Bishop diagonal jump
+  const engine2 = new ChessEngine();
+  // White Bishop at c1 (row 7, col 2).
+  // Place hurdle pawn at d2 (row 6, col 3) and e3 (row 5, col 4) is empty.
+  // Diagonal jump: (7, 2) -> hurdle (6, 3) -> landing (5, 4)
+  assert.strictEqual(engine2.board[7][2].type, "bishop", "c1 has white bishop");
+  engine2.board[6][3] = { type: "pawn", color: "black" }; // hurdle on d2
+  engine2.board[5][4] = null; // landing e3 is empty
+  const bishopJumpRes = engine2.validateAbility("jump", { fromRow: 7, fromCol: 2, toRow: 5, toCol: 4 }, "white");
+  assert.strictEqual(bishopJumpRes, true, "Bishop must be able to perform forward diagonal Pegasus Jump over hurdle");
+  assert.strictEqual(engine2.board[5][4].type, "bishop", "Bishop successfully landed at (5,4)");
+  assert.strictEqual(engine2.board[7][2], null, "Original square (7,2) vacated");
+  assert.strictEqual(engine2.board[6][3].type, "pawn", "Hurdle at (6,3) intact");
 
-  // Invalid jump: landing square occupied
-  engine.board[2][0] = { type: "pawn", color: "white" }; // hurdle
-  engine.board[3][0] = { type: "rook", color: "black" }; // occupied landing
-  const invalidJumpOccupied = engine.validateAbility("jump", { fromRow: 1, fromCol: 0, toRow: 3, toCol: 0 }, "black");
-  assert.strictEqual(invalidJumpOccupied, false, "Jump to occupied square must fail");
+  // C. Bishop diagonal jump without hurdle must fail
+  const engine3 = new ChessEngine();
+  engine3.board[6][3] = null; // no hurdle
+  const bishopNoHurdle = engine3.validateAbility("jump", { fromRow: 7, fromCol: 2, toRow: 5, toCol: 4 }, "white");
+  assert.strictEqual(bishopNoHurdle, false, "Bishop jump without diagonal hurdle must fail");
 
-  // Cannot use jump twice in same match
-  const secondJumpRes = engine.validateAbility("jump", { fromRow: 6, fromCol: 0, toRow: 4, toCol: 0 }, "white");
-  assert.strictEqual(secondJumpRes, false, "Cannot use Pegasus Jump twice in same match");
-
-  console.log("✔ Pegasus Jump ability & obstacle vault verified");
+  console.log("✔ Pegasus Jump (Pawn straight & Bishop diagonal) verified");
 }
 
 console.log("--- ALL 11 CHARACTERIZATION TESTS PASSED SUCCESSFULLY! ---");

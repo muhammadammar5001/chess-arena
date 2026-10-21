@@ -134,22 +134,40 @@ class ChessEngine {
       if (!piece || piece.color !== color) return false;
 
       const dir = color === 'white' ? -1 : 1;
+      const dRow = args.toRow - args.fromRow;
+      const dCol = args.toCol - args.fromCol;
+
+      // Must move forward exactly 2 ranks in piece's direction
+      if (dRow !== 2 * dir) return false;
+
+      // Allowed column deltas:
+      // Bishop: forward diagonals (dCol = -2 or +2), or straight (0)
+      // Queen / King / Knight: straight (0) or forward diagonals (-2 or +2)
+      // Pawn / Rook: straight (0)
+      let allowedDCols = [0];
+      if (piece.type === 'bishop') {
+        allowedDCols = [-2, 2, 0];
+      } else if (piece.type === 'queen' || piece.type === 'king' || piece.type === 'knight') {
+        allowedDCols = [0, -2, 2];
+      }
+
+      if (!allowedDCols.includes(dCol)) return false;
+      if (!this.isInBounds(args.toRow, args.toCol)) return false;
+
       const hurdleRow = args.fromRow + dir;
-      const targetRow = args.fromRow + 2 * dir;
+      const hurdleCol = args.fromCol + dCol / 2;
 
-      if (args.toRow !== targetRow || args.toCol !== args.fromCol) return false;
-      if (!this.isInBounds(targetRow, args.toCol)) return false;
-      if (!this.getPiece(hurdleRow, args.fromCol)) return false; // Must hurdle over a piece
-      if (this.getPiece(targetRow, args.toCol)) return false; // Landing square must be empty
+      if (!this.getPiece(hurdleRow, hurdleCol)) return false; // Must hurdle over a piece
+      if (this.getPiece(args.toRow, args.toCol)) return false; // Landing square must be empty
 
-      if (piece.type === 'king' && this.isSquareAttacked(targetRow, args.toCol, color)) return false;
+      if (piece.type === 'king' && this.isSquareAttacked(args.toRow, args.toCol, color)) return false;
 
-      this.board[targetRow][args.toCol] = piece;
+      this.board[args.toRow][args.toCol] = piece;
       this.board[args.fromRow][args.fromCol] = null;
 
       if (piece.type === 'pawn') {
-        if ((color === 'white' && targetRow === 0) || (color === 'black' && targetRow === 7)) {
-          this.board[targetRow][args.toCol] = { type: args.promotion || 'queen', color: color };
+        if ((color === 'white' && args.toRow === 0) || (color === 'black' && args.toRow === 7)) {
+          this.board[args.toRow][args.toCol] = { type: args.promotion || 'queen', color: color };
         }
       }
 

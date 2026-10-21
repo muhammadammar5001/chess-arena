@@ -1551,7 +1551,7 @@ class App {
           if (this.jumpPiece && this.jumpPiece.fromRow === row && this.jumpPiece.fromCol === col) {
              square.classList.add('selected');
           }
-          if (this.jumpPiece && this.jumpPiece.toRow === row && this.jumpPiece.toCol === col) {
+          if (this.jumpPiece && this.jumpPiece.validTargets && this.jumpPiece.validTargets.some(t => t.row === row && t.col === col)) {
              square.classList.add('legal-move');
           }
 
@@ -1576,7 +1576,40 @@ class App {
 
   // ─── Square Click Handling ─────────────────────────
 
-    handleSquareClick(row, col) {
+    
+  getValidJumpTargets(row, col) {
+    if (!this.engine) return [];
+    const piece = this.engine.getPiece(row, col);
+    if (!piece || piece.color !== this.playerColor) return [];
+
+    const dir = this.playerColor === 'white' ? -1 : 1;
+    const targetRow = row + 2 * dir;
+    if (targetRow < 0 || targetRow > 7) return [];
+
+    let allowedDCols = [0];
+    if (piece.type === 'bishop') {
+      allowedDCols = [-2, 2, 0];
+    } else if (piece.type === 'queen' || piece.type === 'king' || piece.type === 'knight') {
+      allowedDCols = [0, -2, 2];
+    }
+
+    const targets = [];
+    for (const dCol of allowedDCols) {
+      const targetCol = col + dCol;
+      const hurdleRow = row + dir;
+      const hurdleCol = col + dCol / 2;
+
+      if (!this.engine.isInBounds(targetRow, targetCol)) continue;
+      if (!this.engine.getPiece(hurdleRow, hurdleCol)) continue; // Must have hurdle obstacle
+      if (this.engine.getPiece(targetRow, targetCol)) continue; // Landing square must be empty
+      if (piece.type === 'king' && this.engine.isSquareAttacked(targetRow, targetCol, this.playerColor)) continue;
+
+      targets.push({ row: targetRow, col: targetCol, hurdleRow, hurdleCol });
+    }
+    return targets;
+  }
+
+  handleSquareClick(row, col) {
     if (this.isAnimatingMove) return;
     if (this.engine.gameOver || this.playerColor === 'spectator') return;
 
@@ -1608,23 +1641,23 @@ class App {
                     this.showToast('Select your piece to jump');
                     return;
                 }
-                const dir = this.playerColor === 'white' ? -1 : 1;
-                const hurdleRow = row + dir;
-                const targetRow = row + 2 * dir;
-                if (!this.engine.isInBounds(targetRow, col) || !this.engine.getPiece(hurdleRow, col) || this.engine.getPiece(targetRow, col)) {
-                    this.showToast('Must have an obstacle in front and empty landing!');
+                const targets = this.getValidJumpTargets(row, col);
+                if (targets.length === 0) {
+                    this.showToast('No obstacle in front for ' + piece.type + ' to jump!');
                     return;
                 }
-                this.jumpPiece = { fromRow: row, fromCol: col, toRow: targetRow, toCol: col };
+                this.jumpPiece = { fromRow: row, fromCol: col, validTargets: targets };
                 this.showToast('Tap highlighted square to land');
                 this.renderBoard();
                 return;
             } else {
-                if (row === this.jumpPiece.toRow && col === this.jumpPiece.toCol) {
+                const target = this.jumpPiece.validTargets && this.jumpPiece.validTargets.find(t => t.row === row && t.col === col);
+                if (target) {
+                    const jumpArgs = { fromRow: this.jumpPiece.fromRow, fromCol: this.jumpPiece.fromCol, toRow: row, toCol: col };
                     if (this.gameMode === 'online') {
-                        this.multiplayer.send({ type: 'use_ability', ability: 'jump', args: this.jumpPiece });
+                        this.multiplayer.send({ type: 'use_ability', ability: 'jump', args: jumpArgs });
                     } else {
-                        const ok = this.engine.validateAbility('jump', this.jumpPiece, this.playerColor);
+                        const ok = this.engine.validateAbility('jump', jumpArgs, this.playerColor);
                         if (ok) {
                             this.showToast('🪽 Pegasus Jump executed!');
                             this.setupAbilitiesUI();
@@ -1638,6 +1671,17 @@ class App {
                     this.renderBoard();
                     return;
                 } else {
+                    // Check if player tapped another of their own pieces to switch jump piece
+                    const clickedPiece = this.engine.getPiece(row, col);
+                    if (clickedPiece && clickedPiece.color === this.playerColor) {
+                        const newTargets = this.getValidJumpTargets(row, col);
+                        if (newTargets.length > 0) {
+                            this.jumpPiece = { fromRow: row, fromCol: col, validTargets: newTargets };
+                            this.showToast('Tap highlighted square to land');
+                            this.renderBoard();
+                            return;
+                        }
+                    }
                     this.jumpPiece = null;
                     this.activeAbility = null;
                     this.showToast('Jump canceled');
@@ -1894,9 +1938,12 @@ class App {
       const dx = toSq.offsetLeft - fromSq.offsetLeft;
       const dy = toSq.offsetTop - fromSq.offsetTop;
 
-      // Glide moving piece with lift shadow
+      // Glide moving piece on top of all squares & overlays
+      fromSq.classList.add('gliding-source');
+      fromSq.style.zIndex = '1000';
+      fromSq.style.overflow = 'visible';
       movingPieceEl.classList.add('piece-gliding');
-      movingPieceEl.style.transform = `translate(${dx}px, ${dy}px) scale(1.12)`;
+      movingPieceEl.style.transform = `translate(${dx}px, ${dy}px) scale(1.15)`;
 
       // Animate castling rook if castling
       if (result.castling) {
@@ -1909,8 +1956,11 @@ class App {
         if (rookPiece && rookFromSq && rookToSq) {
           const rdx = rookToSq.offsetLeft - rookFromSq.offsetLeft;
           const rdy = rookToSq.offsetTop - rookFromSq.offsetTop;
+          rookFromSq.classList.add('gliding-source');
+          rookFromSq.style.zIndex = '999';
+          rookFromSq.style.overflow = 'visible';
           rookPiece.classList.add('piece-gliding');
-          rookPiece.style.transform = `translate(${rdx}px, ${rdy}px) scale(1.08)`;
+          rookPiece.style.transform = `translate(${rdx}px, ${rdy}px) scale(1.12)`;
         }
       }
 
