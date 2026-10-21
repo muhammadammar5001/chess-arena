@@ -1,18 +1,16 @@
-/* ==========================================================================
-   WARM WOODEN CHESS - HAND-CRAFTED CASUAL UI & RESTORED CLASSIC OAK BOARD
-   Reference: Hand-Made 2D Casual Mobile Game Kit (YouTube Playables Quality)
-   Tokens: Strict adherence to SKILL.md Section 3
+﻿/* ==========================================================================
+   WARM WOODEN GAME TABLE - COMPLETE THEME OVERHAUL
+   Zero tolerance for modern/purple/neon/white-pill UI
    ========================================================================== */
 
 /* --- 1. GLOBAL TABLETOP & SCREEN FOUNDATIONS --- */
 body, html, .screen, .fantasy-home-screen, .discover-shell, .abilities-shell, .game-layout-wrapper {
-  background: radial-gradient(circle at 50% 35%, var(--walnut) 0%, var(--walnut-deep) 60%, #150A04 100%) !important;
-  color: var(--ivory) !important;
-  font-family: var(--font-sans) !important;
-  -webkit-tap-highlight-color: transparent !important;
+  background: radial-gradient(circle at 50% 35%, #422616 0%, #24140B 55%, #120904 100%) !important;
+  color: #FDF7EC !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Georgia", serif !important;
 }
 
-/* --- 2. RESTORED PHASE 4 CLASSIC OAK BOARD (CLEAN, NATURAL, TACTILE) --- */
+/* --- 2. DEEP 3D BEVELED CHESS BOARD --- */
 .board-container {
   display: flex !important;
   justify-content: center !important;
@@ -20,7 +18,7 @@ body, html, .screen, .fantasy-home-screen, .discover-shell, .abilities-shell, .g
   width: 100% !important;
   max-width: 480px !important;
   margin: 0 auto !important;
-  padding: 8px !important;
+  padding: 12px !important;
   box-sizing: border-box !important;
 }
 
@@ -30,286 +28,433 @@ body, html, .screen, .fantasy-home-screen, .discover-shell, .abilities-shell, .g
   grid-template-rows: repeat(8, 1fr) !important;
   width: 100% !important;
   aspect-ratio: 1 / 1 !important;
-  background-color: var(--board-frame) !important;
-  border: 10px solid var(--board-frame) !important;
-  outline: 2px solid var(--board-inlay) !important;
-  outline-offset: -5px !important;
-  border-radius: 14px !important;
+  background-color: #382012 !important;
+  border: 14px solid #382012 !important;
+  outline: 3px solid #C99700 !important;
+  outline-offset: -6px !important;
+  border-radius: 16px !important;
   box-shadow: 
-    0 16px 36px rgba(0, 0, 0, 0.75),
-    0 2px 6px rgba(0, 0, 0, 0.5),
-    inset 0 2px 4px rgba(255, 255, 255, 0.18) !important;
+    0 24px 48px rgba(0, 0, 0, 0.85),
+    0 8px 16px rgba(0, 0, 0, 0.65),
+    inset 0 3px 5px rgba(255, 255, 255, 0.22),
+    inset 0 -5px 10px rgba(0, 0, 0, 0.75) !important;
   position: relative !important;
   box-sizing: border-box !important;
   user-select: none !important;
   touch-action: manipulation !important;
 }
 
-/* Squares: Classic Oak Light & Oak Dark with Organic Grain */
+/* Brass Corner Accents on Board */
+#chess-board::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: -12px !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(255, 213, 79, 0.3) !important;
+  pointer-events: none !important;
+}
+
+/* --- SQUARES: TACTILE WOOD GRAIN & BEVELS --- */
 .square {
   position: relative !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer !important;
-  transition: background-color 0.15s ease !important;
-  border: 0.5px solid rgba(46, 26, 15, 0.15) !important;
+  transition: all 0.12s ease !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
 }
 
 .square.light {
-  background-color: var(--oak-light) !important;
-  background-image: 
-    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.28) 0%, transparent 60%),
-    linear-gradient(45deg, var(--oak-light-grain) 25%, transparent 25%, transparent 75%, var(--oak-light-grain) 75%) !important;
+  background: linear-gradient(135deg, #F5E4C4 0%, #E2C494 50%, #D4B17D 100%) !important;
+  box-shadow: 
+    inset 1.5px 1.5px 2px rgba(255, 255, 255, 0.45),
+    inset -1.5px -1.5px 2px rgba(90, 50, 20, 0.35) !important;
 }
 
 .square.dark {
-  background-color: var(--oak-dark) !important;
-  background-image: 
-    radial-gradient(circle at 70% 75%, rgba(0, 0, 0, 0.15) 0%, transparent 60%),
-    linear-gradient(45deg, var(--oak-dark-grain) 25%, transparent 25%, transparent 75%, var(--oak-dark-grain) 75%) !important;
+  background: linear-gradient(135deg, #A86E3C 0%, #875125 50%, #6E3D18 100%) !important;
+  box-shadow: 
+    inset 1.5px 1.5px 2px rgba(255, 255, 255, 0.18),
+    inset -1.5px -1.5px 3px rgba(0, 0, 0, 0.55) !important;
+}
+
+.square.selected {
+  background: linear-gradient(135deg, #FFE082 0%, #FFCA28 100%) !important;
+  box-shadow: 
+    inset 0 0 0 3px #FFF9C4,
+    inset 0 0 10px rgba(201, 151, 0, 0.8),
+    0 0 8px rgba(255, 213, 79, 0.6) !important;
+}
+
+.square.last-move {
+  background: linear-gradient(135deg, rgba(255, 224, 130, 0.75) 0%, rgba(255, 202, 40, 0.6) 100%) !important;
 }
 
 /* Coordinate Engravings */
 .coord-label {
   position: absolute !important;
-  font-size: 10px !important;
-  font-weight: 700 !important;
-  font-family: var(--font-serif) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  font-family: "Georgia", serif !important;
   pointer-events: none !important;
-  opacity: 0.75 !important;
 }
-.square.light .coord-label { color: #5A3720 !important; }
-.square.dark .coord-label { color: var(--ivory) !important; }
-
-.coord-rank { top: 2px !important; left: 3px !important; }
-.coord-file { bottom: 2px !important; right: 3px !important; }
-
-/* Selected Square: Warm Yellow Tint + Brass Inlay Border */
-.square.selected {
-  background-color: rgba(242, 201, 76, 0.75) !important;
-  box-shadow: inset 0 0 0 2.5px var(--brass), inset 0 0 8px rgba(217, 164, 65, 0.6) !important;
+.square.light .coord-label { 
+  color: #55331C !important; 
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) !important; 
+}
+.square.dark .coord-label { 
+  color: #F8E8CB !important; 
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important; 
 }
 
-/* Last Move Highlight */
-.square.last-move {
-  background-color: rgba(242, 201, 76, 0.45) !important;
-}
-
-/* Legal Move Dot on Empty Square */
+/* Legal Move Indicators */
 .square.legal-move::after {
   content: '' !important;
   display: block !important;
-  width: 28% !important;
-  height: 28% !important;
-  background-color: var(--good) !important;
+  width: 26% !important;
+  height: 26% !important;
+  background: radial-gradient(circle at 35% 35%, #81C784 0%, #2E7D32 100%) !important;
   border-radius: 50% !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 6px rgba(78, 143, 90, 0.6) !important;
-  opacity: 0.9 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 8px rgba(76, 175, 80, 0.6) !important;
 }
 
-/* Legal Move Ring on Capturable Piece */
 .square.legal-capture::after {
   content: '' !important;
   position: absolute !important;
-  width: 86% !important;
-  height: 86% !important;
-  border: 3px solid var(--danger) !important;
+  width: 84% !important;
+  height: 84% !important;
+  border: 3.5px solid #C62828 !important;
   border-radius: 50% !important;
-  box-shadow: 0 0 6px rgba(181, 65, 47, 0.6), inset 0 0 4px rgba(181, 65, 47, 0.6) !important;
+  box-shadow: 0 0 10px rgba(198, 40, 40, 0.7), inset 0 0 6px rgba(198, 40, 40, 0.5) !important;
   pointer-events: none !important;
 }
 
-/* Check: King Square Glow */
+/* Check Glow Ring */
 .square.check {
-  background: radial-gradient(circle at center, rgba(181, 65, 47, 0.85) 0%, rgba(181, 65, 47, 0.4) 50%, transparent 75%) !important;
+  background: radial-gradient(circle at 50% 50%, rgba(198, 40, 40, 0.85) 0%, rgba(136, 14, 79, 0.3) 70%) !important;
+  box-shadow: inset 0 0 12px #FF5252, 0 0 14px #D32F2F !important;
 }
 
-/* --- 3. HAND-CRAFTED PLANK BUTTONS (REFERENCE UI KIT) --- */
-.fantasy-menu-card,
-.btn-primary-wood,
-.wooden-plank-btn {
-  position: relative !important;
+/* --- 3. PIECES: TACTILE WOOD & 3D DROP SHADOWS --- */
+.piece {
   display: flex !important;
   align-items: center !important;
-  justify-content: space-between !important;
-  background: linear-gradient(180deg, var(--timber-bevel) 0%, var(--timber-outer) 100%) !important;
-  border: 3.5px solid var(--timber-bevel) !important;
-  border-radius: 16px !important;
-  padding: 6px !important;
-  margin-bottom: 14px !important;
-  box-shadow: 
-    0 6px 14px rgba(0, 0, 0, 0.6),
-    inset 0 2px 0 rgba(255, 255, 255, 0.22),
-    inset 0 -3px 0 var(--timber-inner-dark) !important;
-  cursor: pointer !important;
-  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-  text-decoration: none !important;
-  overflow: hidden !important;
-}
-
-.fantasy-menu-card > div,
-.wooden-plank-btn-inner {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  width: 100% !important;
-  background: linear-gradient(180deg, var(--honey-start) 0%, var(--honey-mid) 50%, var(--honey-end) 100%) !important;
-  border: 1.5px solid var(--honey-rim) !important;
-  border-radius: 10px !important;
-  padding: 12px 16px !important;
-  box-shadow: 
-    inset 0 1px 0 rgba(255, 255, 255, 0.65),
-    inset 0 -2px 0 #9E5B05 !important;
-  position: relative !important;
-  overflow: hidden !important;
-}
-
-/* Diagonal Specular Sheen on Honey Plate */
-.fantasy-menu-card > div::before,
-.wooden-plank-btn-inner::before {
-  content: '' !important;
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  height: 50% !important;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.1) 45%, transparent 46%) !important;
+  justify-content: center !important;
+  width: 92% !important;
+  height: 92% !important;
+  z-index: 2 !important;
   pointer-events: none !important;
-  border-radius: 8px 8px 0 0 !important;
+  filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.65)) !important;
+  transition: transform 0.1s ease !important;
 }
 
-.fantasy-menu-card:hover,
-.wooden-plank-btn:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.65) !important;
-  filter: brightness(1.04) !important;
+/* --- 4. HOME SCREEN FEATURE MENU (NO MORE WHITE PILLS) --- */
+.fantasy-menu-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  width: 90% !important;
+  max-width: 360px !important;
+  margin: 0 auto 24px auto !important;
 }
 
-.fantasy-menu-card:active,
-.wooden-plank-btn:active {
+.fantasy-menu-card {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  padding: 14px 20px !important;
+  background: linear-gradient(180deg, #52331F 0%, #351F12 100%) !important;
+  border: 2px solid #C99700 !important;
+  border-radius: 12px !important;
+  box-shadow: 
+    0 6px 12px rgba(0, 0, 0, 0.55),
+    0 1px 3px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.22),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.5) !important;
+  color: #FDF7EC !important;
+  cursor: pointer !important;
+  transition: transform 0.08s ease, box-shadow 0.08s ease !important;
+}
+
+.fantasy-menu-card:active {
   transform: translateY(2px) !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 2px 4px rgba(0, 0, 0, 0.6) !important;
 }
 
-.menu-card-title {
-  font-family: var(--font-serif) !important;
-  font-size: 17px !important;
+.menu-icon-box {
+  width: 36px !important;
+  height: 36px !important;
+  background: linear-gradient(145deg, #442615, #1F1008) !important;
+  border: 1.5px solid #C99700 !important;
+  border-radius: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #F5D36C !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4) !important;
+}
+
+.menu-card-label {
+  font-family: "Georgia", serif !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #FDF7EC !important;
+  letter-spacing: 0.5px !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+.menu-card-chevron {
+  color: #C99700 !important;
+}
+
+/* Loadout Button (Select Abilities on Home) */
+#btn-home-loadout, .loadout-btn {
+  background: linear-gradient(180deg, #4A2E1B 0%, #2A170C 100%) !important;
+  border: 1.5px solid #C99700 !important;
+  border-radius: 24px !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  color: #FDF7EC !important;
+  font-family: "Georgia", serif !important;
+  font-weight: 700 !important;
+  padding: 8px 18px !important;
+  margin: 10px auto !important;
+  cursor: pointer !important;
+}
+
+/* --- 5. ABILITIES SCREEN (WOODEN MEDALLIONS & PLAQUES) --- */
+.abilities-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  width: 90% !important;
+  max-width: 380px !important;
+  margin: 16px auto !important;
+}
+
+.ability-card {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: linear-gradient(180deg, #4D2F1B 0%, #2E1A0E 100%) !important;
+  border: 2px solid #8C6538 !important;
+  border-radius: 14px !important;
+  padding: 14px 18px !important;
+  box-shadow: 
+    0 6px 14px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.18),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.5) !important;
+  color: #FDF7EC !important;
+  cursor: pointer !important;
+  transition: all 0.12s ease !important;
+}
+
+.ability-card.selected {
+  border-color: #FFD54F !important;
+  background: linear-gradient(180deg, #603B23 0%, #3D2213 100%) !important;
+  box-shadow: 
+    0 0 14px rgba(255, 213, 79, 0.55),
+    0 6px 14px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.25) !important;
+}
+
+.ability-name {
+  font-family: "Georgia", serif !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #FDF7EC !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+.ability-desc {
+  font-size: 12px !important;
+  color: #D6BD9B !important;
+}
+
+.abilities-heading {
+  font-family: "Georgia", serif !important;
+  color: #FDF7EC !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+}
+
+.abilities-subheading {
+  color: #C99700 !important;
+  font-size: 12px !important;
+}
+
+/* --- 6. RANKINGS / LEADERBOARD (PARCHMENT WOODEN PLAQUES) --- */
+.leaderboard-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  width: 90% !important;
+  max-width: 380px !important;
+  margin: 16px auto !important;
+}
+
+.leaderboard-item, .leaderboard-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background: linear-gradient(180deg, #442918 0%, #2A170C 100%) !important;
+  border: 1.5px solid #8C6538 !important;
+  border-radius: 12px !important;
+  padding: 12px 18px !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  color: #FDF7EC !important;
+}
+
+.leaderboard-rank {
+  font-family: "Georgia", serif !important;
+  font-size: 18px !important;
   font-weight: 800 !important;
-  color: var(--honey-ink) !important;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) !important;
-  letter-spacing: 0.3px !important;
+  color: #FFD54F !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8) !important;
 }
 
-.menu-card-subtitle {
+.leaderboard-name {
+  font-family: "Georgia", serif !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #FDF7EC !important;
+}
+
+.leaderboard-rating {
+  font-size: 12px !important;
+  color: #D6BD9B !important;
+}
+
+/* --- 7. BOTTOM NAVIGATION: NO PURPLE GLOW, WARM BRASS ONLY --- */
+.nav-active-glow {
+  background: radial-gradient(circle, rgba(201, 151, 0, 0.45) 0%, rgba(201, 151, 0, 0) 70%) !important;
+  filter: blur(8px) !important;
+}
+
+.fantasy-bottom-nav {
+  background: linear-gradient(180deg, #321C10 0%, #170B05 100%) !important;
+  border-top: 2px solid #C99700 !important;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.6) !important;
+}
+
+.nav-tab {
+  color: #B89975 !important;
+}
+
+.nav-tab.active {
+  color: #FFD54F !important;
+  text-shadow: 0 0 8px rgba(255, 213, 79, 0.5) !important;
+}
+
+/* --- 8. SHOP COSMETICS SHELVES (WOODEN SHELVES STYLING) --- */
+.shop-shelf {
+  background: linear-gradient(180deg, #3B2214 0%, #201108 100%) !important;
+  border: 2px solid #C99700 !important;
+  border-radius: 14px !important;
+  box-shadow: var(--shadow-plaque) !important;
+  padding: 16px !important;
+  margin-bottom: 20px !important;
+}
+
+.shop-shelf-title {
+  font-family: "Georgia", serif !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #FFD54F !important;
+  border-bottom: 1px solid #6E4426 !important;
+  padding-bottom: 8px !important;
+  margin-bottom: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.shop-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 12px !important;
+}
+
+.shop-item-card {
+  background: linear-gradient(180deg, #482B18 0%, #29160B 100%) !important;
+  border: 1.5px solid #8C6538 !important;
+  border-radius: 10px !important;
+  padding: 12px 10px !important;
+  text-align: center !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important;
+}
+
+.shop-item-card.equipped {
+  border-color: #4CAF50 !important;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5) !important;
+}
+
+.shop-item-name {
+  font-family: "Georgia", serif !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #FDF7EC !important;
+}
+
+.btn-shop-action {
+  background: linear-gradient(180deg, #5A351D 0%, #3D2313 100%) !important;
+  border: 1.5px solid #C99700 !important;
+  border-radius: 6px !important;
+  color: #FDF7EC !important;
+  font-family: "Georgia", serif !important;
   font-size: 11px !important;
   font-weight: 700 !important;
-  color: #63330C !important;
-}
-
-.menu-card-arrow {
-  color: var(--honey-ink) !important;
-  font-weight: 900 !important;
-  font-size: 18px !important;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) !important;
-}
-
-/* --- 4. HAND-CRAFTED ROUND & SQUARE MEDALLIONS (ICON BUTTONS) --- */
-.btn-settings,
-.back-circle-btn,
-.wooden-medallion-btn {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 42px !important;
-  height: 42px !important;
-  border-radius: 50% !important;
-  background: linear-gradient(180deg, var(--timber-bevel) 0%, var(--timber-outer) 100%) !important;
-  border: 2.5px solid var(--timber-bevel) !important;
-  box-shadow: 
-    0 4px 8px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25),
-    inset 0 -2px 0 var(--timber-inner-dark) !important;
-  padding: 3px !important;
+  padding: 6px 12px !important;
   cursor: pointer !important;
-  transition: transform 0.15s ease, filter 0.15s ease !important;
-  outline: none !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4) !important;
 }
 
-.btn-settings::after,
-.back-circle-btn::after,
-.wooden-medallion-btn::after {
-  content: '' !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 100% !important;
-  height: 100% !important;
-  border-radius: 50% !important;
-  background: radial-gradient(circle at 35% 30%, var(--honey-start) 0%, var(--honey-mid) 65%, var(--honey-end) 100%) !important;
-  border: 1.2px solid var(--honey-rim) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
-  position: absolute !important;
-  z-index: 1 !important;
+.btn-shop-action.equipped {
+  background: #2E7D32 !important;
+  border-color: #81C784 !important;
 }
 
-.btn-settings svg,
-.btn-settings span,
-.back-circle-btn svg,
-.back-circle-btn span {
-  position: relative !important;
-  z-index: 2 !important;
-  color: var(--honey-ink) !important;
-  stroke: var(--honey-ink) !important;
-  font-weight: 800 !important;
-}
 
-.btn-settings:hover,
-.back-circle-btn:hover,
-.wooden-medallion-btn:hover {
-  transform: translateY(-1.5px) !important;
-  filter: brightness(1.08) !important;
-}
-
-.btn-settings:active,
-.back-circle-btn:active,
-.wooden-medallion-btn:active {
-  transform: translateY(1.5px) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
-}
-
-/* --- 5. WOODEN PLAQUE BOARDS (MODALS, PANELS, HERO CARDS) --- */
+/* ==========================================================================
+   SETTINGS MODAL: CARVED WALNUT PLAQUE WITH BRASS INLAY
+   ========================================================================== */
 .modal-overlay {
-  background: rgba(15, 8, 4, 0.85) !important;
+  background: rgba(10, 5, 2, 0.85) !important;
+  backdrop-filter: blur(4px) !important;
 }
 
 #modal-settings .modal-content,
 .settings-modal,
-.modal-content,
-.wooden-plaque-board {
-  position: relative !important;
-  background: linear-gradient(180deg, #7A3D18 0%, #5C2C0E 50%, #462009 100%) !important;
-  border: 4px solid var(--timber-bevel) !important;
-  border-radius: 18px !important;
-  box-shadow: var(--shadow-plaque) !important;
-  color: var(--ivory) !important;
-  font-family: var(--font-serif) !important;
+.modal-content {
+  background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
+  border: 2.5px solid #C99700 !important;
+  border-radius: 16px !important;
+  box-shadow: 
+    0 24px 50px rgba(0, 0, 0, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.6) !important;
+  color: #FDF7EC !important;
+  font-family: 'Georgia', serif !important;
   padding: 24px !important;
   max-width: 360px !important;
-  outline: 2px solid var(--wood-groove) !important;
-  outline-offset: -8px !important;
 }
 
 .settings-modal h3,
 .modal-content h3 {
-  font-family: var(--font-serif) !important;
+  font-family: 'Georgia', serif !important;
   font-size: 22px !important;
   font-weight: 800 !important;
-  color: var(--brass) !important;
+  color: #FFD54F !important;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
-  border-bottom: 1px solid rgba(217, 164, 65, 0.3) !important;
+  border-bottom: 1px solid #5A351D !important;
   padding-bottom: 12px !important;
   margin-bottom: 18px !important;
   letter-spacing: 0.5px !important;
@@ -319,98 +464,105 @@ body, html, .screen, .fantasy-home-screen, .discover-shell, .abilities-shell, .g
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
-  background: rgba(25, 12, 5, 0.65) !important;
-  border: 1.5px solid #63330C !important;
+  background: rgba(26, 14, 8, 0.7) !important;
+  border: 1px solid #5A351D !important;
   border-radius: 10px !important;
   padding: 10px 14px !important;
   margin-bottom: 12px !important;
-  color: var(--ivory) !important;
-  font-family: var(--font-serif) !important;
-  font-weight: 700 !important;
+  color: #FDF7EC !important;
+  font-family: 'Georgia', serif !important;
+  font-weight: 600 !important;
   font-size: 14px !important;
 }
 
 .setting-item span {
-  color: var(--ivory) !important;
+  color: #FDF7EC !important;
 }
 
 .setting-item .btn,
 #btn-toggle-sound,
 #btn-toggle-music {
-  background: linear-gradient(180deg, var(--honey-start) 0%, var(--honey-mid) 50%, var(--honey-end) 100%) !important;
-  border: 1.5px solid var(--honey-rim) !important;
-  color: var(--honey-ink) !important;
+  background: linear-gradient(180deg, #5A351D 0%, #2A170C 100%) !important;
+  border: 1.5px solid #C99700 !important;
+  color: #FFD54F !important;
   border-radius: 8px !important;
-  font-family: var(--font-serif) !important;
-  font-weight: 800 !important;
+  font-family: 'Georgia', serif !important;
+  font-weight: 700 !important;
   font-size: 13px !important;
   padding: 8px 14px !important;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
   cursor: pointer !important;
-  transition: all 0.15s ease !important;
+  transition: all 0.2s ease !important;
 }
 
 .setting-item .btn:hover,
 #btn-toggle-sound:hover,
 #btn-toggle-music:hover {
-  filter: brightness(1.08) !important;
+  background: linear-gradient(180deg, #6E4426 0%, #3B2012 100%) !important;
+  border-color: #FFD54F !important;
   transform: translateY(-1px) !important;
 }
 
 .settings-modal .btn-tertiary {
-  background: linear-gradient(180deg, var(--timber-bevel) 0%, var(--timber-outer) 100%) !important;
-  border: 1.5px solid var(--timber-bevel) !important;
-  color: var(--ivory) !important;
+  background: linear-gradient(180deg, #4A2E1B 0%, #1A0D06 100%) !important;
+  border: 1.5px solid #8C6538 !important;
+  color: #FDF7EC !important;
   border-radius: 8px !important;
-  font-family: var(--font-serif) !important;
+  font-family: 'Georgia', serif !important;
   font-weight: 700 !important;
   font-size: 14px !important;
   padding: 10px !important;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
   cursor: pointer !important;
-  transition: all 0.15s ease !important;
+  transition: all 0.2s ease !important;
 }
 
 .settings-modal .btn-tertiary:hover {
-  border-color: var(--brass) !important;
-  color: var(--brass) !important;
+  background: linear-gradient(180deg, #5A351D 0%, #24140B 100%) !important;
+  border-color: #C99700 !important;
+  color: #FFD54F !important;
 }
 
-/* --- 6. PROFILE SCREEN: CARVED WOOD TABLETS & MEDALLIONS --- */
+/* ==========================================================================
+   PROFILE SCREEN: WARM WALNUT & BRASS TABLET
+   Zero White Pills, Zero Slate Blue
+   ========================================================================== */
 #screen-profile {
-  background: radial-gradient(circle at 50% 30%, var(--walnut) 0%, var(--walnut-deep) 60%, #150A04 100%) !important;
-  color: var(--ivory) !important;
+  background: radial-gradient(circle at 50% 30%, #422616 0%, #24140B 60%, #120904 100%) !important;
+  color: #FDF7EC !important;
 }
 
 .profile-hero-card {
-  background: linear-gradient(180deg, #7A3D18 0%, #5C2C0E 50%, #462009 100%) !important;
-  border: 3.5px solid var(--timber-bevel) !important;
+  background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
+  border: 2px solid #C99700 !important;
   border-radius: 16px !important;
   padding: 16px 20px !important;
-  box-shadow: var(--shadow-plaque) !important;
-  outline: 2px solid var(--wood-groove) !important;
-  outline-offset: -6px !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+
+.profile-hero-avatar-wrap {
+  position: relative !important;
 }
 
 .profile-hero-avatar {
-  border: 3px solid var(--brass) !important;
+  border: 3px solid #C99700 !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8) !important;
 }
 
 .profile-hero-name {
-  color: var(--brass) !important;
-  font-family: var(--font-serif) !important;
+  color: #FFD54F !important;
+  font-family: 'Georgia', serif !important;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
   font-size: 22px !important;
 }
 
 .profile-hero-level {
-  color: var(--oak-light) !important;
-  background: rgba(217, 164, 65, 0.2) !important;
-  border: 1px solid var(--brass) !important;
+  color: #EBD2A5 !important;
+  background: rgba(201, 151, 0, 0.2) !important;
+  border: 1px solid #C99700 !important;
   border-radius: 6px !important;
   padding: 2px 8px !important;
-  font-family: var(--font-serif) !important;
+  font-family: 'Georgia', serif !important;
   font-weight: 700 !important;
 }
 
@@ -418,10 +570,10 @@ body, html, .screen, .fantasy-home-screen, .discover-shell, .abilities-shell, .g
   display: grid !important;
   grid-template-columns: repeat(4, 1fr) !important;
   gap: 8px !important;
-  background: linear-gradient(180deg, #5C2C0E 0%, #3B1B07 100%) !important;
-  border: 2.5px solid var(--brass) !important;
+  background: linear-gradient(180deg, #3B2214 0%, #201108 100%) !important;
+  border: 2px solid #C99700 !important;
   border-radius: 14px !important;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
   padding: 14px 10px !important;
   margin-bottom: 20px !important;
 }
@@ -433,79 +585,96 @@ body, html, .screen, .fantasy-home-screen, .discover-shell, .abilities-shell, .g
 }
 
 .quad-stat-num {
-  font-family: var(--font-serif) !important;
+  font-family: 'Georgia', serif !important;
   font-size: 18px !important;
   font-weight: 800 !important;
-  color: var(--brass) !important;
+  color: #FFD54F !important;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8) !important;
 }
 
 .quad-stat-label {
   font-size: 10px !important;
   font-weight: 700 !important;
-  color: var(--oak-light) !important;
+  color: #C4A482 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
   margin-top: 3px !important;
+}
+
+.profile-section-title-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 12px !important;
+}
+
+.profile-section-title {
+  font-family: 'Georgia', serif !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #FFD54F !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
 }
 
 .match-history-item {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  background: linear-gradient(180deg, #5A2E12 0%, #3B1B08 100%) !important;
-  border: 1.5px solid var(--timber-bevel) !important;
+  background: linear-gradient(180deg, #442918 0%, #2A170C 100%) !important;
+  border: 1.5px solid #8C6538 !important;
   border-radius: 12px !important;
   padding: 12px 16px !important;
   margin-bottom: 10px !important;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
-  color: var(--ivory) !important;
+  color: #FDF7EC !important;
 }
 
 .match-history-item:hover {
-  border-color: var(--brass) !important;
+  border-color: #C99700 !important;
   transform: translateY(-1px) !important;
 }
 
 .match-opp-name {
-  font-family: var(--font-serif) !important;
+  font-family: 'Georgia', serif !important;
   font-weight: 700 !important;
-  color: var(--ivory) !important;
+  color: #FDF7EC !important;
   font-size: 14px !important;
 }
 
 .match-opp-rating {
   font-size: 12px !important;
-  color: var(--oak-light) !important;
+  color: #C4A482 !important;
 }
 
 .match-timestamp {
   font-size: 11px !important;
-  color: #B08D6E !important;
+  color: #A98C72 !important;
 }
 
-/* --- 7. NOTIFICATIONS & INVITATIONS: HAND-CRAFTED CASUAL POPUP --- */
+/* ==========================================================================
+   NOTIFICATIONS & INVITATIONS: WOODEN SCROLL PLAQUE
+   ========================================================================== */
 .invite-popup,
 #game-invite-popup {
   position: fixed !important;
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
-  background: linear-gradient(180deg, #7A3D18 0%, #5C2C0E 50%, #462009 100%) !important;
-  border: 4px solid var(--timber-bevel) !important;
-  border-radius: 18px !important;
+  background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
+  border: 2.5px solid #C99700 !important;
+  border-radius: 16px !important;
   padding: 22px !important;
   z-index: 999999 !important;
-  color: var(--ivory) !important;
-  box-shadow: var(--shadow-plaque) !important;
+  color: #FDF7EC !important;
+  box-shadow: 
+    0 24px 60px rgba(0, 0, 0, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 16px !important;
   width: 90% !important;
   max-width: 360px !important;
-  font-family: var(--font-serif) !important;
-  outline: 2px solid var(--wood-groove) !important;
-  outline-offset: -8px !important;
+  font-family: 'Georgia', serif !important;
 }
 
 .invite-popup.hidden {
@@ -513,70 +682,123 @@ body, html, .screen, .fantasy-home-screen, .discover-shell, .abilities-shell, .g
 }
 
 .invite-popup .btn-accept {
-  background: linear-gradient(180deg, var(--honey-start) 0%, var(--honey-mid) 50%, var(--honey-end) 100%) !important;
-  border: 1.5px solid var(--honey-rim) !important;
-  color: var(--honey-ink) !important;
-  border-radius: 10px !important;
-  padding: 12px 18px !important;
-  font-family: var(--font-serif) !important;
+  background: linear-gradient(180deg, #C99700 0%, #996D00 100%) !important;
+  border: 1.5px solid #FFD54F !important;
+  color: #1F1008 !important;
+  border-radius: 8px !important;
+  padding: 10px 18px !important;
+  font-family: 'Georgia', serif !important;
   font-weight: 800 !important;
   cursor: pointer !important;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
-  transition: all 0.15s ease !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  transition: all 0.2s ease !important;
 }
 
 .invite-popup .btn-accept:hover {
-  filter: brightness(1.08) !important;
+  background: linear-gradient(180deg, #E5AE00 0%, #B27E00 100%) !important;
   transform: translateY(-1px) !important;
 }
 
 .invite-popup .btn-reject {
-  background: linear-gradient(180deg, var(--timber-bevel) 0%, var(--timber-outer) 100%) !important;
-  border: 1.5px solid var(--timber-bevel) !important;
-  color: var(--ivory) !important;
-  border-radius: 10px !important;
-  padding: 12px 18px !important;
-  font-family: var(--font-serif) !important;
+  background: linear-gradient(180deg, #5A351D 0%, #2A170C 100%) !important;
+  border: 1.5px solid #8C6538 !important;
+  color: #FDF7EC !important;
+  border-radius: 8px !important;
+  padding: 10px 18px !important;
+  font-family: 'Georgia', serif !important;
   font-weight: 700 !important;
   cursor: pointer !important;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5) !important;
-  transition: all 0.15s ease !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+  transition: all 0.2s ease !important;
 }
 
 .invite-popup .btn-reject:hover {
-  border-color: var(--brass) !important;
-  color: var(--brass) !important;
+  border-color: #C99700 !important;
+  color: #FFD54F !important;
 }
 
 .toast,
 #toast {
-  background: linear-gradient(180deg, #5C2C0E 0%, #3B1B07 100%) !important;
-  border: 2px solid var(--brass) !important;
+  background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
+  border: 1.5px solid #C99700 !important;
   border-radius: 12px !important;
-  color: var(--brass) !important;
-  font-family: var(--font-serif) !important;
+  color: #FFD54F !important;
+  font-family: 'Georgia', serif !important;
   font-weight: 700 !important;
   padding: 12px 24px !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
 }
 
-/* --- 8. BOTTOM NAVIGATION: CARVED WOODEN TRAY WITH BRASS GLOW --- */
-.fantasy-bottom-nav {
-  background: linear-gradient(180deg, #4E260D 0%, #261105 100%) !important;
-  border-top: 2.5px solid var(--brass) !important;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.7) !important;
+/* ==========================================================================
+   IN-GAME CHAT & TACTILE EMOTES: TAVERN WOODEN FEED
+   ========================================================================== */
+.chat-messages,
+#chat-messages {
+  background: rgba(26, 14, 8, 0.9) !important;
+  border: 1.5px solid #5A351D !important;
+  border-radius: 10px !important;
+  padding: 10px !important;
+  color: #EBD2A5 !important;
+  font-family: 'Georgia', serif !important;
+  font-size: 13px !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7) !important;
 }
 
-.nav-tab {
-  color: #B89975 !important;
+.chat-input-wrapper {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: center !important;
+  margin-top: 8px !important;
 }
 
-.nav-tab.active {
-  color: var(--brass) !important;
-  text-shadow: 0 0 10px rgba(217, 164, 65, 0.6) !important;
+.chat-input,
+#chat-input {
+  background: rgba(18, 9, 4, 0.95) !important;
+  border: 1.5px solid #8C6538 !important;
+  border-radius: 8px !important;
+  color: #FDF7EC !important;
+  font-family: 'Georgia', serif !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  outline: none !important;
 }
 
-.nav-active-glow {
-  background: radial-gradient(circle, rgba(217, 164, 65, 0.45) 0%, rgba(217, 164, 65, 0) 70%) !important;
-  filter: blur(8px) !important;
+.chat-input:focus,
+#chat-input:focus {
+  border-color: #C99700 !important;
+  box-shadow: 0 0 8px rgba(201, 151, 0, 0.4) !important;
+}
+
+.chat-send-btn,
+#btn-chat-send {
+  background: linear-gradient(180deg, #C99700 0%, #996D00 100%) !important;
+  border: 1.5px solid #FFD54F !important;
+  color: #1F1008 !important;
+  border-radius: 8px !important;
+  font-family: 'Georgia', serif !important;
+  font-weight: 800 !important;
+  padding: 8px 14px !important;
+  cursor: pointer !important;
+}
+
+.emote-btn,
+.tactile-emote-chip {
+  background: linear-gradient(180deg, #442918 0%, #2A170C 100%) !important;
+  border: 1.5px solid #8C6538 !important;
+  border-radius: 8px !important;
+  color: #FDF7EC !important;
+  padding: 6px 12px !important;
+  font-family: 'Georgia', serif !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.15s ease !important;
+}
+
+.emote-btn:hover,
+.tactile-emote-chip:hover {
+  border-color: #C99700 !important;
+  color: #FFD54F !important;
+  transform: translateY(-1px) !important;
 }
