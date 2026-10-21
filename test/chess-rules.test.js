@@ -179,6 +179,13 @@ console.log("--- RUNNING CHESS ENGINE CHARACTERIZATION TESTS ---");
   const bishopNoHurdle = engine3.validateAbility("jump", { fromRow: 7, fromCol: 2, toRow: 5, toCol: 4 }, "white");
   assert.strictEqual(bishopNoHurdle, false, "Bishop jump without diagonal hurdle must fail");
 
+  // D. Bishop straight jump must fail (Bishops must only jump diagonally)
+  const engine4 = new ChessEngine();
+  engine4.board[6][2] = { type: "pawn", color: "white" }; // hurdle straight ahead at c2
+  engine4.board[5][2] = null; // empty landing straight ahead at c3
+  const bishopStraightJump = engine4.validateAbility("jump", { fromRow: 7, fromCol: 2, toRow: 5, toCol: 2 }, "white");
+  assert.strictEqual(bishopStraightJump, false, "Bishop straight jump must fail (strictly diagonal)");
+
   console.log("✔ Pegasus Jump (Pawn straight & Bishop diagonal) verified");
 }
 

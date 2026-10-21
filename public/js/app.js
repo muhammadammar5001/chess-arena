@@ -1424,7 +1424,10 @@ class App {
 
       if (this.activeAbility === abilityId) {
         this.activeAbility = null;
-        if (abilityId === 'swap') this.swapSelection = [];
+        this.swapSelection = [];
+        this.jumpPiece = null;
+        this.selectedSquare = null;
+        this.legalMoves = [];
         this.showToast('Ability canceled');
         this.renderBoard();
         return;
@@ -1548,11 +1551,13 @@ class App {
           if (this.swapSelection && this.swapSelection.some(s => s.row === row && s.col === col)) {
              square.classList.add('swap-selected');
           }
-          if (this.jumpPiece && this.jumpPiece.fromRow === row && this.jumpPiece.fromCol === col) {
-             square.classList.add('selected');
-          }
-          if (this.jumpPiece && this.jumpPiece.validTargets && this.jumpPiece.validTargets.some(t => t.row === row && t.col === col)) {
-             square.classList.add('legal-move');
+          if (this.activeAbility === 'jump' && this.jumpPiece) {
+             if (this.jumpPiece.fromRow === row && this.jumpPiece.fromCol === col) {
+                square.classList.add('selected');
+             }
+             if (this.jumpPiece.validTargets && this.jumpPiece.validTargets.some(t => t.row === row && t.col === col)) {
+                square.classList.add('legal-move');
+             }
           }
 
           if (piece) {
@@ -1588,7 +1593,7 @@ class App {
 
     let allowedDCols = [0];
     if (piece.type === 'bishop') {
-      allowedDCols = [-2, 2, 0];
+      allowedDCols = [-2, 2];
     } else if (piece.type === 'queen' || piece.type === 'king' || piece.type === 'knight') {
       allowedDCols = [0, -2, 2];
     }
@@ -1684,6 +1689,8 @@ class App {
                     }
                     this.jumpPiece = null;
                     this.activeAbility = null;
+                    this.selectedSquare = null;
+                    this.legalMoves = [];
                     this.showToast('Jump canceled');
                     this.renderBoard();
                     return;

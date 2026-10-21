@@ -146,7 +146,7 @@ class ChessEngine {
       // Pawn / Rook: straight (0)
       let allowedDCols = [0];
       if (piece.type === 'bishop') {
-        allowedDCols = [-2, 2, 0];
+        allowedDCols = [-2, 2];
       } else if (piece.type === 'queen' || piece.type === 'king' || piece.type === 'knight') {
         allowedDCols = [0, -2, 2];
       }
