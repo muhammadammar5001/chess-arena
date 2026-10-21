@@ -66,6 +66,7 @@ class ChessEngine {
       const piece = this.getPiece(args.row, args.col);
       piece.frozenUntilMoveCount = this.moveHistory.length + 3;
       this.moveHistory.push({ notation: 'USE_FREEZE', color: color, ability: 'freeze', args: args });
+      if (this.abilitiesUsed && this.abilitiesUsed[color]) this.abilitiesUsed[color].push('freeze');
       const historyBackup = this.stateHistory; this.stateHistory = []; const stateSnapshot = JSON.stringify(this); this.stateHistory = historyBackup; this.stateHistory.push(stateSnapshot);
       return true;
     }
@@ -88,6 +89,7 @@ class ChessEngine {
       }
       
       this.moveHistory.push({ notation: 'USE_TACTICAL_SWAP', color: color, ability: 'swap', args: args });
+      if (this.abilitiesUsed && this.abilitiesUsed[color]) this.abilitiesUsed[color].push('swap');
       
       // Swap consumes turn
       this.currentTurn = this.currentTurn === 'white' ? 'black' : 'white';
@@ -105,6 +107,7 @@ class ChessEngine {
       const success = this.undoLastMove();
       if (success) {
          this.moveHistory.push({ notation: 'USE_SECOND_CHANCE', color: color, ability: 'second', args: null });
+         if (this.abilitiesUsed && this.abilitiesUsed[color]) this.abilitiesUsed[color].push('second');
          const historyBackup = this.stateHistory;
         this.stateHistory = [];
         const stateSnapshot = JSON.stringify(this);
@@ -114,6 +117,55 @@ class ChessEngine {
       return success;
     }
     
+    if (abilityId === 'shield') {
+      const piece = this.getPiece(args.row, args.col);
+      if (!piece || piece.color !== color) return false;
+      if (piece.type === 'king' && this.isCheckmate(color)) return false;
+
+      piece.shieldedUntilMoveCount = this.moveHistory.length + 3;
+      this.moveHistory.push({ notation: 'USE_DIVINE_SHIELD', color: color, ability: 'shield', args: args });
+      if (this.abilitiesUsed && this.abilitiesUsed[color]) this.abilitiesUsed[color].push('shield');
+      const historyBackup = this.stateHistory; this.stateHistory = []; const stateSnapshot = JSON.stringify(this); this.stateHistory = historyBackup; this.stateHistory.push(stateSnapshot);
+      return true;
+    }
+
+    if (abilityId === 'jump') {
+      const piece = this.getPiece(args.fromRow, args.fromCol);
+      if (!piece || piece.color !== color) return false;
+
+      const dir = color === 'white' ? -1 : 1;
+      const hurdleRow = args.fromRow + dir;
+      const targetRow = args.fromRow + 2 * dir;
+
+      if (args.toRow !== targetRow || args.toCol !== args.fromCol) return false;
+      if (!this.isInBounds(targetRow, args.toCol)) return false;
+      if (!this.getPiece(hurdleRow, args.fromCol)) return false; // Must hurdle over a piece
+      if (this.getPiece(targetRow, args.toCol)) return false; // Landing square must be empty
+
+      if (piece.type === 'king' && this.isSquareAttacked(targetRow, args.toCol, color)) return false;
+
+      this.board[targetRow][args.toCol] = piece;
+      this.board[args.fromRow][args.fromCol] = null;
+
+      if (piece.type === 'pawn') {
+        if ((color === 'white' && targetRow === 0) || (color === 'black' && targetRow === 7)) {
+          this.board[targetRow][args.toCol] = { type: args.promotion || 'queen', color: color };
+        }
+      }
+
+      if (piece.type === 'king') {
+        this.kingPositions[color] = { row: targetRow, col: args.toCol };
+      }
+
+      this.moveHistory.push({ notation: 'USE_PEGASUS_JUMP', color: color, ability: 'jump', args: args });
+      if (this.abilitiesUsed && this.abilitiesUsed[color]) this.abilitiesUsed[color].push('jump');
+      this.currentTurn = this.currentTurn === 'white' ? 'black' : 'white';
+      if (this.currentTurn === 'white') this.fullMoveNumber++;
+      this.enPassantTarget = null;
+      const historyBackup = this.stateHistory; this.stateHistory = []; const stateSnapshot = JSON.stringify(this); this.stateHistory = historyBackup; this.stateHistory.push(stateSnapshot);
+      return true;
+    }
+
     return false;
   }
   undoLastMove() {
@@ -136,6 +188,12 @@ class ChessEngine {
     const piece = this.getPiece(row, col);
     if (!piece || !piece.frozenUntilMoveCount) return false;
     return this.moveHistory.length < piece.frozenUntilMoveCount;
+  }
+
+  isPieceShielded(row, col) {
+    const piece = this.getPiece(row, col);
+    if (!piece || !piece.shieldedUntilMoveCount) return false;
+    return this.moveHistory.length < piece.shieldedUntilMoveCount;
   }
 
   getPseudoLegalMoves(row, col) {
@@ -184,7 +242,7 @@ class ChessEngine {
       if (!this.isInBounds(newRow, captureCol)) continue;
 
       const target = this.getPiece(newRow, captureCol);
-      if (target && target.color !== color) {
+      if (target && target.color !== color && !this.isPieceShielded(newRow, captureCol)) {
         if (newRow === promotionRow) {
           ['queen', 'rook', 'bishop', 'knight'].forEach(type => {
             moves.push({ row: newRow, col: captureCol, promotion: type });
@@ -214,7 +272,7 @@ class ChessEngine {
         if (!target) {
           moves.push({ row: r, col: c });
         } else {
-          if (target.color !== color) moves.push({ row: r, col: c });
+          if (target.color !== color && !this.isPieceShielded(r, c)) moves.push({ row: r, col: c });
           break;
         }
         r += dr;
@@ -246,7 +304,7 @@ class ChessEngine {
       const r = row + dr, c = col + dc;
       if (this.isInBounds(r, c)) {
         const target = this.getPiece(r, c);
-        if (!target || target.color !== color) {
+        if (!target || (target.color !== color && !this.isPieceShielded(r, c))) {
           moves.push({ row: r, col: c });
         }
       }
@@ -262,7 +320,7 @@ class ChessEngine {
         const r = row + dr, c = col + dc;
         if (this.isInBounds(r, c)) {
           const target = this.getPiece(r, c);
-          if (!target || target.color !== color) {
+          if (!target || (target.color !== color && !this.isPieceShielded(r, c))) {
             moves.push({ row: r, col: c });
           }
         }

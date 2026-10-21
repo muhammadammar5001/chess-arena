@@ -984,7 +984,8 @@ class App {
                 this.updateMoveHistoryUI();
             this.updatePlayerBars();
             }
-            this.setupAbilitiesUI(); // Re-render ability buttons (to gray them out if used)
+            this.hintCountInMatch = 0;
+    this.setupAbilitiesUI(); // Re-render ability buttons (to gray them out if used)
             this.renderBoard();
             this.updatePlayerBars();
         }
@@ -1366,17 +1367,18 @@ class App {
     hintBtn.querySelector('.btn-icon').textContent = '💡';
     hintBtn.querySelector('.btn-label').textContent = 'Hint';
 
-    if (this.gameMode === 'online' && this.matchType === 'robin' && this.multiplayer && this.multiplayer.abilities && this.multiplayer.abilities.self.length > 0) {
-      const abs = this.multiplayer.abilities.self;
-      if (abs.length >= 1) {
-        this.configureAbilityButton(undoBtn, abs[0]);
+    const abs = (this.gameMode === 'online' && this.multiplayer && this.multiplayer.abilities && this.multiplayer.abilities.self && this.multiplayer.abilities.self.length > 0)
+        ? this.multiplayer.abilities.self
+        : (this.selectedAbilities || ['swap', 'freeze']);
+
+      if (abs && abs.length > 0) {
+        if (abs[0]) this.configureAbilityButton(undoBtn, abs[0]);
+        if (abs[1]) {
+          this.configureAbilityButton(hintBtn, abs[1]);
+        } else {
+          hintBtn.style.display = 'none';
+        }
       }
-      if (abs.length >= 2) {
-        this.configureAbilityButton(hintBtn, abs[1]);
-      } else {
-        hintBtn.style.display = 'none';
-      }
-    }
   }
 
   configureAbilityButton(btn, abilityId) {
@@ -1392,6 +1394,12 @@ class App {
     } else if (abilityId === 'second') {
       btn.querySelector('.btn-icon').innerHTML = '<img src="/assets/Asset 44.png" style="width: 22px; height: 22px; object-fit: contain; transform: translateY(2px);">';
       btn.querySelector('.btn-label').textContent = '2nd Chance';
+    } else if (abilityId === 'shield') {
+      btn.querySelector('.btn-icon').innerHTML = '🛡️';
+      btn.querySelector('.btn-label').textContent = 'Shield';
+    } else if (abilityId === 'jump') {
+      btn.querySelector('.btn-icon').innerHTML = '🪽';
+      btn.querySelector('.btn-label').textContent = 'Jump';
     }
     
     // Check if ability was used
@@ -1427,13 +1435,27 @@ class App {
       this.renderBoard();
     
     if (abilityId === 'second') {
-      this.multiplayer.send({ type: 'use_ability', ability: 'second' });
-    } else if (abilityId === 'freeze' || abilityId === 'swap') {
-      this.activeAbility = abilityId;
-      if (abilityId === 'swap') {
-          this.swapSelection = [];
+      if (this.gameMode === 'online') {
+        this.multiplayer.send({ type: 'use_ability', ability: 'second' });
+      } else {
+        const ok = this.engine.validateAbility('second', null, this.playerColor);
+        if (ok) {
+          this.showToast('Second Chance used!');
+          this.setupAbilitiesUI();
+          this.renderBoard();
+        } else {
+          this.showToast('Cannot undo');
+        }
       }
-      this.showToast('Select target piece(s) for ' + (abilityId === 'swap' ? 'Swap' : 'Freeze'));
+    } else if (abilityId === 'freeze' || abilityId === 'swap' || abilityId === 'shield' || abilityId === 'jump') {
+      this.activeAbility = abilityId;
+      if (abilityId === 'swap') this.swapSelection = [];
+      if (abilityId === 'jump') this.jumpPiece = null;
+      const msg = abilityId === 'swap' ? 'Select 2 pieces to Swap' :
+                  abilityId === 'freeze' ? 'Select opponent piece to Freeze' :
+                  abilityId === 'shield' ? 'Select piece for Divine Shield' :
+                  'Select piece to Pegasus Jump over hurdle';
+      this.showToast(msg);
       this.renderBoard();
     }
   }
@@ -1520,8 +1542,17 @@ class App {
           if (this.engine.isPieceFrozen(row, col)) {
              square.classList.add('frozen');
           }
+          if (this.engine.isPieceShielded && this.engine.isPieceShielded(row, col)) {
+             square.classList.add('shielded-square');
+          }
           if (this.swapSelection && this.swapSelection.some(s => s.row === row && s.col === col)) {
              square.classList.add('swap-selected');
+          }
+          if (this.jumpPiece && this.jumpPiece.fromRow === row && this.jumpPiece.fromCol === col) {
+             square.classList.add('selected');
+          }
+          if (this.jumpPiece && this.jumpPiece.toRow === row && this.jumpPiece.toCol === col) {
+             square.classList.add('legal-move');
           }
 
           if (piece) {
@@ -1550,6 +1581,72 @@ class App {
     if (this.engine.gameOver || this.playerColor === 'spectator') return;
 
     if (this.activeAbility) {
+        if (this.activeAbility === 'shield') {
+            const piece = this.engine.getPiece(row, col);
+            if (!piece || piece.color !== this.playerColor) {
+                this.showToast('Must select your own piece');
+                return;
+            }
+            if (this.gameMode === 'online') {
+                this.multiplayer.send({ type: 'use_ability', ability: 'shield', args: { row, col } });
+            } else {
+                const ok = this.engine.validateAbility('shield', { row, col }, this.playerColor);
+                if (ok) {
+                    this.showToast('🛡️ Divine Shield active on ' + piece.type + '!');
+                    this.setupAbilitiesUI();
+                }
+            }
+            this.activeAbility = null;
+            this.renderBoard();
+            return;
+        }
+
+        if (this.activeAbility === 'jump') {
+            if (!this.jumpPiece) {
+                const piece = this.engine.getPiece(row, col);
+                if (!piece || piece.color !== this.playerColor) {
+                    this.showToast('Select your piece to jump');
+                    return;
+                }
+                const dir = this.playerColor === 'white' ? -1 : 1;
+                const hurdleRow = row + dir;
+                const targetRow = row + 2 * dir;
+                if (!this.engine.isInBounds(targetRow, col) || !this.engine.getPiece(hurdleRow, col) || this.engine.getPiece(targetRow, col)) {
+                    this.showToast('Must have an obstacle in front and empty landing!');
+                    return;
+                }
+                this.jumpPiece = { fromRow: row, fromCol: col, toRow: targetRow, toCol: col };
+                this.showToast('Tap highlighted square to land');
+                this.renderBoard();
+                return;
+            } else {
+                if (row === this.jumpPiece.toRow && col === this.jumpPiece.toCol) {
+                    if (this.gameMode === 'online') {
+                        this.multiplayer.send({ type: 'use_ability', ability: 'jump', args: this.jumpPiece });
+                    } else {
+                        const ok = this.engine.validateAbility('jump', this.jumpPiece, this.playerColor);
+                        if (ok) {
+                            this.showToast('🪽 Pegasus Jump executed!');
+                            this.setupAbilitiesUI();
+                            if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
+                                setTimeout(() => this.makeAIMove(), 500);
+                            }
+                        }
+                    }
+                    this.activeAbility = null;
+                    this.jumpPiece = null;
+                    this.renderBoard();
+                    return;
+                } else {
+                    this.jumpPiece = null;
+                    this.activeAbility = null;
+                    this.showToast('Jump canceled');
+                    this.renderBoard();
+                    return;
+                }
+            }
+        }
+
         if (this.activeAbility === 'freeze') {
             const piece = this.engine.getPiece(row, col);
             if (!piece || piece.color === this.playerColor) {
@@ -2536,6 +2633,17 @@ class App {
       return;
     }
 
+    this.hintCountInMatch = (this.hintCountInMatch || 0) + 1;
+    const hintCost = Math.pow(2, this.hintCountInMatch - 1) * 20;
+    if ((this.coins || 0) < hintCost) {
+      this.showToast(`Need ${hintCost} coins for hint! (You have ${this.coins || 0})`);
+      this.hintCountInMatch--;
+      return;
+    }
+    this.coins -= hintCost;
+    try { localStorage.setItem('owl_coins', this.coins); } catch(e){}
+    this.updateCoinDisplay();
+
     const hintAI = new AIEngine('hard');
     const bestMove = hintAI.getBestMove(this.engine);
     if (!bestMove) {
@@ -2665,19 +2773,25 @@ class App {
     if (!container) return;
     
     const iconMap = {
-      'swap': '/assets/Asset 42.png',
-      'freeze': '/assets/Asset 43.png',
-      'second': '/assets/Asset 44.png'
-    };
+        'swap': '/assets/Asset 42.png',
+        'freeze': '/assets/Asset 43.png',
+        'second': '/assets/Asset 44.png'
+      };
+      const emojiMap = {
+        'shield': '🛡️',
+        'jump': '🪽'
+      };
 
-    let html = '';
-    const abilities = this.selectedAbilities || ['swap', 'freeze'];
-    abilities.forEach(ab => {
-      if (iconMap[ab]) {
-        html += `<img src="${iconMap[ab]}" style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #20120B; object-fit: cover; background: #fff;">`;
-      }
-    });
-    container.innerHTML = html;
+      let html = '';
+      const abilities = this.selectedAbilities || ['swap', 'freeze'];
+      abilities.forEach(ab => {
+        if (iconMap[ab]) {
+          html += `<img src="${iconMap[ab]}" style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #20120B; object-fit: cover; background: #fff;">`;
+        } else if (emojiMap[ab]) {
+          html += `<span style="display:inline-flex; align-items:center; justify-content:center; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid #C99700; background: #2A170B; font-size: 11px;">${emojiMap[ab]}</span>`;
+        }
+      });
+      container.innerHTML = html;
   }
 
   confirmAbilities() {

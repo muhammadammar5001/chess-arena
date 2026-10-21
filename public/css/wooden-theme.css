@@ -802,3 +802,33 @@ body, html, .screen, .fantasy-home-screen, .discover-shell, .abilities-shell, .g
   color: #FFD54F !important;
   transform: translateY(-1px) !important;
 }
+
+/* ==========================================================================
+   Divine Shield & Skill Visual Effects
+   ========================================================================== */
+.shielded-square {
+  position: relative;
+  box-shadow: inset 0 0 16px rgba(217, 164, 65, 0.75), 0 0 14px rgba(255, 215, 0, 0.6) !important;
+  border: 2px solid #D9A441 !important;
+  animation: divineShieldPulse 2s ease-in-out infinite;
+}
+
+.shielded-square::after {
+  content: '🛡️';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 15px;
+  filter: drop-shadow(0 0 4px #D9A441);
+  pointer-events: none;
+  z-index: 5;
+}
+
+@keyframes divineShieldPulse {
+  0%, 100% {
+    box-shadow: inset 0 0 16px rgba(217, 164, 65, 0.75), 0 0 14px rgba(255, 215, 0, 0.6);
+  }
+  50% {
+    box-shadow: inset 0 0 24px rgba(255, 223, 100, 0.95), 0 0 20px rgba(255, 215, 0, 0.85);
+  }
+}

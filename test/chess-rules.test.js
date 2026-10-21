@@ -122,4 +122,61 @@ console.log("--- RUNNING CHESS ENGINE CHARACTERIZATION TESTS ---");
   console.log("? Second chance (Undo) ability verified");
 }
 
-console.log("--- ALL 9 CHARACTERIZATION TESTS PASSED SUCCESSFULLY! ---");
+// Test 10: Abilities - Divine Shield
+{
+  const engine = new ChessEngine();
+  // Shield white pawn at (6, 4)
+  const shieldRes = engine.validateAbility("shield", { row: 6, col: 4 }, "white");
+  assert.strictEqual(shieldRes, true, "Divine Shield should validate on friendly piece");
+  assert.strictEqual(engine.isPieceShielded(6, 4), true, "Pawn at (6,4) should be shielded");
+
+  // Enemy piece cannot capture shielded piece
+  engine.board[5][3] = { type: "pawn", color: "black" };
+  const blackMoves = engine.getPseudoLegalMoves(5, 3);
+  const captureAttempt = blackMoves.find(m => m.row === 6 && m.col === 4);
+  assert.strictEqual(captureAttempt, undefined, "Enemy piece must NOT be allowed to capture shielded piece");
+
+  // Cannot shield enemy piece
+  const enemyShieldRes = engine.validateAbility("shield", { row: 1, col: 0 }, "white");
+  assert.strictEqual(enemyShieldRes, false, "Cannot shield opponent piece");
+
+  // Cannot use shield a 2nd time (1-time use per match)
+  const secondShieldRes = engine.validateAbility("shield", { row: 6, col: 0 }, "white");
+  assert.strictEqual(secondShieldRes, false, "Cannot use Divine Shield twice in same match");
+
+  console.log("✔ Divine Shield ability & capture immunity verified");
+}
+
+// Test 11: Abilities - Pegasus Jump
+{
+  const engine = new ChessEngine();
+  // Place obstacle directly in front of white pawn at (6, 4)
+  // hurdle is at (5, 4), landing at (4, 4)
+  engine.board[5][4] = { type: "pawn", color: "black" };
+  const jumpRes = engine.validateAbility("jump", { fromRow: 6, fromCol: 4, toRow: 4, toCol: 4 }, "white");
+  assert.strictEqual(jumpRes, true, "Pegasus Jump should vault over front hurdle to empty square");
+  assert.strictEqual(engine.board[4][4].type, "pawn", "Pawn successfully landed at (4,4)");
+  assert.strictEqual(engine.board[6][4], null, "Original square (6,4) vacated");
+  assert.strictEqual(engine.board[5][4].type, "pawn", "Hurdle at (5,4) remains in place");
+
+  // Engine turn should advance to black after jump
+  assert.strictEqual(engine.currentTurn, "black", "Pegasus Jump consumes turn");
+
+  // Invalid jump: no hurdle in front
+  const invalidJumpNoHurdle = engine.validateAbility("jump", { fromRow: 1, fromCol: 0, toRow: 3, toCol: 0 }, "black");
+  assert.strictEqual(invalidJumpNoHurdle, false, "Jump without hurdle must fail");
+
+  // Invalid jump: landing square occupied
+  engine.board[2][0] = { type: "pawn", color: "white" }; // hurdle
+  engine.board[3][0] = { type: "rook", color: "black" }; // occupied landing
+  const invalidJumpOccupied = engine.validateAbility("jump", { fromRow: 1, fromCol: 0, toRow: 3, toCol: 0 }, "black");
+  assert.strictEqual(invalidJumpOccupied, false, "Jump to occupied square must fail");
+
+  // Cannot use jump twice in same match
+  const secondJumpRes = engine.validateAbility("jump", { fromRow: 6, fromCol: 0, toRow: 4, toCol: 0 }, "white");
+  assert.strictEqual(secondJumpRes, false, "Cannot use Pegasus Jump twice in same match");
+
+  console.log("✔ Pegasus Jump ability & obstacle vault verified");
+}
+
+console.log("--- ALL 11 CHARACTERIZATION TESTS PASSED SUCCESSFULLY! ---");
