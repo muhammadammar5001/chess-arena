@@ -97,14 +97,6 @@
             <span class="wallet-balance" id="wallet-balance">1,000 Coins</span>
           </div>
           
-          <button class="btn-settings" onclick="app.toggleFriendsList()" title="Friends">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-            </svg>
-          </button>
           <button class="btn-settings" onclick="app.showModal('modal-settings')" title="Settings">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="3"></circle>
@@ -336,25 +328,10 @@
   <div id="screen-room" class="screen">
     <div class="screen-inner">
       <button class="back-btn" onclick="app.showMatchmakingScreen()">← Back</button>
-      <h2 class="screen-title">Play with Friend</h2>
-      <p class="screen-desc">Create a private room or join a friend's game</p>
+      <h2 class="screen-title">Custom Room</h2>
+      <p class="screen-desc">Create a private room or join via 6-letter code</p>
 
       <div class="play-mode-list">
-
-        <!-- Friend List -->
-        <button class="play-mode-card" onclick="app.toggleFriendsList()">
-          <div class="play-mode-icon-box" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#20120B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </div>
-          <div class="play-mode-text">
-            <span class="play-mode-title">Friend List</span>
-            <span class="play-mode-desc">Invite a friend directly from your list</span>
-          </div>
-          <svg class="play-mode-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m9 18 6-6-6-6"/></svg>
-        </button>
 
         <!-- Create Room -->
         <button class="play-mode-card" onclick="app.onCreateRoomClick()">
@@ -450,8 +427,8 @@
               </svg>
             </div>
           <div class="play-mode-text">
-            <span class="play-mode-title">Play with Friend</span>
-            <span class="play-mode-desc">Create or join a private room</span>
+            <span class="play-mode-title">Custom Room</span>
+            <span class="play-mode-desc">Create or join via 6-letter room code</span>
           </div>
           <svg class="play-mode-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="m9 18 6-6-6-6"/></svg>
         </button>
@@ -1284,7 +1261,7 @@
   <script src="/js/ai-engine.js?v=639262545462453427"></script>
   <script src="/js/pieces.js"></script>
   <script src="/js/ad-service.js"></script>
-  <script src="/js/app.js?v=1792623716191"></script>
+  <script src="/js/app.js?v=1792624409091"></script>
   
 
   <!-- ═══════════════ LEADERBOARD SCREEN ═══════════════ -->
@@ -1451,15 +1428,7 @@
           <div class="recap-player-col">
             <div style="position: relative; display: inline-block;">
               <img id="victory-opp-avatar" src="/assets/shadow_owl_avatar.jpg" alt="Opponent" class="recap-player-avatar">
-              <button class="add-friend-btn" id="btn-add-friend-gameover" onclick="app.addFriend(document.getElementById('victory-opp-name').textContent)" title="Add Friend">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="8.5" cy="7" r="4"></circle>
-                  <line x1="20" y1="8" x2="20" y2="14"></line>
-                  <line x1="17" y1="11" x2="23" y2="11"></line>
-                </svg>
-              </button>
-            </div>
+              </div>
             <span style="font-size: 12px; font-weight: 700; color: #fff;" id="victory-opp-name">ShadowOwl</span>
             <span style="font-size: 10px; color: #94a3b8;" id="victory-opp-rating">1180</span>
           </div>
@@ -1651,46 +1620,6 @@
     </div>
   </div>
 
-  <!-- Friends Sidebar -->
-  <div id="friends-sidebar" class="friends-sidebar closed">
-    <div class="friends-sidebar-header" style="flex-direction: column; align-items: stretch; gap: 10px;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="margin:0;">Friends</h3>
-        <button onclick="app.toggleFriendsList()" class="btn-close-sidebar" style="margin-left: auto;">&times;</button>
-      </div>
-      <div style="display: flex; gap: 8px;">
-        <input type="text" id="add-friend-input" placeholder="Add username..." style="flex:1; padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.4); color: white; font-size: 13px; outline: none;">
-        <button onclick="app.sendFriendRequest()" style="background: #F5D36C; color: #20120B; border: none; border-radius: 6px; padding: 0 12px; font-weight: bold; cursor: pointer;">Add</button>
-      </div>
-      <button onclick="app.showFriendRequests()" id="btn-friend-requests" style="width: 100%; padding: 8px; background: rgba(181, 176, 255, 0.1); color: #F5D36C; border: 1px solid rgba(181, 176, 255, 0.3); border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-        <span>Friend Requests</span>
-        <span id="friend-requests-badge" style="background: #ef4444; color: white; font-size: 11px; padding: 2px 6px; border-radius: 10px; display: none;">0</span>
-      </button>
-    </div>
-    <div class="friends-list" id="friends-list-container">
-      <p style="color: rgba(255,255,255,0.5); text-align: center; padding: 20px 0; font-size: 14px;">No friends yet. Add someone above!</p>
-    </div>
-    <div class="demo-incoming-btn-wrap">
-      <button onclick="app.simulateIncomingInvite()" class="btn-demo-incoming" style="width: 100%; margin-top: 20px; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; cursor: pointer;">[Demo] Receive Invite</button>
-    </div>
-  </div>
-
-  <!-- Game Invite Popup Notification -->
-  <div id="game-invite-popup" class="invite-popup hidden">
-    <div class="invite-popup-content">
-      <img src="/assets/shadow_owl_avatar.jpg" class="invite-avatar" id="invite-sender-avatar" />
-      <div class="invite-info">
-        <span class="invite-title"><strong id="invite-sender-name">ShadowOwl</strong> invited you to play!</span>
-        <span class="invite-details"><span id="invite-amount">50 Coins</span> match • <span id="invite-mode">Standard</span> Mode</span>
-      </div>
-    </div>
-    <div class="invite-actions">
-      <button class="btn-reject" onclick="app.rejectInvite()">Reject</button>
-      <button class="btn-accept" onclick="app.acceptInvite()">Accept</button>
-    </div>
-  </div>
-
-  
   <!-- Username Prompt Modal -->
   <div id="username-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 99999; display: flex; align-items: center; justify-content: center; backdrop-filter: none;">
     <div style="background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%); border: 2px solid #C99700; border-radius: 12px; padding: 24px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 0 20px rgba(181, 176, 255, 0.3);">
@@ -1703,26 +1632,6 @@
       </div>
     </div>
   </div>
-
-
-
-  <!-- Friend Requests Modal -->
-  <div id="friend-requests-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 99999; display: flex; align-items: center; justify-content: center; backdrop-filter: none;">
-    <div style="background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%); border: 2px solid #C99700; border-radius: 12px; padding: 24px; width: 90%; max-width: 400px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(181, 176, 255, 0.3);">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="color: #F5D36C; margin: 0; font-family: 'Outfit', sans-serif;">Incoming Requests</h2>
-        <button onclick="document.getElementById('friend-requests-modal').classList.add('hidden')" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
-      </div>
-      <div id="friend-requests-list" style="overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
-        <p style="color: rgba(255,255,255,0.5); text-align: center; margin: 20px 0;">No incoming requests.</p>
-      </div>
-    </div>
-  </div>
-
-
-  
-  </div>
-
 </body>
 </html>
 
