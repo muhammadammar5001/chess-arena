@@ -1633,3 +1633,87 @@ body, html, .screen, .fantasy-home-screen, #screen-home, #screen-profile, .disco
   border-color: #C99700 !important;
   box-shadow: 0 0 0 2px rgba(201, 151, 0, 0.25) !important;
 }
+/* --- IN-GAME ACTION BAR & TACTILE WOODEN BUTTONS --- */
+.ingame-action-bar {
+  display: flex !important;
+  justify-content: space-around !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: 480px !important;
+  margin: 12px auto 0 auto !important;
+  gap: 10px !important;
+}
+
+.btn-game-pill {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  padding: 12px 6px !important;
+  background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
+  border: 1.5px solid #8C6538 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 10px rgba(46, 26, 15, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.15) !important;
+  color: #FDF7EC !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+  user-select: none !important;
+}
+
+.btn-game-pill:hover {
+  background: linear-gradient(180deg, #4A2E1B 0%, #2A170C 100%) !important;
+  border-color: #C99700 !important;
+  color: #FDF7EC !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 14px rgba(46, 26, 15, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.25) !important;
+}
+
+.btn-game-pill:active {
+  transform: translateY(1px) !important;
+  box-shadow: 0 2px 4px rgba(46, 26, 15, 0.3) !important;
+}
+
+.btn-game-pill .btn-icon {
+  font-size: 18px !important;
+  color: #F5D36C !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 24px !important;
+}
+
+.btn-game-pill .btn-label {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #D6BD9B !important;
+  letter-spacing: 0.3px !important;
+  transition: color 0.15s ease !important;
+}
+
+.btn-game-pill:hover .btn-label {
+  color: #FDF7EC !important;
+}
+
+/* Active Ability Highlight (When clicked / awaiting target square) */
+.btn-game-pill.active {
+  background: linear-gradient(180deg, #4E2E18 0%, #2E180B 100%) !important;
+  border: 2px solid #FFD54F !important;
+  box-shadow: 0 0 14px rgba(201, 151, 0, 0.55), inset 0 0 8px rgba(255, 213, 79, 0.25) !important;
+  transform: translateY(-2px) !important;
+}
+
+.btn-game-pill.active .btn-label {
+  color: #FFD54F !important;
+}
+
+/* Used Ability State */
+.btn-game-pill.used,
+.btn-game-pill:disabled {
+  opacity: 0.45 !important;
+  filter: grayscale(0.8) !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
