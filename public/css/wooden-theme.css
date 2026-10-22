@@ -1717,3 +1717,73 @@ body, html, .screen, .fantasy-home-screen, #screen-home, #screen-profile, .disco
   transform: none !important;
   box-shadow: none !important;
 }
+/* --- DIRECT ABILITY SELECTION CARD ON HOME --- */
+.home-abilities-card {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 90% !important;
+  max-width: 360px !important;
+  margin: 10px auto 16px auto !important;
+  padding: 12px 16px !important;
+  background: linear-gradient(180deg, #442918 0%, #2A170C 100%) !important;
+  border: 1.5px solid #C99700 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 12px rgba(46, 26, 15, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.15) !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+  box-sizing: border-box !important;
+}
+
+.home-abilities-card:hover {
+  background: linear-gradient(180deg, #53331E 0%, #351C0F 100%) !important;
+  border-color: #FFD54F !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(46, 26, 15, 0.35) !important;
+}
+
+.home-abilities-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.home-abilities-icon-badge {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 10px !important;
+  background: linear-gradient(145deg, #2A170B, #1A0D06) !important;
+  border: 1px solid #8C6538 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+.home-abilities-text {
+  display: flex !important;
+  flex-direction: column !important;
+  text-align: left !important;
+}
+
+.home-abilities-title {
+  font-family: 'Cinzel', 'Georgia', serif !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: #FDF7EC !important;
+  letter-spacing: 0.3px !important;
+}
+
+.home-abilities-desc {
+  font-size: 11px !important;
+  color: #D6BD9B !important;
+  font-weight: 600 !important;
+}
+
+.home-abilities-preview {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin-left: auto !important;
+  margin-right: 8px !important;
+}

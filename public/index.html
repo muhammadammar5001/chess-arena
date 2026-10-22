@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/tokens.css">
   <link rel="stylesheet" href="/css/styles.css?v=1792631652731">
-  <link rel="stylesheet" href="/css/wooden-theme.css?v=1792632427296">
+  <link rel="stylesheet" href="/css/wooden-theme.css?v=1792668457241">
 <style>
     #username-modal.hidden { display: none !important; }
     #username-modal:not(.hidden) { display: flex !important; }
@@ -119,25 +119,26 @@
         </div>
       </div>
 
-      <!-- Mode Selector -->
-      <div class="mode-toggle-container">
-        <div class="mode-toggle-bg" id="mode-toggle-bg"></div>
-        <button class="mode-toggle-btn active" id="btn-mode-standard" onclick="app.setGameMode('standard')">Standard Mode</button>
-        <button class="mode-toggle-btn" id="btn-mode-robin" onclick="app.setGameMode('robin')">Robin Mode</button>
-      </div>
-
-        <button id="btn-home-loadout" class="loadout-btn hidden" onclick="app.showAbilitiesScreen()" style="min-width: 160px; justify-content: space-between;">
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
-              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-              <line x1="7" y1="7" x2="7.01" y2="7"></line>
+            <!-- Direct Ability Selection Bar -->
+      <div class="home-abilities-card" id="btn-home-loadout" onclick="app.showAbilitiesScreen()" title="Choose Your Abilities">
+        <div class="home-abilities-left">
+          <div class="home-abilities-icon-badge">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFD54F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
             </svg>
-            Select Abilities
           </div>
-          <div id="home-selected-abilities" style="display: flex; gap: 4px; align-items: center;">
-            <!-- JS will inject small ability icons here -->
+          <div class="home-abilities-text">
+            <span class="home-abilities-title">Tactical Abilities</span>
+            <span class="home-abilities-desc">Tap to customize 2 abilities</span>
           </div>
-        </button>
+        </div>
+        <div id="home-selected-abilities" class="home-abilities-preview">
+          <!-- JS injects 2 ability medallions here -->
+        </div>
+        <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </div>
 
         <!-- Main Action: Play Now button -->
       <button id="btn-main-play" class="btn-lime" style="margin-bottom: 18px;" onclick="app.showMatchmakingScreen('matchmaking')">
@@ -1291,7 +1292,7 @@
   <script src="/js/ai-engine.js?v=639262545462453427"></script>
   <script src="/js/pieces.js?v=1792631652731"></script>
   <script src="/js/ad-service.js"></script>
-  <script src="/js/app.js?v=1792631652731"></script>
+  <script src="/js/app.js?v=1792668457241"></script>
   
 
   <!-- ═══════════════ LEADERBOARD SCREEN ═══════════════ -->

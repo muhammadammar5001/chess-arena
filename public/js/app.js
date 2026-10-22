@@ -29,7 +29,7 @@ class App {
     this.bgMusicNodes = [];
     this.bgMusicGain = null;
     this.isAnimatingMove = false;
-    this.matchType = 'standard'; // 'standard' or 'robin'
+    this.matchType = 'robin'; // 'standard' or 'robin'
     
     try {
       let saved = JSON.parse(localStorage.getItem('owl_selected_abilities'));
@@ -53,24 +53,10 @@ class App {
     this.init();
   }
 
-  setGameMode(mode) {
-    this.matchType = mode;
-    document.getElementById('btn-mode-standard').classList.toggle('active', mode === 'standard');
-    document.getElementById('btn-mode-robin').classList.toggle('active', mode === 'robin');
-    
-    const container = document.querySelector('.mode-toggle-container');
-    if (container) {
-      container.setAttribute('data-mode', mode);
-    }
-
-    const loadoutBtn = document.getElementById('btn-home-loadout');
-    if (loadoutBtn) {
-      if (mode === 'robin') {
-        loadoutBtn.classList.remove('hidden');
-      } else {
-        loadoutBtn.classList.add('hidden');
-      }
-    }
+    setGameMode(mode) {
+    this.matchType = 'robin';
+    this.syncAbilitiesUI();
+  }
   }
 
   init() {
@@ -2872,30 +2858,30 @@ class App {
   }
 
   
-  updateHomeAbilitiesDisplay() {
+    updateHomeAbilitiesDisplay() {
     const container = document.getElementById('home-selected-abilities');
     if (!container) return;
     
     const iconMap = {
-        'swap': '/assets/Asset 42.png',
-        'freeze': '/assets/Asset 43.png',
-        'second': '/assets/Asset 44.png'
-      };
-      const emojiMap = {
-        'shield': '🛡️',
-        'jump': '🪽'
-      };
+      'swap': '/assets/Asset 42.png',
+      'freeze': '/assets/Asset 43.png',
+      'second': '/assets/Asset 44.png'
+    };
+    const emojiMap = {
+      'shield': '🛡️',
+      'jump': '🪽'
+    };
 
-      let html = '';
-      const abilities = this.selectedAbilities || ['swap', 'freeze'];
-      abilities.forEach(ab => {
-        if (iconMap[ab]) {
-          html += `<img src="${iconMap[ab]}" style="width: 20px; height: 20px; border-radius: 50%; border: 1px solid #20120B; object-fit: cover; background: #fff;">`;
-        } else if (emojiMap[ab]) {
-          html += `<span style="display:inline-flex; align-items:center; justify-content:center; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid #C99700; background: #2A170B; font-size: 11px;">${emojiMap[ab]}</span>`;
-        }
-      });
-      container.innerHTML = html;
+    let html = '';
+    const abilities = this.selectedAbilities || ['swap', 'freeze'];
+    abilities.forEach(ab => {
+      if (iconMap[ab]) {
+        html += `<div style="width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #C99700; background: #2A170B; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.4);"><img src="${iconMap[ab]}" style="width: 17px; height: 17px; object-fit: contain;"></div>`;
+      } else if (emojiMap[ab]) {
+        html += `<div style="width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #C99700; background: #2A170B; display: flex; align-items: center; justify-content: center; font-size: 13px; box-shadow: 0 2px 5px rgba(0,0,0,0.4);">${emojiMap[ab]}</div>`;
+      }
+    });
+    container.innerHTML = html;
   }
 
   confirmAbilities() {
