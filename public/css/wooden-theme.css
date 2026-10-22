@@ -10,144 +10,502 @@ body, html, .screen, .fantasy-home-screen, #screen-home, #screen-profile, .disco
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Georgia", serif !important;
 }
 
-/* --- 2. DEEP 3D BEVELED CHESS BOARD --- */
-.board-container {
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
+:root {
+  --sans: "Manrope", "Avenir Next", Avenir, "Segoe UI", system-ui, sans-serif;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+}
+
+.svg-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ------------------------- wooden frame ------------------------- */
+
+.board-wrap {
+  position: relative !important;
   width: 100% !important;
   max-width: 480px !important;
   margin: 0 auto !important;
-  padding: 12px !important;
-  box-sizing: border-box !important;
+  flex: 0 0 auto !important;
+  isolation: isolate !important;
 }
 
-#chess-board {
-  display: grid !important;
-  grid-template-columns: repeat(8, 1fr) !important;
-  grid-template-rows: repeat(8, 1fr) !important;
-  width: 100% !important;
-  aspect-ratio: 1 / 1 !important;
-  background-color: #382012 !important;
-  border: 14px solid #382012 !important;
-  outline: 3px solid #C99700 !important;
-  outline-offset: -6px !important;
-  border-radius: 16px !important;
-  box-shadow: 
-    0 24px 48px rgba(0, 0, 0, 0.85),
-    0 8px 16px rgba(0, 0, 0, 0.65),
-    inset 0 3px 5px rgba(255, 255, 255, 0.22),
-    inset 0 -5px 10px rgba(0, 0, 0, 0.75) !important;
-  position: relative !important;
-  box-sizing: border-box !important;
-  user-select: none !important;
-  touch-action: manipulation !important;
-}
-
-/* Brass Corner Accents on Board */
-#chess-board::before {
-  content: '' !important;
+.board-wrap::before {
+  content: "" !important;
   position: absolute !important;
-  inset: -12px !important;
-  border-radius: 14px !important;
-  border: 1px solid rgba(255, 213, 79, 0.3) !important;
+  z-index: -1 !important;
+  inset: 13% -1% -11% !important;
+  border-radius: 50% !important;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(180, 126, 66, 0.24),
+    rgba(118, 77, 37, 0.08) 42%,
+    transparent 69%
+  ) !important;
+  filter: blur(26px) !important;
   pointer-events: none !important;
 }
 
-/* --- SQUARES: TACTILE WOOD GRAIN & BEVELS --- */
+.board-frame {
+  position: relative !important;
+  width: 100% !important;
+  flex: 0 0 auto !important;
+  padding: clamp(9px, 1.15vw, 15px) !important;
+  border-radius: clamp(14px, 1.6vw, 21px) !important;
+  background:
+    linear-gradient(128deg, rgba(255, 236, 201, 0.18), transparent 20%, transparent 74%, rgba(0, 0, 0, 0.2)),
+    repeating-linear-gradient(
+      91deg,
+      rgba(255, 255, 255, 0.022) 0 1px,
+      transparent 1px 12px,
+      rgba(0, 0, 0, 0.025) 12px 13px,
+      transparent 13px 31px
+    ),
+    linear-gradient(148deg, #694a30 0%, #4d321f 38%, #362113 72%, #28170c 100%) !important;
+  box-shadow:
+    0 40px 65px -16px rgba(0, 0, 0, 0.56),
+    0 18px 28px rgba(0, 0, 0, 0.3),
+    0 4px 0 rgba(24, 13, 6, 0.95),
+    inset 0 1px 0 rgba(255, 235, 196, 0.27),
+    inset 0 -2px 2px rgba(0, 0, 0, 0.42) !important;
+  box-sizing: border-box !important;
+}
+
+.board-frame::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: clamp(5px, 0.65vw, 9px) !important;
+  border: 1px solid rgba(239, 210, 160, 0.2) !important;
+  border-radius: clamp(10px, 1.1vw, 14px) !important;
+  box-shadow: 0 0 0 1px rgba(24, 12, 5, 0.35) !important;
+  pointer-events: none !important;
+  z-index: 3 !important;
+}
+
+.board-frame::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: clamp(7px, 0.85vw, 11px) !important;
+  border-radius: clamp(9px, 1vw, 13px) !important;
+  background:
+    radial-gradient(circle at 0 0, rgba(245, 214, 158, 0.88) 0 1.9px, rgba(62, 39, 17, 0.42) 2.1px 2.8px, transparent 3.2px),
+    radial-gradient(circle at 100% 0, rgba(245, 214, 158, 0.82) 0 1.9px, rgba(62, 39, 17, 0.42) 2.1px 2.8px, transparent 3.2px),
+    radial-gradient(circle at 0 100%, rgba(245, 214, 158, 0.82) 0 1.9px, rgba(62, 39, 17, 0.42) 2.1px 2.8px, transparent 3.2px),
+    radial-gradient(circle at 100% 100%, rgba(245, 214, 158, 0.88) 0 1.9px, rgba(62, 39, 17, 0.42) 2.1px 2.8px, transparent 3.2px),
+    linear-gradient(116deg, rgba(255, 248, 226, 0.052), transparent 27%, transparent 72%, rgba(23, 10, 3, 0.085)) !important;
+  pointer-events: none !important;
+  z-index: 4 !important;
+}
+
+/* ------------------------- board ------------------------- */
+
+.board, #chess-board {
+  position: relative !important;
+  display: grid !important;
+
+  grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+  grid-template-rows: repeat(8, minmax(0, 1fr)) !important;
+  grid-auto-flow: row !important;
+  grid-auto-rows: minmax(0, 1fr) !important;
+
+  width: 100% !important;
+  height: auto !important;
+  flex: none !important;
+  aspect-ratio: 1 / 1 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+
+  border: none !important;
+  outline: none !important;
+  border-radius: clamp(5px, 0.7vw, 8px) !important;
+  background: #6c4b2e !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(33, 18, 8, 0.8),
+    inset 0 0 24px rgba(24, 12, 4, 0.5) !important;
+
+  touch-action: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.board::after, #chess-board::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+  opacity: 0.55 !important;
+  mix-blend-mode: soft-light !important;
+  background-image:
+    repeating-linear-gradient(
+      91deg,
+      transparent 0 18px,
+      rgba(62, 34, 12, 0.2) 18px 19px,
+      transparent 19px 44px,
+      rgba(255, 246, 220, 0.1) 44px 45px,
+      transparent 45px 76px
+    ),
+    repeating-linear-gradient(
+      89deg,
+      transparent 0 37px,
+      rgba(46, 24, 8, 0.14) 37px 38px,
+      transparent 38px 59px
+    ) !important;
+}
+
+/* ------------------------- board squares ------------------------- */
+
 .square {
   position: relative !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  aspect-ratio: 1 / 1 !important;
+  flex: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  appearance: none !important;
   cursor: pointer !important;
-  transition: all 0.12s ease !important;
+  isolation: isolate !important;
+  background: transparent !important;
   box-sizing: border-box !important;
-  overflow: visible !important;
+
+  --marker: rgba(55, 31, 12, 0.44);
+  --marker-soft: rgba(55, 31, 12, 0.15);
 }
 
 .square.light {
-  background: linear-gradient(135deg, #F5E4C4 0%, #E2C494 50%, #D4B17D 100%) !important;
-  box-shadow: 
-    inset 1.5px 1.5px 2px rgba(255, 255, 255, 0.45),
-    inset -1.5px -1.5px 2px rgba(90, 50, 20, 0.35) !important;
+  background-color: #e2c594 !important;
+  background-image:
+    radial-gradient(ellipse at 24% 12%, rgba(255, 249, 228, 0.24), transparent 53%),
+    linear-gradient(
+      112deg,
+      transparent 22%,
+      rgba(138, 92, 44, 0.055) 23%,
+      transparent 24% 68%,
+      rgba(135, 88, 42, 0.04) 69%,
+      transparent 70%
+    ),
+    linear-gradient(148deg, #ead2a4 0%, #ddbd88 62%, #d1ad75 100%) !important;
+  box-shadow: none !important;
 }
 
 .square.dark {
-  background: linear-gradient(135deg, #A86E3C 0%, #875125 50%, #6E3D18 100%) !important;
-  box-shadow: 
-    inset 1.5px 1.5px 2px rgba(255, 255, 255, 0.18),
-    inset -1.5px -1.5px 3px rgba(0, 0, 0, 0.55) !important;
+  background-color: #845433 !important;
+  background-image:
+    radial-gradient(ellipse at 23% 9%, rgba(255, 206, 144, 0.1), transparent 50%),
+    linear-gradient(
+      114deg,
+      transparent 20%,
+      rgba(53, 27, 10, 0.09) 21%,
+      transparent 22% 70%,
+      rgba(255, 225, 179, 0.035) 71%,
+      transparent 72%
+    ),
+    linear-gradient(148deg, #986442 0%, #825334 58%, #714629 100%) !important;
+  box-shadow: none !important;
+  --marker: rgba(255, 240, 209, 0.62);
+  --marker-soft: rgba(255, 240, 209, 0.14);
 }
 
+.square.tone-b.light {
+  background-color: #dec08d !important;
+  background-image:
+    radial-gradient(ellipse at 30% 8%, rgba(255, 248, 224, 0.2), transparent 55%),
+    linear-gradient(104deg, transparent 35%, rgba(118, 77, 36, 0.055) 36%, transparent 37%),
+    linear-gradient(151deg, #e8cf9f 0%, #d9b883 62%, #cda970 100%) !important;
+}
+
+.square.tone-b.dark {
+  background-color: #805131 !important;
+  background-image:
+    radial-gradient(ellipse at 30% 8%, rgba(255, 205, 145, 0.09), transparent 52%),
+    linear-gradient(106deg, transparent 32%, rgba(45, 23, 8, 0.075) 33%, transparent 34%),
+    linear-gradient(151deg, #94603e 0%, #7e5031 58%, #6d4327 100%) !important;
+}
+
+.square:focus-visible {
+  outline: 3px solid rgba(255, 221, 155, 0.95) !important;
+  outline-offset: -3px !important;
+  z-index: 8 !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .square:hover .chess-piece {
+    transform: translateY(-1.5%) scale(1.018) !important;
+  }
+
+  .square:hover {
+    filter: brightness(1.025) !important;
+  }
+}
+
+/* ------------------------- coordinates ------------------------- */
+
+.square .coord,
+.square .coord-label {
+  position: absolute !important;
+  z-index: 3 !important;
+  font-family: var(--sans) !important;
+  font-size: clamp(7px, 0.72vmin + 1.8px, 10px) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.025em !important;
+  line-height: 1 !important;
+  pointer-events: none !important;
+  opacity: 0.76 !important;
+  text-shadow: none !important;
+}
+
+.square.light .coord,
+.square.light .coord-label {
+  color: rgba(89, 55, 25, 0.74) !important;
+}
+
+.square.dark .coord,
+.square.dark .coord-label {
+  color: rgba(249, 225, 184, 0.74) !important;
+}
+
+.coord-file {
+  right: 4px !important;
+  bottom: 3px !important;
+  left: auto !important;
+  top: auto !important;
+}
+
+.coord-rank {
+  top: 3px !important;
+  left: 4px !important;
+  bottom: auto !important;
+  right: auto !important;
+}
+
+/* ------------------------- board states ------------------------- */
+
+.square.last-move::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  background: radial-gradient(
+    circle at 50% 44%,
+    rgba(255, 224, 158, 0.1),
+    rgba(241, 189, 88, 0.18)
+  ) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 225, 162, 0.14) !important;
+}
+
+.square.is-selected,
 .square.selected {
-  background: linear-gradient(135deg, #FFE082 0%, #FFCA28 100%) !important;
-  box-shadow: 
-    inset 0 0 0 3px #FFF9C4,
-    inset 0 0 10px rgba(201, 151, 0, 0.8),
-    0 0 8px rgba(255, 213, 79, 0.6) !important;
+  box-shadow:
+    inset 0 0 0 3px rgba(255, 226, 161, 0.94),
+    inset 0 0 34px rgba(255, 202, 101, 0.34) !important;
 }
 
-.square.last-move {
-  background: linear-gradient(135deg, rgba(255, 224, 130, 0.75) 0%, rgba(255, 202, 40, 0.6) 100%) !important;
+.square.is-selected .chess-piece,
+.square.selected .chess-piece {
+  transform: translateY(-2.5%) scale(1.035) !important;
+  filter: drop-shadow(0 8px 5px rgba(27, 12, 3, 0.45)) !important;
 }
 
-/* Coordinate Engravings */
-.coord-label {
-  position: absolute !important;
-  font-size: 11px !important;
-  font-weight: 800 !important;
-  font-family: "Georgia", serif !important;
-  pointer-events: none !important;
-}
-.square.light .coord-label { 
-  color: #55331C !important; 
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) !important; 
-}
-.square.dark .coord-label { 
-  color: #F8E8CB !important; 
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important; 
-}
-
-/* Legal Move Indicators */
-.square.legal-move::after {
-  content: '' !important;
-  display: block !important;
-  width: 26% !important;
-  height: 26% !important;
-  background: radial-gradient(circle at 35% 35%, #81C784 0%, #2E7D32 100%) !important;
-  border-radius: 50% !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 8px rgba(76, 175, 80, 0.6) !important;
-}
-
-.square.legal-capture::after {
-  content: '' !important;
-  position: absolute !important;
-  width: 84% !important;
-  height: 84% !important;
-  border: 3.5px solid #C62828 !important;
-  border-radius: 50% !important;
-  box-shadow: 0 0 10px rgba(198, 40, 40, 0.7), inset 0 0 6px rgba(198, 40, 40, 0.5) !important;
-  pointer-events: none !important;
-}
-
-/* Check Glow Ring */
+.square.is-check,
 .square.check {
-  background: radial-gradient(circle at 50% 50%, rgba(198, 40, 40, 0.85) 0%, rgba(136, 14, 79, 0.3) 70%) !important;
-  box-shadow: inset 0 0 12px #FF5252, 0 0 14px #D32F2F !important;
+  background-image:
+    radial-gradient(
+      circle at 50% 55%,
+      rgba(184, 49, 28, 0.65),
+      rgba(139, 27, 15, 0.36) 47%,
+      transparent 73%
+    ),
+    linear-gradient(148deg, #cd7d59 0%, #9d4f33 100%) !important;
+  animation: check-pulse 2.8s ease-in-out infinite !important;
 }
 
-/* --- 3. PIECES: TACTILE WOOD & 3D DROP SHADOWS --- */
-.piece {
+@keyframes check-pulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 203, 157, 0.12),
+      inset 0 0 22px rgba(147, 35, 18, 0.12) !important;
+  }
+
+  50% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 213, 170, 0.35),
+      inset 0 0 34px rgba(203, 54, 30, 0.25) !important;
+  }
+}
+
+.square.is-check .chess-piece,
+.square.check .chess-piece {
+  filter:
+    drop-shadow(0 0 15px rgba(255, 83, 38, 0.55))
+    drop-shadow(0 5px 4px rgba(20, 8, 2, 0.45)) !important;
+}
+
+.square.move-target::after,
+.square.legal-move::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 21% !important;
+  height: 21% !important;
+  aspect-ratio: 1 !important;
+  z-index: 6 !important;
+  border-radius: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  background: var(--marker) !important;
+  border: none !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 243, 218, 0.1),
+    0 1px 4px rgba(43, 22, 6, 0.18) !important;
+  animation: dot-in 160ms var(--ease) both !important;
+}
+
+.square.capture-target::after,
+.square.legal-capture::after {
+  content: "" !important;
+  position: absolute !important;
+  width: 86% !important;
+  height: 86% !important;
+  left: 7% !important;
+  top: 7% !important;
+  transform: none !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  border: clamp(2px, 0.28vw, 4px) solid var(--marker) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 247, 226, 0.08) !important;
+  animation: ring-in 170ms var(--ease) both !important;
+}
+
+@keyframes dot-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes ring-in {
+  from {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ------------------------- piece placement ------------------------- */
+
+.square .piece {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 92% !important;
-  height: 92% !important;
-  z-index: 2 !important;
+  width: 100% !important;
+  height: 100% !important;
   pointer-events: none !important;
-  filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.65)) !important;
-  transition: transform 0.1s ease !important;
+  filter: none !important;
+  background: transparent !important;
+}
+
+.square .chess-piece {
+  position: relative !important;
+  z-index: 4 !important;
+  width: 96% !important;
+  height: 96% !important;
+  display: block !important;
+  overflow: visible !important;
+  pointer-events: none !important;
+  transform-origin: 50% 78% !important;
+  transition:
+    transform 160ms var(--ease),
+    filter 160ms var(--ease),
+    opacity 120ms linear !important;
+  filter: drop-shadow(0 6px 4px rgba(25, 12, 3, 0.4)) !important;
+  will-change: transform !important;
+}
+
+/* ------------------------- chess artwork ------------------------- */
+
+.chess-piece .piece-base {
+  fill: url(#ivoryWood) !important;
+  stroke: #72512f !important;
+  stroke-width: 2.2 !important;
+  stroke-linejoin: round !important;
+}
+
+.chess-piece .piece-body {
+  fill: url(#ivoryWood) !important;
+  stroke: #72512f !important;
+  stroke-width: 2.2 !important;
+  stroke-linejoin: round !important;
+}
+
+.chess-piece[data-color="b"] .piece-base,
+.chess-piece[data-color="b"] .piece-body {
+  fill: url(#walnutWood) !important;
+  stroke: #2a170a !important;
+}
+
+.chess-piece .piece-shade {
+  fill: rgba(111, 71, 33, 0.19) !important;
+  stroke: none !important;
+}
+
+.chess-piece[data-color="b"] .piece-shade {
+  fill: rgba(15, 6, 2, 0.24) !important;
+}
+
+.chess-piece .piece-highlight {
+  fill: rgba(255, 248, 221, 0.2) !important;
+  stroke: none !important;
+}
+
+.chess-piece[data-color="b"] .piece-highlight {
+  fill: rgba(246, 207, 154, 0.09) !important;
+}
+
+.chess-piece .piece-detail {
+  fill: none !important;
+  stroke: rgba(105, 70, 37, 0.57) !important;
+  stroke-width: 1.65 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+.chess-piece[data-color="b"] .piece-detail {
+  stroke: rgba(226, 184, 130, 0.23) !important;
+}
+
+.chess-piece .piece-eye {
+  fill: #38220f !important;
+  stroke: none !important;
+}
+
+.chess-piece[data-color="b"] .piece-eye {
+  fill: #d7b27b !important;
 }
 
 /* --- 4. HOME SCREEN FEATURE MENU (NO MORE WHITE PILLS) --- */

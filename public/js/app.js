@@ -1475,9 +1475,9 @@ class App {
   // ─── Board Rendering ──────────────────────────────
 
   renderBoard() {
-      const boardEl = document.getElementById('chess-board');
+      const boardEl = document.getElementById('chess-board') || document.getElementById('board');
       if (!boardEl) return;
-      boardEl.innerHTML = ''; // RESTORED THIS LINE!
+      boardEl.innerHTML = '';
       if (!this.engine) return;
       
       // If it's online and not our turn, clear selection so pieces don't get stuck hovering
@@ -1495,20 +1495,25 @@ class App {
 
         const square = document.createElement('div');
         const isLight = (row + col) % 2 === 0;
-        square.className = `square ${isLight ? 'light' : 'dark'}`;
+        let squareClass = `square ${isLight ? 'light' : 'dark'}`;
+        const squareIndex = displayRow * 8 + displayCol;
+        if (((squareIndex * 13 + 5) % 17) < 4) {
+          squareClass += ' tone-b';
+        }
+        square.className = squareClass;
         square.dataset.row = row;
         square.dataset.col = col;
 
         // Coordinate labels
         if (displayCol === 0) {
           const rank = document.createElement('span');
-          rank.className = 'coord-label coord-rank';
+          rank.className = 'coord coord-rank coord-label';
           rank.textContent = 8 - row;
           square.appendChild(rank);
         }
         if (displayRow === 7) {
           const file = document.createElement('span');
-          file.className = 'coord-label coord-file';
+          file.className = 'coord coord-file coord-label';
           file.textContent = files[col];
           square.appendChild(file);
         }
@@ -1523,7 +1528,7 @@ class App {
 
         // Selected square
         if (this.selectedSquare && this.selectedSquare.row === row && this.selectedSquare.col === col) {
-          square.classList.add('selected');
+          square.classList.add('selected', 'is-selected');
         }
 
         // Legal move indicators
@@ -1531,9 +1536,9 @@ class App {
         if (legalMove) {
           const targetPiece = this.engine.getPiece(row, col);
           if (targetPiece || legalMove.enPassant) {
-            square.classList.add('legal-capture');
+            square.classList.add('legal-capture', 'capture-target');
           } else {
-            square.classList.add('legal-move');
+            square.classList.add('legal-move', 'move-target');
           }
         }
 
@@ -1542,7 +1547,7 @@ class App {
           const piece = this.engine.getPiece(row, col);
           if (piece && piece.type === 'king' && piece.color === this.engine.currentTurn) {
             if (this.engine.isKingInCheck(this.engine.currentTurn)) {
-              square.classList.add('check');
+              square.classList.add('check', 'is-check');
             }
           }
         }
@@ -1550,26 +1555,26 @@ class App {
         // Piece
         const piece = this.engine.getPiece(row, col);
 
-          // Ability highlights
-          if (this.engine.isPieceFrozen(row, col)) {
-             square.classList.add('frozen');
-          }
-          if (this.engine.isPieceShielded && this.engine.isPieceShielded(row, col)) {
-             square.classList.add('shielded-square');
-          }
-          if (this.swapSelection && this.swapSelection.some(s => s.row === row && s.col === col)) {
-             square.classList.add('swap-selected');
-          }
-          if (this.activeAbility === 'jump' && this.jumpPiece) {
-             if (this.jumpPiece.fromRow === row && this.jumpPiece.fromCol === col) {
-                square.classList.add('selected');
-             }
-             if (this.jumpPiece.validTargets && this.jumpPiece.validTargets.some(t => t.row === row && t.col === col)) {
-                square.classList.add('legal-move');
-             }
-          }
+        // Ability highlights
+        if (this.engine.isPieceFrozen(row, col)) {
+           square.classList.add('frozen');
+        }
+        if (this.engine.isPieceShielded && this.engine.isPieceShielded(row, col)) {
+           square.classList.add('shielded-square');
+        }
+        if (this.swapSelection && this.swapSelection.some(s => s.row === row && s.col === col)) {
+           square.classList.add('swap-selected');
+        }
+        if (this.activeAbility === 'jump' && this.jumpPiece) {
+           if (this.jumpPiece.fromRow === row && this.jumpPiece.fromCol === col) {
+              square.classList.add('selected', 'is-selected');
+           }
+           if (this.jumpPiece.validTargets && this.jumpPiece.validTargets.some(t => t.row === row && t.col === col)) {
+              square.classList.add('legal-move', 'move-target');
+           }
+        }
 
-          if (piece) {
+        if (piece) {
           const pieceEl = document.createElement('span');
           pieceEl.className = `piece ${piece.color}-piece`;
           if (typeof PieceSVGs !== 'undefined' && PieceSVGs.getPiece) {

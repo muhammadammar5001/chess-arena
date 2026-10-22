@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/tokens.css">
-  <link rel="stylesheet" href="/css/styles.css?v=1792630100505">
-  <link rel="stylesheet" href="/css/wooden-theme.css?v=1792630100505">
+  <link rel="stylesheet" href="/css/styles.css?v=1792631652731">
+  <link rel="stylesheet" href="/css/wooden-theme.css?v=1792631652731">
 <style>
     #username-modal.hidden { display: none !important; }
     #username-modal:not(.hidden) { display: flex !important; }
@@ -575,8 +575,38 @@
           <span class="status-text">Disconnected</span>
         </div>
 
-        <!-- Chess Board -->
-        <div id="chess-board" class="chess-board"></div>
+                <!-- Shared wood gradients used by the piece SVGs -->
+        <svg class="svg-defs" aria-hidden="true" focusable="false">
+          <defs>
+            <linearGradient id="ivoryWood" x1="0" y1="0" x2="0.85" y2="1">
+              <stop offset="0" stop-color="#f8e8c5"/>
+              <stop offset="0.38" stop-color="#ecd3a3"/>
+              <stop offset="0.72" stop-color="#d5af76"/>
+              <stop offset="1" stop-color="#c29257"/>
+            </linearGradient>
+
+            <linearGradient id="walnutWood" x1="0" y1="0" x2="0.82" y2="1">
+              <stop offset="0" stop-color="#835634"/>
+              <stop offset="0.4" stop-color="#654026"/>
+              <stop offset="0.75" stop-color="#4a2c18"/>
+              <stop offset="1" stop-color="#331d0e"/>
+            </linearGradient>
+          </defs>
+        </svg>
+
+        <!-- Board shell -->
+        <div class="board-wrap">
+          <div class="board-frame">
+            <div
+              class="board chess-board"
+              id="chess-board"
+              role="grid"
+              aria-label="Chess board"
+              aria-rowcount="8"
+              aria-colcount="8"
+            ></div>
+          </div>
+        </div>
 
         <!-- Captured pieces & spectators -->
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 4px;">
@@ -1259,9 +1289,9 @@
   <script src="/js/chess-engine.js?v=1792622925456"></script>
   <script src="/js/multiplayer.js?v=639262545462453427"></script>
   <script src="/js/ai-engine.js?v=639262545462453427"></script>
-  <script src="/js/pieces.js"></script>
+  <script src="/js/pieces.js?v=1792631652731"></script>
   <script src="/js/ad-service.js"></script>
-  <script src="/js/app.js?v=1792630100505"></script>
+  <script src="/js/app.js?v=1792631652731"></script>
   
 
   <!-- ═══════════════ LEADERBOARD SCREEN ═══════════════ -->
