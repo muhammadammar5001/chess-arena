@@ -2536,16 +2536,16 @@ class App {
       }
     }
 
-    if (titleEl) {
+        if (titleEl) {
       if (isPlayerWin) {
         titleEl.textContent = 'VICTORY';
-        titleEl.style.color = 'var(--primary-lime)';
+        titleEl.style.color = '#8F5F00';
       } else if (isDraw) {
         titleEl.textContent = 'DRAW';
-        titleEl.style.color = '#94a3b8';
+        titleEl.style.color = '#20120B';
       } else {
         titleEl.textContent = 'DEFEAT';
-        titleEl.style.color = '#ef4444';
+        titleEl.style.color = '#8B1E1E';
       }
     }
 

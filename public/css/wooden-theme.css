@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    WARM WOODEN GAME TABLE - COMPLETE THEME OVERHAUL
    Zero tolerance for modern/purple/neon/white-pill UI
    ========================================================================== */
@@ -276,14 +276,15 @@ body, html, .screen, .fantasy-home-screen, #screen-home, #screen-profile, .disco
 }
 
 .abilities-heading {
-  font-family: "Georgia", serif !important;
-  color: #FDF7EC !important;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+  font-family: "Cinzel", "Georgia", serif !important;
+  color: #20120B !important;
+  text-shadow: none !important;
 }
 
 .abilities-subheading {
-  color: #C99700 !important;
-  font-size: 12px !important;
+  color: #8C6538 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
 }
 
 /* --- 6. RANKINGS / LEADERBOARD (PARCHMENT WOODEN PLAQUES) --- */
@@ -914,4 +915,363 @@ body, html, .screen, .fantasy-home-screen, #screen-home, #screen-profile, .disco
   background: rgba(18, 10, 5, 0.75) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+
+/* ==========================================================================
+   SOLID WOODEN THEME - CONTRAST & WALNUT PLAQUE ENHANCEMENTS
+   High contrast against #FBF2E9 tabletop for all texts, buttons, and victory screen
+   ========================================================================== */
+
+/* --- 1. MATCH ENDING RESULT SCREEN (#screen-victory) --- */
+.victory-shell {
+  background: #FBF2E9 !important;
+}
+
+.victory-heading {
+  font-family: 'Cinzel', 'Georgia', serif !important;
+  font-size: 32px !important;
+  font-weight: 900 !important;
+  letter-spacing: 2px !important;
+  color: #20120B !important;
+  text-shadow: 0 1px 2px rgba(46, 26, 15, 0.15) !important;
+}
+
+.victory-subheading {
+  color: #8C6538 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+  margin-top: 6px !important;
+  text-shadow: none !important;
+}
+
+/* Walnut Plaque for Match Ending Result */
+.victory-recap-card {
+  background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
+  border: 2.5px solid #C99700 !important;
+  border-radius: 24px !important;
+  padding: 24px 28px !important;
+  margin: 22px 0 !important;
+  box-shadow: 0 16px 36px rgba(32, 18, 11, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.15) !important;
+}
+
+.recap-score-display {
+  font-family: 'Georgia', serif !important;
+  font-size: 32px !important;
+  font-weight: 900 !important;
+  color: #F5D36C !important;
+  letter-spacing: 4px !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6) !important;
+}
+
+#victory-player-name,
+#victory-opp-name {
+  color: #FDF7EC !important;
+  font-weight: 700 !important;
+}
+
+#victory-player-rating,
+#victory-opp-rating {
+  color: #D1B896 !important;
+  font-weight: 600 !important;
+}
+
+.recap-meta-row {
+  border-bottom: 1px solid rgba(201, 151, 0, 0.15) !important;
+  padding: 8px 0 !important;
+}
+
+.recap-meta-label {
+  color: #D1B896 !important;
+  font-weight: 600 !important;
+}
+
+.recap-meta-value {
+  color: #FDF7EC !important;
+  font-weight: 700 !important;
+}
+
+.recap-meta-value.highlight-green {
+  color: #5ED186 !important;
+  font-weight: 800 !important;
+  text-shadow: 0 0 8px rgba(94, 209, 134, 0.3) !important;
+}
+
+/* Secondary Action Button (Back to Home) - Rich Walnut Pill */
+.btn-secondary-pill {
+  width: 100% !important;
+  padding: 15px 24px !important;
+  background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
+  border: 1.5px solid #8C6538 !important;
+  border-radius: 9999px !important;
+  color: #FDF7EC !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Georgia", serif !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(46, 26, 15, 0.25) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-secondary-pill:hover {
+  background: linear-gradient(180deg, #4A2E1B 0%, #2A170C 100%) !important;
+  border-color: #C99700 !important;
+  color: #F5D36C !important;
+  transform: translateY(-1.5px) !important;
+  box-shadow: 0 6px 16px rgba(46, 26, 15, 0.35) !important;
+}
+
+/* Primary Action Buttons (Rematch / Play Again) */
+.btn-lime {
+  background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%) !important;
+  color: #20120B !important;
+  border: 2px solid #20120B !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 12px rgba(46, 26, 15, 0.25) !important;
+}
+
+.btn-lime:hover {
+  background: linear-gradient(180deg, #FFE082 0%, #D4A017 100%) !important;
+  color: #20120B !important;
+  border-color: #20120B !important;
+}
+
+/* --- 2. UNIVERSAL SCREEN HEADERS & NAVIGATION (HIGH CONTRAST) --- */
+.header-page-title {
+  color: #20120B !important;
+  font-family: 'Cinzel', 'Georgia', serif !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.3px !important;
+  text-shadow: none !important;
+}
+
+.header-page-subtitle {
+  color: #8C6538 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+.back-circle-btn {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  background: #3A2315 !important;
+  border: 1.5px solid #8C6538 !important;
+  color: #FDF7EC !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 8px rgba(46, 26, 15, 0.2) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.back-circle-btn:hover {
+  background: #4A2E1B !important;
+  border-color: #C99700 !important;
+  color: #F5D36C !important;
+  transform: translateX(-2px) !important;
+}
+
+.btn-settings {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  background: #3A2315 !important;
+  border: 1.5px solid #8C6538 !important;
+  color: #FDF7EC !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 8px rgba(46, 26, 15, 0.2) !important;
+  cursor: pointer !important;
+}
+
+.btn-settings:hover {
+  background: #4A2E1B !important;
+  border-color: #C99700 !important;
+  color: #F5D36C !important;
+}
+
+/* --- 3. "YOUR ABILITIES" SCREEN CONTRAST --- */
+.abilities-heading {
+  font-family: 'Cinzel', 'Georgia', serif !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  color: #20120B !important;
+  text-shadow: none !important;
+  margin-bottom: 4px !important;
+}
+
+.abilities-subheading {
+  color: #8C6538 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+/* --- 4. DIFFICULTY SELECTION & BOT CONTROLS (#screen-ai-select) --- */
+.color-label {
+  color: #8C6538 !important;
+  font-weight: 700 !important;
+  letter-spacing: 1.5px !important;
+}
+
+.color-btn {
+  background: #3A2315 !important;
+  border: 1.5px solid #8C6538 !important;
+  color: #D6BD9B !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.color-btn.active {
+  background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%) !important;
+  color: #20120B !important;
+  border-color: #8C6538 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+.difficulty-card {
+  background: #3A2315 !important;
+  border: 1.5px solid #8C6538 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 12px rgba(46, 26, 15, 0.15) !important;
+  transition: all 0.2s ease !important;
+}
+
+.difficulty-card:hover,
+.difficulty-card:active {
+  border-color: #C99700 !important;
+  background: #4A2E1B !important;
+  transform: translateY(-2px) !important;
+}
+
+.diff-name {
+  color: #FDF7EC !important;
+  font-weight: 800 !important;
+}
+
+.diff-desc {
+  color: #D1B896 !important;
+  font-size: 12px !important;
+}
+
+.diff-depth {
+  color: #F5D36C !important;
+  font-weight: 700 !important;
+}
+
+/* --- 5. MATCHMAKING & WAITING SCREEN (#screen-waiting) --- */
+.roulette-player-label {
+  color: #20120B !important;
+  font-weight: 800 !important;
+}
+
+.roulette-player-rating {
+  color: #8C6538 !important;
+  font-weight: 700 !important;
+}
+
+.roulette-vs-badge {
+  color: #F5D36C !important;
+  background: #3A2315 !important;
+  border: 1.5px solid #C99700 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* --- 6. IN-GAME HUD & STATUS ROW (#screen-game) --- */
+.ingame-player-name {
+  color: #20120B !important;
+  font-weight: 800 !important;
+}
+
+.ingame-player-rating {
+  color: #8C6538 !important;
+  font-weight: 700 !important;
+}
+
+.timer-pill {
+  background: #3A2315 !important;
+  border: 1.5px solid #8C6538 !important;
+  color: #FDF7EC !important;
+  box-shadow: 0 2px 6px rgba(46, 26, 15, 0.2) !important;
+}
+
+.timer-pill.active {
+  border-color: #C99700 !important;
+  color: #F5D36C !important;
+  box-shadow: 0 0 10px rgba(201, 151, 0, 0.35) !important;
+}
+
+.turn-status-badge {
+  background: #3A2315 !important;
+  border: 1.5px solid #8C6538 !important;
+  color: #D6BD9B !important;
+  box-shadow: 0 2px 6px rgba(46, 26, 15, 0.15) !important;
+}
+
+.turn-status-badge.your-turn {
+  background: linear-gradient(180deg, #4A2E1B 0%, #2E1A0F 100%) !important;
+  border: 1.5px solid #C99700 !important;
+  color: #F5D36C !important;
+  box-shadow: 0 0 10px rgba(201, 151, 0, 0.3) !important;
+}
+
+.move-ticker-container {
+  background: #3A2315 !important;
+  border: 1.5px solid #8C6538 !important;
+  color: #FDF7EC !important;
+  box-shadow: 0 2px 8px rgba(46, 26, 15, 0.15) !important;
+}
+
+/* --- 7. PROFILE & STATS QUAD BOX (#screen-profile) --- */
+.profile-hero-name {
+  color: #20120B !important;
+  font-family: 'Georgia', serif !important;
+}
+
+.stats-quad-grid {
+  background: #3A2315 !important;
+  border: 1.5px solid #8C6538 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 12px rgba(46, 26, 15, 0.15) !important;
+}
+
+.quad-stat-num {
+  color: #FDF7EC !important;
+  font-weight: 800 !important;
+}
+
+.quad-stat-label {
+  color: #F5D36C !important;
+  font-weight: 700 !important;
+}
+
+/* --- 8. SHOP, ROADMAP, & GENERAL INPUTS --- */
+.roadmap-card {
+  background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
+  border: 1.5px solid #8C6538 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 8px 24px rgba(46, 26, 15, 0.2) !important;
+}
+
+.shop-shelf-title {
+  color: #20120B !important;
+  font-family: 'Georgia', serif !important;
+  font-weight: 800 !important;
+}
+
+.room-input, .code-input, input[type="text"], input[type="number"] {
+  background: #FFFFFF !important;
+  color: #20120B !important;
+  border: 1.5px solid #8C6538 !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+}
+
+.room-input:focus, .code-input:focus, input[type="text"]:focus {
+  border-color: #C99700 !important;
+  box-shadow: 0 0 0 2px rgba(201, 151, 0, 0.25) !important;
 }
