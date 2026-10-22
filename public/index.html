@@ -15,7 +15,7 @@
     rel="stylesheet">
   <link rel="stylesheet" href="/css/tokens.css">
   <link rel="stylesheet" href="/css/styles.css?v=1792631652731">
-  <link rel="stylesheet" href="/css/wooden-theme.css?v=1792704394623">
+  <link rel="stylesheet" href="/css/wooden-theme.css?v=1792705073988">
   <style>
     #username-modal.hidden {
       display: none !important;
@@ -668,6 +668,19 @@
               <stop offset="0.76" stop-color="#471c2d"/>
               <stop offset="1" stop-color="#2b0e1a"/>
             </linearGradient>
+            <!-- Royal Ebony & Ivory pieces -->
+            <linearGradient id="ebonyIvoryLight" x1="0.05" y1="0" x2="0.88" y2="1">
+              <stop offset="0" stop-color="#ffffff"/>
+              <stop offset="0.32" stop-color="#f5f3ec"/>
+              <stop offset="0.7" stop-color="#e2ded4"/>
+              <stop offset="1" stop-color="#cac4b6"/>
+            </linearGradient>
+            <linearGradient id="ebonyIvoryDark" x1="0.05" y1="0" x2="0.82" y2="1">
+              <stop offset="0" stop-color="#3d3d3d"/>
+              <stop offset="0.38" stop-color="#262626"/>
+              <stop offset="0.75" stop-color="#141414"/>
+              <stop offset="1" stop-color="#080808"/>
+            </linearGradient>
           </defs>
         </svg>
 
@@ -1167,6 +1180,15 @@
               <span>?? Hand-Crafted Pieces Collection</span>
             </div>
             <div class="shop-grid">
+              
+              <!-- Royal Ebony & Ivory Pieces -->
+              <div class="shop-item-card" data-id="ebony-ivory">
+                <div class="shop-card-preview" style="background: linear-gradient(135deg, #242424 0%, #0d0d0d 100%); border-color: #888;">
+                  <span style="font-size: 32px; color: #ffffff; filter: drop-shadow(0 2px 5px rgba(255,255,255,0.4));">?</span>
+                </div>
+                <div class="shop-item-name">Ebony & Ivory</div>
+                <button class="btn-shop-action" onclick="app.equipCosmetic('piece', 'ebony-ivory')">Equip (Free)</button>
+              </div>
               <!-- Boxwood & Ebony -->
               <div class="shop-item-card equipped" data-id="staunton-boxwood">
                 <div class="shop-card-preview">

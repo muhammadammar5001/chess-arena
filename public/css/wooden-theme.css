@@ -2435,3 +2435,86 @@ body[data-board-theme="sakura"] .square.dark,
 
 .board-preview-sakura .sq-l { background-color: #efd7d1; }
 .board-preview-sakura .sq-d { background-color: #8e5466; }
+
+/* ==========================================================================
+   ROYAL EBONY & IVORY PIECES STYLING
+   High-contrast monochrome: Bone/Porcelain Ivory & Obsidian Ebony
+   ========================================================================== */
+
+/* Active when board is ebony-ivory OR piece theme is explicitly ebony-ivory */
+body[data-board-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-base,
+body[data-board-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-body,
+body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-base,
+body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-body,
+[data-board-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-base,
+[data-board-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-body,
+[data-piece-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-base,
+[data-piece-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-body {
+  fill: url(#ebonyIvoryLight) !important;
+  stroke: #423e38 !important;
+  stroke-width: 2.2 !important;
+}
+
+body[data-board-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-shade,
+body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-shade,
+[data-board-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-shade,
+[data-piece-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-shade {
+  fill: rgba(70, 65, 58, 0.16) !important;
+}
+
+body[data-board-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-highlight,
+body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-highlight,
+[data-board-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-highlight,
+[data-piece-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-highlight {
+  fill: rgba(255, 255, 255, 0.4) !important;
+}
+
+body[data-board-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-detail,
+body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-detail,
+[data-board-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-detail,
+[data-piece-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-detail {
+  stroke: rgba(60, 55, 48, 0.6) !important;
+}
+
+/* Black Ebony pieces: pure obsidian with subtle silver rim for perfect definition on dark tiles */
+body[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-base,
+body[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-body,
+body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-base,
+body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-body,
+[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-base,
+[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-body,
+[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-base,
+[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-body {
+  fill: url(#ebonyIvoryDark) !important;
+  stroke: #111111 !important;
+  stroke-width: 2.2 !important;
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.45)) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.8)) !important;
+}
+
+body[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-shade,
+body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-shade,
+[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-shade,
+[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-shade {
+  fill: rgba(0, 0, 0, 0.4) !important;
+}
+
+body[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-highlight,
+body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-highlight,
+[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-highlight,
+[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-highlight {
+  fill: rgba(255, 255, 255, 0.22) !important;
+}
+
+body[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-detail,
+body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-detail,
+[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-detail,
+[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-detail {
+  stroke: rgba(220, 220, 220, 0.45) !important;
+}
+
+body[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
+body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
+[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
+[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye {
+  fill: #ffffff !important;
+}
