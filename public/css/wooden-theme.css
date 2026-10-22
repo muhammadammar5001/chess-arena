@@ -4,9 +4,9 @@
    ========================================================================== */
 
 /* --- 1. GLOBAL TABLETOP & SCREEN FOUNDATIONS --- */
-body, html, .screen, .fantasy-home-screen, .discover-shell, .abilities-shell, .game-layout-wrapper {
-  background: radial-gradient(circle at 50% 35%, #422616 0%, #24140B 55%, #120904 100%) !important;
-  color: #FDF7EC !important;
+body, html, .screen, .fantasy-home-screen, #screen-home, #screen-profile, .discover-shell, .abilities-shell, .game-layout-wrapper {
+  background: #FBF2E9 !important;
+  color: #20120B !important;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Georgia", serif !important;
 }
 
@@ -528,8 +528,8 @@ body, html, .screen, .fantasy-home-screen, .discover-shell, .abilities-shell, .g
    Zero White Pills, Zero Slate Blue
    ========================================================================== */
 #screen-profile {
-  background: radial-gradient(circle at 50% 30%, #422616 0%, #24140B 60%, #120904 100%) !important;
-  color: #FDF7EC !important;
+  background: #FBF2E9 !important;
+  color: #20120B !important;
 }
 
 .profile-hero-card {
@@ -843,4 +843,75 @@ body, html, .screen, .fantasy-home-screen, .discover-shell, .abilities-shell, .g
   z-index: 1001 !important;
   pointer-events: none !important;
   will-change: transform;
+}
+
+/* ==========================================================================
+   SOLID THEME OVERRIDES (#FBF2E9 TABLETOP - ZERO GLASS)
+   ========================================================================== */
+.fantasy-home-shell,
+.screen-inner,
+.abilities-shell,
+.profile-page-shell,
+.victory-shell,
+.fantasy-container,
+.discover-shell,
+.game-layout-wrapper {
+  background: #FBF2E9 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Crisp Dark Typography on #FBF2E9 */
+.fantasy-username {
+  color: #20120B !important;
+}
+
+.fantasy-rating {
+  color: #8C6538 !important;
+}
+
+.screen-title {
+  color: #20120B !important;
+  font-family: 'Georgia', serif !important;
+}
+
+.screen-desc {
+  color: #8C6538 !important;
+}
+
+.back-btn {
+  color: #20120B !important;
+  background: rgba(46, 26, 15, 0.08) !important;
+  border: 1px solid #8C6538 !important;
+  border-radius: 8px !important;
+}
+
+/* Mode toggle bar on #FBF2E9 */
+.mode-toggle-container {
+  background: #3A2315 !important;
+  border: 1.5px solid #8C6538 !important;
+  box-shadow: 0 4px 12px rgba(46, 26, 15, 0.12) !important;
+}
+
+.mode-toggle-bg {
+  background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+}
+
+.mode-toggle-btn {
+  color: #D6BD9B !important;
+  font-weight: 700 !important;
+}
+
+.mode-toggle-btn.active {
+  color: #20120B !important;
+}
+
+/* Modal Overlay solid treatment without blur */
+.modal-overlay {
+  background: rgba(18, 10, 5, 0.75) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
