@@ -2808,14 +2808,6 @@ class App {
     if (this.selectedAbilities.length > 2) {
       this.selectedAbilities = this.selectedAbilities.slice(0, 2);
     }
-    if (this.selectedAbilities.length < 2) {
-      for (const v of valid) {
-        if (!this.selectedAbilities.includes(v)) {
-          this.selectedAbilities.push(v);
-          if (this.selectedAbilities.length === 2) break;
-        }
-      }
-    }
 
     valid.forEach(id => {
       const card = document.getElementById(`ability-card-${id}`);
@@ -2826,12 +2818,33 @@ class App {
           card.classList.remove('selected');
         }
       }
+
+      const medallion = document.getElementById(`preview-medallion-${id}`);
+      if (medallion) {
+        if (this.selectedAbilities.includes(id)) {
+          medallion.style.opacity = '1';
+          medallion.style.borderColor = '#FFD54F';
+          medallion.style.boxShadow = '0 0 12px rgba(255, 213, 79, 0.7)';
+          medallion.style.transform = 'scale(1.1)';
+        } else {
+          medallion.style.opacity = '0.35';
+          medallion.style.borderColor = '#5A351C';
+          medallion.style.boxShadow = 'none';
+          medallion.style.transform = 'scale(1)';
+        }
+      }
     });
 
     this.updateHomeAbilitiesDisplay();
   }
 
   showAbilitiesScreen() {
+    try {
+      let saved = JSON.parse(localStorage.getItem('owl_selected_abilities'));
+      if (Array.isArray(saved) && saved.length === 2) {
+        this.selectedAbilities = [...saved];
+      }
+    } catch(e) {}
     this.syncAbilitiesUI();
     this.showScreen('screen-abilities');
   }
@@ -2840,14 +2853,14 @@ class App {
     const valid = ['swap', 'freeze', 'second', 'shield', 'jump'];
     if (!valid.includes(abilityId)) return;
     if (!Array.isArray(this.selectedAbilities)) {
-      this.selectedAbilities = ['swap', 'freeze'];
+      this.selectedAbilities = [];
     }
     const idx = this.selectedAbilities.indexOf(abilityId);
     if (idx !== -1) {
-      if (this.selectedAbilities.length > 1) {
-        this.selectedAbilities.splice(idx, 1);
-      }
+      // Already selected -> Deselect on click!
+      this.selectedAbilities.splice(idx, 1);
     } else {
+      // Not selected -> Select (if 2 already selected, replace the oldest one)
       if (this.selectedAbilities.length >= 2) {
         this.selectedAbilities.shift();
       }
@@ -3067,6 +3080,19 @@ class App {
       console.warn('goHome cleanup error:', e);
     }
 
+    try {
+      let saved = JSON.parse(localStorage.getItem('owl_selected_abilities'));
+      if (Array.isArray(saved) && saved.length === 2) {
+        this.selectedAbilities = saved;
+      } else if (!this.selectedAbilities || this.selectedAbilities.length < 2) {
+        this.selectedAbilities = ['swap', 'freeze'];
+      }
+    } catch(e) {
+      if (!this.selectedAbilities || this.selectedAbilities.length < 2) {
+        this.selectedAbilities = ['swap', 'freeze'];
+      }
+    }
+    this.updateHomeAbilitiesDisplay();
     this.isMyTurn = false;
     this.updateBottomNav('home');
     this.showScreen('screen-home');
