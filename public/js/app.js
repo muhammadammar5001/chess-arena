@@ -1,5 +1,5 @@
 /**
- * Owl's Gambit — App Controller
+ * Owl's Gambit ? App Controller
  * Main application logic: screen management, board rendering, game flow.
  */
 
@@ -82,7 +82,7 @@ class App {
       });
     }
 
-    // Join Room card click — expand/collapse the code input
+    // Join Room card click ? expand/collapse the code input
     const joinCard = document.getElementById('join-room-card');
     const joinExpand = document.getElementById('join-room-expand');
     if (joinCard && joinExpand) {
@@ -429,7 +429,12 @@ class App {
 
         const result = this.engine.makeMove(move.fromRow, move.fromCol, move.row, move.col, move.promotion || null);
         if (result) {
-          this.animateMoveAndApply(result, () => {
+              // User made a move -> reset 1-move undo lock so they can undo this new move if desired
+    if (result.piece.color === this.playerColor) {
+      this.hasUndoneCurrentMove = false;
+      this.updateUndoButtonUI();
+    }
+    this.animateMoveAndApply(result, () => {
             if (this.engine.gameOver) {
               this.playSound('gameover');
               setTimeout(() => this.showGameOver(), 500);
@@ -1023,7 +1028,7 @@ class App {
             this.updatePlayerBars();
             }
             this.hintCountInMatch = 0;
-    this.setupAbilitiesUI(); // Re-render ability buttons (to gray them out if used)
+    this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI(); // Re-render ability buttons (to gray them out if used)
             this.renderBoard();
             this.updatePlayerBars();
         }
@@ -1035,7 +1040,12 @@ class App {
       const result = this.engine.makeMove(fromPos.row, fromPos.col, toPos.row, toPos.col, promotion);
 
       if (result) {
-        this.animateMoveAndApply(result, () => {
+            // User made a move -> reset 1-move undo lock so they can undo this new move if desired
+    if (result.piece.color === this.playerColor) {
+      this.hasUndoneCurrentMove = false;
+      this.updateUndoButtonUI();
+    }
+    this.animateMoveAndApply(result, () => {
           if (this.engine.gameOver) {
             this.playSound('gameover');
             setTimeout(() => this.showGameOver(), 500);
@@ -1252,10 +1262,10 @@ class App {
       if (sender === 'white' || sender === 'black') {
         let bubbleId;
         if (sender === this.playerColor) {
-          // I sent this message — show on my avatar (bottom)
+          // I sent this message ? show on my avatar (bottom)
           bubbleId = 'bottom-chat-bubble';
         } else {
-          // Opponent sent — show on their avatar (top)
+          // Opponent sent ? show on their avatar (top)
           bubbleId = 'top-chat-bubble';
         }
 
@@ -1393,7 +1403,7 @@ class App {
     this.clearMoveHistory();
     this.clearCapturedPieces();
     
-    this.setupAbilitiesUI();
+    this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
   }
 
   setupAbilitiesUI() {
@@ -1502,7 +1512,7 @@ class App {
         const ok = this.engine.validateAbility('second', null, this.playerColor);
         if (ok) {
           this.showToast('Second Chance used!');
-          this.setupAbilitiesUI();
+          this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
           this.renderBoard();
         } else {
           this.showToast('Cannot undo');
@@ -1694,7 +1704,7 @@ class App {
                 const ok = this.engine.validateAbility('shield', { row, col }, this.playerColor);
                 if (ok) {
                     this.showToast('??? Divine Shield active on ' + piece.type + '!');
-                    this.setupAbilitiesUI();
+                    this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
                 }
             }
             this.activeAbility = null;
@@ -1728,7 +1738,7 @@ class App {
                         const ok = this.engine.validateAbility('jump', jumpArgs, this.playerColor);
                         if (ok) {
                             this.showToast('?? Pegasus Jump executed!');
-                            this.setupAbilitiesUI();
+                            this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
                             if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
                                 setTimeout(() => this.makeAIMove(), 500);
                             }
@@ -2101,6 +2111,11 @@ class App {
       sq.classList.remove('selected', 'legal-move', 'legal-capture');
     });
 
+        // User made a move -> reset 1-move undo lock so they can undo this new move if desired
+    if (result.piece.color === this.playerColor) {
+      this.hasUndoneCurrentMove = false;
+      this.updateUndoButtonUI();
+    }
     this.animateMoveAndApply(result, () => {
       // Check game over
       if (this.engine.gameOver) {
@@ -2431,7 +2446,7 @@ class App {
     if (ctx.state === 'suspended') ctx.resume();
     this.bgMusicRunning = true;
 
-    // Master gain — fade in slowly
+    // Master gain ? fade in slowly
     const master = ctx.createGain();
     master.gain.setValueAtTime(0, ctx.currentTime);
     master.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 6);
@@ -2617,7 +2632,7 @@ class App {
 
     if (scoreEl) {
       if (isPlayerWin) scoreEl.textContent = '1 - 0';
-      else if (isDraw) scoreEl.textContent = '½ - ½';
+      else if (isDraw) scoreEl.textContent = '? - ?';
       else scoreEl.textContent = '0 - 1';
     }
 
@@ -2835,6 +2850,32 @@ class App {
     if (joinBalEl) joinBalEl.textContent = newAmount.toLocaleString() + ' Coins';
   }
 
+  getUndoCost() {
+    const count = this.undoCountInMatch || 0;
+    return 50 * Math.pow(2, count);
+  }
+
+  updateUndoButtonUI() {
+    const undoBtn = document.getElementById('btn-ingame-undo');
+    if (!undoBtn) return;
+    const labelEl = document.getElementById('btn-ingame-undo-label');
+    const cost = this.getUndoCost();
+
+    if (this.hasUndoneCurrentMove) {
+      undoBtn.classList.add('disabled');
+      undoBtn.style.opacity = '0.45';
+      if (labelEl) {
+        labelEl.innerHTML = `Undo <span style="color: #bbb; font-size: 11px;">(1 only)</span>`;
+      }
+    } else {
+      undoBtn.classList.remove('disabled');
+      undoBtn.style.opacity = '1';
+      if (labelEl) {
+        labelEl.innerHTML = `Undo <span style="color: #FFD54F; font-size: 11px;">??${cost}</span>`;
+      }
+    }
+  }
+
   undoMove() {
     if (this.gameMode === 'online') {
       this.showToast('Undo is disabled in competitive PvP');
@@ -2845,14 +2886,21 @@ class App {
       return;
     }
 
-    const cost = 5;
+    // Restriction: Only 1 move undo allowed until player makes another move!
+    if (this.hasUndoneCurrentMove) {
+      this.showToast('Only 1 move can be undone. Make a new move first!');
+      return;
+    }
+
+    // Progressive double-down cost: 50 -> 100 -> 200 -> 400 ...
+    const cost = this.getUndoCost();
     const currentCoins = this.getUserCoins();
     if (currentCoins < cost) {
       this.showToast(`Need ${cost} coins to Undo! (You have ${currentCoins})`);
       return;
     }
 
-    // Deduct 5 coins
+    // Deduct coins
     this.updateUserCoins(currentCoins - cost);
 
     // Rollback moves (AI move + Player move if both moved, else 1)
@@ -2878,13 +2926,17 @@ class App {
     this.selectedSquare = null;
     this.legalMoves = [];
 
+    // Mark current move as undone and increment count for double-down next time
+    this.hasUndoneCurrentMove = true;
+    this.undoCountInMatch = (this.undoCountInMatch || 0) + 1;
+    this.updateUndoButtonUI();
+
     this.renderBoard();
     this.updateCapturedPieces();
     this.rebuildMoveHistoryUI();
     this.updatePlayerBars();
     this.showToast(`Move undone ? (-${cost} coins)`);
   }
-
   rebuildMoveHistoryUI() {
     this.updateMoveHistoryUI();
   }
@@ -3605,7 +3657,7 @@ class App {
           const balEl = document.getElementById("wp-balance");
           const usdEl = document.getElementById("wp-usd");
           if (balEl) balEl.textContent = ethAmount + " ETH";
-          if (usdEl) usdEl.textContent = "˜ $" + Number(totalUSD).toLocaleString();
+          if (usdEl) usdEl.textContent = "? $" + Number(totalUSD).toLocaleString();
 
           // ETH asset row
           const ethAmtEl = document.getElementById("wp-eth-amount");
@@ -3627,7 +3679,7 @@ class App {
           const balEl = document.getElementById("wp-balance");
           const usdEl = document.getElementById("wp-usd");
           if (balEl) balEl.textContent = ethAmount + " ETH";
-          if (usdEl) usdEl.textContent = "˜ $" + Number(totalUSD).toLocaleString();
+          if (usdEl) usdEl.textContent = "? $" + Number(totalUSD).toLocaleString();
           const ethAmtEl = document.getElementById("wp-eth-amount");
           const ethFiatEl = document.getElementById("wp-eth-fiat");
           if (ethAmtEl) ethAmtEl.textContent = ethAmount;
