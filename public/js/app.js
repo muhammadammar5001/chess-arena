@@ -53,10 +53,9 @@ class App {
     this.init();
   }
 
-    setGameMode(mode) {
+  setGameMode(mode) {
     this.matchType = 'robin';
     this.syncAbilitiesUI();
-  }
   }
 
   init() {
