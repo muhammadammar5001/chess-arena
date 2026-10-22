@@ -618,27 +618,27 @@
           <div class="captured-pieces" id="bottom-captured"></div>
         </div>
 
-        <!-- In-game 4-Button Action Bar -->
+        <!-- In-game Action Bar (Abilities + Undo/Draw + Resign) -->
         <div class="ingame-action-bar">
-          <button class="btn-game-pill" id="btn-ingame-undo" onclick="app.undoMove()" title="Undo Move">
-            <span class="btn-icon">↺</span>
-            <span class="btn-label">Undo</span>
+          <button class="btn-game-pill" id="btn-ability-1" style="display: none;" title="Tactical Ability 1">
+            <span class="btn-icon">⚡</span>
+            <span class="btn-label">Ability 1</span>
           </button>
-          <button class="btn-game-pill hint-btn" id="btn-ingame-hint" onclick="app.getHint()" title="Get Hint">
-            <span class="btn-icon">💡</span>
-            <span class="btn-label">Hint</span>
+          <button class="btn-game-pill" id="btn-ability-2" style="display: none;" title="Tactical Ability 2">
+            <span class="btn-icon">⚡</span>
+            <span class="btn-label">Ability 2</span>
+          </button>
+          <button class="btn-game-pill" id="btn-ingame-undo" onclick="app.undoMove()" title="Undo Move (5 Coins)">
+            <span class="btn-icon" style="font-size: 18px; font-weight: bold;">↩</span>
+            <span class="btn-label" style="display: flex; align-items: center; justify-content: center; gap: 3px;">Undo <span style="color: #FFD54F; font-size: 11px;">🪙5</span></span>
           </button>
           <button class="btn-game-pill" id="btn-ingame-draw" onclick="app.offerDraw()" title="Offer Draw">
-            <span class="btn-icon">½</span>
+            <span class="btn-icon">🤝</span>
             <span class="btn-label">Draw</span>
           </button>
           <button class="btn-game-pill" id="btn-ingame-resign" onclick="app.confirmResign()" title="Resign">
-            <span class="btn-icon">⚐</span>
+            <span class="btn-icon">🏳</span>
             <span class="btn-label">Resign</span>
-          </button>
-          <button class="btn-game-pill hidden" id="btn-leave-spectate" onclick="app.goHome()" title="Leave Match">
-            <span class="btn-icon">🚪</span>
-            <span class="btn-label">Leave</span>
           </button>
         </div>
 
@@ -1292,7 +1292,7 @@
   <script src="/js/ai-engine.js?v=639262545462453427"></script>
   <script src="/js/pieces.js?v=1792631652731"></script>
   <script src="/js/ad-service.js"></script>
-  <script src="/js/app.js?v=1792682597300"></script>
+  <script src="/js/app.js?v=1792683492411"></script>
   
 
   <!-- ═══════════════ LEADERBOARD SCREEN ═══════════════ -->

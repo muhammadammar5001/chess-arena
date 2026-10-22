@@ -1161,6 +1161,10 @@ class App {
       document.getElementById('btn-ingame-undo').classList.add('hidden');
       document.getElementById('btn-ingame-hint').classList.add('hidden');
       document.getElementById('btn-leave-spectate').classList.remove('hidden');
+      const ab1 = document.getElementById('btn-ability-1');
+      if (ab1) ab1.classList.add('hidden');
+      const ab2 = document.getElementById('btn-ability-2');
+      if (ab2) ab2.classList.add('hidden');
 
       this.showToast('You are spectating the match');
     };
@@ -1349,30 +1353,46 @@ class App {
   }
 
   setupAbilitiesUI() {
+    const ab1Btn = document.getElementById('btn-ability-1');
+    const ab2Btn = document.getElementById('btn-ability-2');
     const undoBtn = document.getElementById('btn-ingame-undo');
-    const hintBtn = document.getElementById('btn-ingame-hint');
-    
-    // Reset to defaults
-    undoBtn.onclick = () => this.undoMove();
-    undoBtn.querySelector('.btn-icon').textContent = '↩';
-    undoBtn.querySelector('.btn-label').textContent = 'Undo';
-    
-    hintBtn.onclick = () => this.getHint();
-    hintBtn.querySelector('.btn-icon').textContent = '💡';
-    hintBtn.querySelector('.btn-label').textContent = 'Hint';
+    const drawBtn = document.getElementById('btn-ingame-draw');
+    const resignBtn = document.getElementById('btn-ingame-resign');
 
     const abs = (this.gameMode === 'online' && this.multiplayer && this.multiplayer.abilities && this.multiplayer.abilities.self && this.multiplayer.abilities.self.length > 0)
         ? this.multiplayer.abilities.self
         : (this.selectedAbilities || ['swap', 'freeze']);
 
-      if (abs && abs.length > 0) {
-        if (abs[0]) this.configureAbilityButton(undoBtn, abs[0]);
-        if (abs[1]) {
-          this.configureAbilityButton(hintBtn, abs[1]);
-        } else {
-          hintBtn.style.display = 'none';
-        }
+    if (abs && abs.length > 0) {
+      if (abs[0] && ab1Btn) {
+        this.configureAbilityButton(ab1Btn, abs[0]);
+        ab1Btn.style.display = '';
+        ab1Btn.classList.remove('hidden');
       }
+      if (abs[1] && ab2Btn) {
+        this.configureAbilityButton(ab2Btn, abs[1]);
+        ab2Btn.style.display = '';
+        ab2Btn.classList.remove('hidden');
+      } else if (ab2Btn) {
+        ab2Btn.style.display = 'none';
+      }
+    }
+
+    if (this.gameMode === 'online') {
+      // In online PvP: Show Draw, Hide Undo (no coins undo in PvP)
+      if (undoBtn) undoBtn.style.display = 'none';
+      if (drawBtn) drawBtn.style.display = '';
+    } else {
+      // In AI / Practice Mode: Show Undo (5 Coins), Hide Draw
+      if (undoBtn) {
+        undoBtn.style.display = '';
+        undoBtn.classList.remove('hidden');
+        undoBtn.onclick = () => this.undoMove();
+      }
+      if (drawBtn) drawBtn.style.display = 'none';
+    }
+
+    if (resignBtn) resignBtn.style.display = '';
   }
 
   configureAbilityButton(btn, abilityId) {
@@ -2731,6 +2751,38 @@ class App {
     }, 3500);
   }
 
+  getUserCoins() {
+    let saved = localStorage.getItem('owl_coins');
+    if (saved !== null) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed)) return parsed;
+    }
+    const balanceEl = document.getElementById('profile-wallet-balance');
+    if (balanceEl) {
+      const parsed = parseInt(balanceEl.textContent.replace(/,/g, ''), 10);
+      if (!isNaN(parsed)) return parsed;
+    }
+    return 1000;
+  }
+
+  updateUserCoins(newAmount) {
+    this.coins = newAmount;
+    try {
+      localStorage.setItem('owl_coins', newAmount);
+    } catch(e) {}
+    
+    const profileEl = document.getElementById('profile-wallet-balance');
+    if (profileEl) profileEl.textContent = newAmount.toLocaleString();
+
+    const walletBalEl = document.getElementById('wallet-balance');
+    if (walletBalEl && walletBalEl.textContent.includes('Coin')) {
+      walletBalEl.textContent = newAmount.toLocaleString() + ' Coins';
+    }
+
+    const joinBalEl = document.getElementById('join-user-balance-display');
+    if (joinBalEl) joinBalEl.textContent = newAmount.toLocaleString() + ' Coins';
+  }
+
   undoMove() {
     if (this.gameMode === 'online') {
       this.showToast('Undo is disabled in competitive PvP');
@@ -2741,6 +2793,17 @@ class App {
       return;
     }
 
+    const cost = 5;
+    const currentCoins = this.getUserCoins();
+    if (currentCoins < cost) {
+      this.showToast(`Need ${cost} coins to Undo! (You have ${currentCoins})`);
+      return;
+    }
+
+    // Deduct 5 coins
+    this.updateUserCoins(currentCoins - cost);
+
+    // Rollback moves (AI move + Player move if both moved, else 1)
     let movesToPop = 1;
     if (this.engine.currentTurn === this.playerColor && this.engine.moveHistory.length >= 2) {
       movesToPop = 2;
@@ -2767,7 +2830,7 @@ class App {
     this.updateCapturedPieces();
     this.rebuildMoveHistoryUI();
     this.updatePlayerBars();
-    this.showToast('Move undone ↺');
+    this.showToast(`Move undone ↺ (-${cost} coins)`);
   }
 
   rebuildMoveHistoryUI() {
