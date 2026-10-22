@@ -2521,3 +2521,67 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 [data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye {
   fill: #1a1c20 !important;
 }
+
+/* ==========================================================================
+   CAPTURED PIECES DISPLAY & ACTION BAR BADGES (HIGH-VISIBILITY & VECTOR PIECES)
+   ========================================================================== */
+.captured-pieces,
+#top-captured,
+#bottom-captured {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 3px !important;
+  min-height: 26px !important;
+  padding: 3px 8px !important;
+  background: rgba(20, 10, 5, 0.65) !important;
+  border: 1px solid rgba(140, 101, 56, 0.45) !important;
+  border-radius: 6px !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+  opacity: 1 !important;
+}
+
+.captured-pieces .cap-piece-item {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 22px !important;
+  height: 22px !important;
+  flex-shrink: 0 !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.75)) !important;
+  transition: transform 0.15s ease !important;
+}
+
+.captured-pieces .cap-piece-item:hover {
+  transform: scale(1.2) !important;
+}
+
+.captured-pieces .cap-piece-item svg {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.captured-pieces .cap-piece-glyph {
+  font-size: 20px !important;
+  line-height: 1 !important;
+  display: inline-block !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8)) !important;
+}
+
+.captured-pieces .cap-piece-glyph.white-cap {
+  color: #FFF3D6 !important;
+}
+
+.captured-pieces .cap-piece-glyph.black-cap {
+  color: #2B180E !important;
+  text-shadow: 0 0 1.5px rgba(255, 255, 255, 0.6) !important;
+}
+
+.undo-cost-badge {
+  color: #FFD54F !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+  letter-spacing: 0.5px !important;
+}
+

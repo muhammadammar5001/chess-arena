@@ -46,8 +46,8 @@ class App {
     
     this.setupDraggableChat();
     this.pieceSymbols = {
-      white: { king: '?', queen: '?', rook: '?', bishop: '?', knight: '?', pawn: '?' },
-      black: { king: '?', queen: '?', rook: '?', bishop: '?', knight: '?', pawn: '?' }
+      white: { king: '♔', queen: '♕', rook: '♖', bishop: '♗', knight: '♘', pawn: '♙' },
+      black: { king: '♚', queen: '♛', rook: '♜', bishop: '♝', knight: '♞', pawn: '♟' }
     };
 
     this.init();
@@ -2398,30 +2398,40 @@ class App {
     const topColor = this.boardFlipped ? 'white' : 'black';
     const bottomColor = this.boardFlipped ? 'black' : 'white';
 
-    // Top shows pieces captured BY top player (which are bottom player's pieces)
     const topCaptured = document.getElementById('top-captured');
     const bottomCaptured = document.getElementById('bottom-captured');
+    if (!topCaptured || !bottomCaptured) return;
 
-    // Pieces captured by the top player (opponent from bottom's perspective)
-    const topCaptures = this.engine.capturedPieces[bottomColor]; // bottom's lost pieces
-    const bottomCaptures = this.engine.capturedPieces[topColor]; // top's lost pieces
+    // Pieces captured by top player (opponent from bottom's perspective)
+    const topCaptures = (this.engine && this.engine.capturedPieces) ? this.engine.capturedPieces[bottomColor] : [];
+    // Pieces captured by bottom player
+    const bottomCaptures = (this.engine && this.engine.capturedPieces) ? this.engine.capturedPieces[topColor] : [];
 
     const pieceOrder = ['queen', 'rook', 'bishop', 'knight', 'pawn'];
 
-    const renderCaptures = (captures, color) => {
+    const renderCapturesHTML = (captures, color) => {
+      if (!captures || captures.length === 0) return '';
       const sorted = [...captures].sort((a, b) =>
         pieceOrder.indexOf(a.type) - pieceOrder.indexOf(b.type)
       );
-      return sorted.map(p => this.pieceSymbols[color][p.type]).join('');
+      return sorted.map(p => {
+        if (typeof PieceSVGs !== 'undefined' && PieceSVGs.getPiece) {
+          return `<span class="cap-piece-item" title="${color} ${p.type}">${PieceSVGs.getPiece(color, p.type)}</span>`;
+        }
+        const sym = (this.pieceSymbols[color] && this.pieceSymbols[color][p.type]) || p.type.charAt(0).toUpperCase();
+        return `<span class="cap-piece-glyph ${color === 'white' ? 'white-cap' : 'black-cap'}">${sym}</span>`;
+      }).join('');
     };
 
-    topCaptured.textContent = renderCaptures(topCaptures, bottomColor);
-    bottomCaptured.textContent = renderCaptures(bottomCaptures, topColor);
+    topCaptured.innerHTML = renderCapturesHTML(topCaptures, bottomColor);
+    bottomCaptured.innerHTML = renderCapturesHTML(bottomCaptures, topColor);
   }
 
   clearCapturedPieces() {
-    document.getElementById('top-captured').textContent = '';
-    document.getElementById('bottom-captured').textContent = '';
+    const topCaptured = document.getElementById('top-captured');
+    const bottomCaptured = document.getElementById('bottom-captured');
+    if (topCaptured) topCaptured.innerHTML = '';
+    if (bottomCaptured) bottomCaptured.innerHTML = '';
   }
 
   // --- Game Over -------------------------------------
@@ -2871,7 +2881,7 @@ class App {
       undoBtn.classList.remove('disabled');
       undoBtn.style.opacity = '1';
       if (labelEl) {
-        labelEl.innerHTML = `Undo <span style="color: #FFD54F; font-size: 11px;">??${cost}</span>`;
+        labelEl.innerHTML = `Undo <span class="undo-cost-badge" style="color: #FFD54F; font-size: 11px; font-weight: 700;">🪙${cost}</span>`;
       }
     }
   }

@@ -695,8 +695,8 @@
         <!-- Captured pieces & spectators -->
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 4px;">
           <div class="captured-pieces" id="top-captured"></div>
-          <div id="spectator-count-container" class="spectator-count" style="display: none;">
-            ?? <span id="spectator-count-text">0</span>
+          <div id="spectator-count-container" class="spectator-count" style="display: none; align-items: center; gap: 4px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> <span id="spectator-count-text">0</span>
           </div>
           <div class="captured-pieces" id="bottom-captured"></div>
         </div>
@@ -704,24 +704,30 @@
         <!-- In-game Action Bar (Abilities + Undo/Draw + Resign) -->
         <div class="ingame-action-bar">
           <button class="btn-game-pill" id="btn-ability-1" style="display: none;" title="Tactical Ability 1">
-            <span class="btn-icon">?</span>
+            <span class="btn-icon">⚡</span>
             <span class="btn-label">Ability 1</span>
           </button>
           <button class="btn-game-pill" id="btn-ability-2" style="display: none;" title="Tactical Ability 2">
-            <span class="btn-icon">?</span>
+            <span class="btn-icon">✨</span>
             <span class="btn-label">Ability 2</span>
           </button>
-                    <button class="btn-game-pill" id="btn-ingame-undo" onclick="app.undoMove()" title="Undo Last Move (50 Coins)">
-            <span class="btn-icon" style="font-size: 18px; font-weight: bold;">?</span>
-            <span class="btn-label" id="btn-ingame-undo-label" style="display: flex; align-items: center; justify-content: center; gap: 3px;">Undo
-              <span style="color: #FFD54F; font-size: 11px;">??50</span></span>
+          <button class="btn-game-pill" id="btn-ingame-undo" onclick="app.undoMove()" title="Undo Last Move (50 Coins)">
+            <span class="btn-icon" style="display: inline-flex; align-items: center; justify-content: center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+            </span>
+            <span class="btn-label" id="btn-ingame-undo-label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">Undo
+              <span class="undo-cost-badge" style="color: #FFD54F; font-size: 11px; font-weight: 700;">🪙50</span></span>
           </button>
           <button class="btn-game-pill" id="btn-ingame-draw" onclick="app.offerDraw()" title="Offer Draw">
-            <span class="btn-icon">??</span>
+            <span class="btn-icon" style="display: inline-flex; align-items: center; justify-content: center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88"/><path d="m18 10 2-2a2 2 0 0 0-3-3l-7 7a2 2 0 0 0 0 3l2 2"/></svg>
+            </span>
             <span class="btn-label">Draw</span>
           </button>
           <button class="btn-game-pill" id="btn-ingame-resign" onclick="app.confirmResign()" title="Resign">
-            <span class="btn-icon">??</span>
+            <span class="btn-icon" style="display: inline-flex; align-items: center; justify-content: center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            </span>
             <span class="btn-label">Resign</span>
           </button>
         </div>
@@ -731,9 +737,7 @@
 
         <div class="game-controls">
 
-          <button id="btn-toggle-chat" class="ctrl-btn mobile-only-flex" onclick="app.toggleChat()" title="Live Chat">
-            <span>??</span>
-          </button>
+          <button id="btn-toggle-chat" class="ctrl-btn mobile-only-flex" onclick="app.toggleChat()" title="Live Chat"><span style="display: inline-flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span></button>
         </div>
 
         <!-- Move history panel -->
