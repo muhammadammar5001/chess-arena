@@ -1869,3 +1869,119 @@ body, html, .screen, .fantasy-home-screen, #screen-home, #screen-profile, .disco
     padding-bottom: 160px !important;
   }
 }
+
+/* ==========================================================================
+   RESET SHOP - SEGMENTED TABS (BOARDS & PIECES)
+   ========================================================================== */
+
+.shop-subtabs-nav {
+  display: flex !important;
+  gap: 8px !important;
+  margin-bottom: 18px !important;
+  background: #2A170C !important;
+  padding: 4px !important;
+  border-radius: 12px !important;
+  border: 1.5px solid #8C6538 !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4) !important;
+}
+
+.shop-subtab {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 10px 14px !important;
+  font-family: 'Cinzel', 'Georgia', serif !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px !important;
+  color: #D6BD9B !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 9px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.shop-subtab:hover {
+  color: #FFF !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.shop-subtab.active {
+  background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%) !important;
+  color: #20120B !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+.shop-tab-pane {
+  display: none !important;
+}
+
+.shop-tab-pane.active {
+  display: block !important;
+  animation: fadeInPane 0.22s ease-out !important;
+}
+
+@keyframes fadeInPane {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.shop-card-preview {
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1.5px solid #8C6538 !important;
+  background: #1F1008 !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6) !important;
+}
+
+.shop-board-preview-grid {
+  width: 44px !important;
+  height: 44px !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Board specific preview palettes */
+.board-preview-oak .sq-l { background-color: #E2C594; }
+.board-preview-oak .sq-d { background-color: #845433; }
+
+.board-preview-walnut .sq-l { background-color: #EEDBB2; }
+.board-preview-walnut .sq-d { background-color: #5C3A21; }
+
+.board-preview-cherry .sq-l { background-color: #F3D2C1; }
+.board-preview-cherry .sq-d { background-color: #7B2A22; }
+
+.board-preview-ebony .sq-l { background-color: #F0EDE5; }
+.board-preview-ebony .sq-d { background-color: #2B2B2B; }
+
+/* Active Theme Dynamic Variations */
+body[data-board-theme="walnut-maple"] .square.light {
+  background-color: #EEDBB2 !important;
+}
+body[data-board-theme="walnut-maple"] .square.dark {
+  background-color: #5C3A21 !important;
+}
+
+body[data-board-theme="cherry-rosewood"] .square.light {
+  background-color: #F3D2C1 !important;
+}
+body[data-board-theme="cherry-rosewood"] .square.dark {
+  background-color: #7B2A22 !important;
+}
+
+body[data-board-theme="ebony-ivory"] .square.light {
+  background-color: #F0EDE5 !important;
+}
+body[data-board-theme="ebony-ivory"] .square.dark {
+  background-color: #2B2B2B !important;
+}

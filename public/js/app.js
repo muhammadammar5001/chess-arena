@@ -3324,11 +3324,58 @@ class App {
   }
 
 
+  switchShopTab(tab) {
+    const tabBtns = document.querySelectorAll('.shop-subtab');
+    const panes = document.querySelectorAll('.shop-tab-pane');
+    tabBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    panes.forEach(pane => {
+      pane.classList.toggle('active', pane.id === 'shop-pane-' + tab);
+    });
+  }
+
   equipCosmetic(type, id) {
     if (type === 'board') {
       document.body.dataset.boardTheme = id;
       localStorage.setItem('owl_board_theme', id);
-      this.showToast('Equipped ' + id + ' board!');
+      this.showToast('Equipped ' + id.replace('-', ' ') + ' board!');
+      const boardPane = document.getElementById('shop-pane-boards');
+      if (boardPane) {
+        boardPane.querySelectorAll('.shop-item-card').forEach(card => {
+          const btn = card.querySelector('.btn-shop-action');
+          if (card.dataset.id === id) {
+            card.classList.add('equipped');
+            if (btn) { btn.classList.add('equipped'); btn.textContent = 'Equipped'; }
+          } else {
+            card.classList.remove('equipped');
+            if (btn && btn.classList.contains('equipped')) {
+              btn.classList.remove('equipped');
+              btn.textContent = 'Equip';
+            }
+          }
+        });
+      }
+    } else if (type === 'piece') {
+      document.body.dataset.pieceTheme = id;
+      localStorage.setItem('owl_piece_theme', id);
+      this.showToast('Equipped ' + id.replace('-', ' ') + ' pieces!');
+      const piecesPane = document.getElementById('shop-pane-pieces');
+      if (piecesPane) {
+        piecesPane.querySelectorAll('.shop-item-card').forEach(card => {
+          const btn = card.querySelector('.btn-shop-action');
+          if (card.dataset.id === id) {
+            card.classList.add('equipped');
+            if (btn) { btn.classList.add('equipped'); btn.textContent = 'Equipped'; }
+          } else {
+            card.classList.remove('equipped');
+            if (btn && btn.classList.contains('equipped')) {
+              btn.classList.remove('equipped');
+              btn.textContent = 'Equip';
+            }
+          }
+        });
+      }
     } else if (type === 'table') {
       document.body.dataset.tableTheme = id;
       localStorage.setItem('owl_table_theme', id);
@@ -3339,8 +3386,24 @@ class App {
   showShopScreen() {
     this.updateBottomNav('shop');
     this.showScreen('screen-shop');
+    const savedBoard = localStorage.getItem('owl_board_theme') || 'classic-oak';
+    const boardPane = document.getElementById('shop-pane-boards');
+    if (boardPane) {
+      boardPane.querySelectorAll('.shop-item-card').forEach(card => {
+        const btn = card.querySelector('.btn-shop-action');
+        if (card.dataset.id === savedBoard) {
+          card.classList.add('equipped');
+          if (btn) { btn.classList.add('equipped'); btn.textContent = 'Equipped'; }
+        } else {
+          card.classList.remove('equipped');
+          if (btn && btn.classList.contains('equipped')) {
+            btn.classList.remove('equipped');
+            btn.textContent = 'Equip';
+          }
+        }
+      });
+    }
   }
-
   showLeaderboardScreen() {
     this.updateBottomNav('rankings');
     this.showScreen('screen-leaderboard');
