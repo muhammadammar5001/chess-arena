@@ -2523,58 +2523,111 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 }
 
 /* ==========================================================================
-   CAPTURED PIECES DISPLAY & ACTION BAR BADGES (HIGH-VISIBILITY & VECTOR PIECES)
+   CAPTURED PIECES DISPLAY: VERTICAL SIDE FLANKS (LEFT & RIGHT OF CHESSBOARD)
    ========================================================================== */
-.captured-pieces,
-#top-captured,
-#bottom-captured {
+.board-arena-container {
   display: flex !important;
+  flex-direction: row !important;
   align-items: center !important;
-  flex-wrap: wrap !important;
-  gap: 3px !important;
-  min-height: 26px !important;
-  padding: 3px 8px !important;
-  background: rgba(20, 10, 5, 0.65) !important;
-  border: 1px solid rgba(140, 101, 56, 0.45) !important;
-  border-radius: 6px !important;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6) !important;
-  opacity: 1 !important;
+  justify-content: center !important;
+  position: relative !important;
+  width: 100% !important;
+  max-width: 580px !important;
+  margin: 0 auto !important;
+  gap: 8px !important;
 }
 
-.captured-pieces .cap-piece-item {
+.board-arena-container .board-wrap {
+  flex: 1 1 auto !important;
+  max-width: 480px !important;
+  margin: 0 !important;
+}
+
+/* Vertical side rails flanking the board */
+.captured-rail {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 38px !important;
+  min-height: 280px !important;
+  max-height: 480px !important;
+  padding: 8px 4px !important;
+  gap: 6px !important;
+  background: linear-gradient(180deg, rgba(34, 18, 10, 0.85) 0%, rgba(20, 10, 5, 0.95) 100%) !important;
+  border: 1.5px solid rgba(140, 101, 56, 0.45) !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  overflow-y: auto !important;
+  scrollbar-width: none !important;
+  opacity: 1 !important;
+  flex-shrink: 0 !important;
+  transition: border-color 0.2s ease !important;
+}
+
+.captured-rail::-webkit-scrollbar {
+  display: none !important;
+}
+
+.captured-rail:hover {
+  border-color: rgba(201, 151, 0, 0.7) !important;
+}
+
+/* Individual captured piece icons inside the vertical rail */
+.captured-rail .cap-piece-item {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 22px !important;
-  height: 22px !important;
+  width: 28px !important;
+  height: 28px !important;
   flex-shrink: 0 !important;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.75)) !important;
-  transition: transform 0.15s ease !important;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.85)) !important;
+  transition: transform 0.15s ease, filter 0.15s ease !important;
+  cursor: default !important;
 }
 
-.captured-pieces .cap-piece-item:hover {
-  transform: scale(1.2) !important;
+.captured-rail .cap-piece-item:hover {
+  transform: scale(1.22) !important;
+  filter: drop-shadow(0 3px 5px rgba(255, 213, 79, 0.4)) !important;
 }
 
-.captured-pieces .cap-piece-item svg {
+.captured-rail .cap-piece-item svg {
   width: 100% !important;
   height: 100% !important;
 }
 
-.captured-pieces .cap-piece-glyph {
-  font-size: 20px !important;
+.captured-rail .cap-piece-glyph {
+  font-size: 24px !important;
   line-height: 1 !important;
   display: inline-block !important;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8)) !important;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.85)) !important;
 }
 
-.captured-pieces .cap-piece-glyph.white-cap {
+.captured-rail .cap-piece-glyph.white-cap {
   color: #FFF3D6 !important;
 }
 
-.captured-pieces .cap-piece-glyph.black-cap {
+.captured-rail .cap-piece-glyph.black-cap {
   color: #2B180E !important;
   text-shadow: 0 0 1.5px rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Mobile responsive fallback: if screen is narrow, rails stay slim */
+@media (max-width: 540px) {
+  .board-arena-container {
+    gap: 4px !important;
+  }
+  .captured-rail {
+    width: 28px !important;
+    min-height: 220px !important;
+    padding: 4px 2px !important;
+    gap: 4px !important;
+    border-radius: 8px !important;
+  }
+  .captured-rail .cap-piece-item {
+    width: 22px !important;
+    height: 22px !important;
+  }
 }
 
 .undo-cost-badge {
@@ -2584,4 +2637,5 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
   letter-spacing: 0.5px !important;
 }
+
 

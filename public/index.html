@@ -684,21 +684,27 @@
           </defs>
         </svg>
 
-        <!-- Board shell -->
-        <div class="board-wrap">
-          <div class="board-frame">
-            <div class="board chess-board" id="chess-board" role="grid" aria-label="Chess board" aria-rowcount="8"
-              aria-colcount="8"></div>
+        <!-- Chess Arena Layout (Flanked by Vertical Captured Pieces Trays) -->
+        <div class="board-arena-container">
+          <!-- Left Captured Pieces Flank -->
+          <div class="captured-rail captured-rail-left" id="top-captured" title="Opponent's Captured Pieces"></div>
+
+          <!-- Board shell -->
+          <div class="board-wrap">
+            <div class="board-frame">
+              <div class="board chess-board" id="chess-board" role="grid" aria-label="Chess board" aria-rowcount="8"
+                aria-colcount="8"></div>
+            </div>
           </div>
+
+          <!-- Right Captured Pieces Flank -->
+          <div class="captured-rail captured-rail-right" id="bottom-captured" title="Your Captured Pieces"></div>
         </div>
 
-        <!-- Captured pieces & spectators -->
-        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 4px;">
-          <div class="captured-pieces" id="top-captured"></div>
-          <div id="spectator-count-container" class="spectator-count" style="display: none; align-items: center; gap: 4px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> <span id="spectator-count-text">0</span>
-          </div>
-          <div class="captured-pieces" id="bottom-captured"></div>
+        <!-- Spectators Counter Badge (Compact) -->
+        <div id="spectator-count-container" class="spectator-count" style="display: none; align-items: center; justify-content: center; gap: 4px; margin: 4px auto;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span id="spectator-count-text">0</span>
         </div>
 
         <!-- In-game Action Bar (Abilities + Undo/Draw + Resign) -->
