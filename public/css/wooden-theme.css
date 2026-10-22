@@ -1787,3 +1787,85 @@ body, html, .screen, .fantasy-home-screen, #screen-home, #screen-profile, .disco
   margin-left: auto !important;
   margin-right: 8px !important;
 }
+/* ==========================================================================
+   DESKTOP / PC SQUARE & STAGE LAYOUT ENHANCEMENTS
+   Balances layout on wide displays with centered square proportion (~680px)
+   and ensures ample scrolling clearance above bottom navigation dock.
+   ========================================================================== */
+
+/* Clearance for scrollable content above bottom nav across all viewports */
+.shop-shell-inner,
+#leaderboard-list,
+.profile-page-shell,
+.abilities-shell,
+.discover-shell {
+  padding-bottom: 150px !important;
+  box-sizing: border-box !important;
+}
+
+@media (min-width: 768px) {
+  /* Expand portrait bottleneck into a majestic square/stage container */
+  .fantasy-home-shell,
+  .screen-inner,
+  .abilities-shell,
+  .profile-page-shell,
+  .victory-shell,
+  .discover-shell {
+    max-width: 680px !important;
+    width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Desktop Stage Hero Card & Artwork Banner */
+  .fantasy-hero-banner {
+    height: 250px !important;
+    border-radius: 18px !important;
+    overflow: hidden !important;
+  }
+
+  .fantasy-hero-banner .hero-owl-img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center 35% !important;
+  }
+
+  /* Content items centered with balanced, elegant desktop width */
+  .home-abilities-card,
+  #btn-main-play,
+  .fantasy-menu-list {
+    max-width: 540px !important;
+    width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* Fixed Bottom Nav Dock centered with matching stage width on PC */
+  .fantasy-bottom-nav {
+    max-width: 540px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    bottom: 24px !important;
+    border-radius: 20px !important;
+    border: 1.5px solid #C99700 !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.12) !important;
+  }
+
+  /* Shop Inner Container on PC */
+  .shop-shell-inner {
+    max-width: 620px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-bottom: 160px !important;
+  }
+
+  /* Discover and Leaderboard Lists on PC */
+  #leaderboard-list {
+    max-width: 620px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-bottom: 160px !important;
+  }
+}
