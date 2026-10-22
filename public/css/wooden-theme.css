@@ -2543,12 +2543,12 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   margin: 0 !important;
 }
 
-/* Vertical side rails flanking the board (Clean floating pieces, no wooden tray box) */
+/* Vertical side rails flanking the board (Clean floating pieces, stacking from bottom up) */
 .captured-rail {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  justify-content: flex-start !important;
+  justify-content: flex-end !important;
   width: 34px !important;
   min-height: 280px !important;
   max-height: 480px !important;
