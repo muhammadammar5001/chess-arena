@@ -1389,10 +1389,10 @@ class App {
       btn.querySelector('.btn-icon').innerHTML = '<img src="/assets/Asset 44.png" style="width: 22px; height: 22px; object-fit: contain; transform: translateY(2px);">';
       btn.querySelector('.btn-label').textContent = '2nd Chance';
     } else if (abilityId === 'shield') {
-      btn.querySelector('.btn-icon').innerHTML = '🛡️';
+      btn.querySelector('.btn-icon').innerHTML = '<img src="/assets/Asset 45.png" style="width: 22px; height: 22px; object-fit: contain; transform: translateY(2px);">';
       btn.querySelector('.btn-label').textContent = 'Shield';
     } else if (abilityId === 'jump') {
-      btn.querySelector('.btn-icon').innerHTML = '🪽';
+      btn.querySelector('.btn-icon').innerHTML = '<img src="/assets/Asset 46.png" style="width: 22px; height: 22px; object-fit: contain; transform: translateY(2px);">';
       btn.querySelector('.btn-label').textContent = 'Jump';
     }
     
@@ -2877,11 +2877,9 @@ class App {
     const iconMap = {
       'swap': '/assets/Asset 42.png',
       'freeze': '/assets/Asset 43.png',
-      'second': '/assets/Asset 44.png'
-    };
-    const emojiMap = {
-      'shield': '🛡️',
-      'jump': '🪽'
+      'second': '/assets/Asset 44.png',
+      'shield': '/assets/Asset 45.png',
+      'jump': '/assets/Asset 46.png'
     };
 
     let html = '';
