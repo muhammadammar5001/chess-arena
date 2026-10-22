@@ -1413,40 +1413,60 @@ class App {
     const drawBtn = document.getElementById('btn-ingame-draw');
     const resignBtn = document.getElementById('btn-ingame-resign');
 
-    const abs = (this.gameMode === 'online' && this.multiplayer && this.multiplayer.abilities && this.multiplayer.abilities.self && this.multiplayer.abilities.self.length > 0)
-        ? this.multiplayer.abilities.self
-        : (this.selectedAbilities || ['swap', 'freeze']);
-
-    if (abs && abs.length > 0) {
-      if (abs[0] && ab1Btn) {
-        this.configureAbilityButton(ab1Btn, abs[0]);
-        ab1Btn.style.display = '';
-        ab1Btn.classList.remove('hidden');
-      }
-      if (abs[1] && ab2Btn) {
-        this.configureAbilityButton(ab2Btn, abs[1]);
-        ab2Btn.style.display = '';
-        ab2Btn.classList.remove('hidden');
-      } else if (ab2Btn) {
-        ab2Btn.style.display = 'none';
-      }
-    }
-
     if (this.gameMode === 'online') {
-      // In online PvP: Show Draw, Hide Undo (no coins undo in PvP)
-      if (undoBtn) undoBtn.style.display = 'none';
-      if (drawBtn) drawBtn.style.display = '';
+      const abs = (this.multiplayer && this.multiplayer.abilities && this.multiplayer.abilities.self && this.multiplayer.abilities.self.length > 0)
+          ? this.multiplayer.abilities.self
+          : (this.selectedAbilities || ['swap', 'freeze']);
+
+      if (abs && abs.length > 0) {
+        if (abs[0] && ab1Btn) {
+          this.configureAbilityButton(ab1Btn, abs[0]);
+          ab1Btn.style.display = '';
+          ab1Btn.classList.remove('hidden');
+        }
+        if (abs[1] && ab2Btn) {
+          this.configureAbilityButton(ab2Btn, abs[1]);
+          ab2Btn.style.display = '';
+          ab2Btn.classList.remove('hidden');
+        } else if (ab2Btn) {
+          ab2Btn.style.display = 'none';
+          ab2Btn.classList.add('hidden');
+        }
+      }
+      // In online PvP: Show Draw, Hide Undo
+      if (undoBtn) {
+        undoBtn.style.display = 'none';
+        undoBtn.classList.add('hidden');
+      }
+      if (drawBtn) {
+        drawBtn.style.display = '';
+        drawBtn.classList.remove('hidden');
+      }
     } else {
-      // In AI / Practice Mode: Show Undo (5 Coins), Hide Draw
+      // In AI / Practice Mode: Standard Chess - Hide Abilities, Hide Draw, Show Undo
+      if (ab1Btn) {
+        ab1Btn.style.display = 'none';
+        ab1Btn.classList.add('hidden');
+      }
+      if (ab2Btn) {
+        ab2Btn.style.display = 'none';
+        ab2Btn.classList.add('hidden');
+      }
+      if (drawBtn) {
+        drawBtn.style.display = 'none';
+        drawBtn.classList.add('hidden');
+      }
       if (undoBtn) {
         undoBtn.style.display = '';
         undoBtn.classList.remove('hidden');
         undoBtn.onclick = () => this.undoMove();
       }
-      if (drawBtn) drawBtn.style.display = 'none';
     }
 
-    if (resignBtn) resignBtn.style.display = '';
+    if (resignBtn) {
+      resignBtn.style.display = '';
+      resignBtn.classList.remove('hidden');
+    }
   }
 
   configureAbilityButton(btn, abilityId) {
@@ -2573,7 +2593,7 @@ class App {
         const prizeWon = this.currentStake * 2;
         currentBalance += prizeWon;
         balanceEl.textContent = currentBalance.toLocaleString();
-        this.showToast(`?? Won ${prizeWon} $OWL! Added to wallet.`);
+        this.showToast(`🏆 Won ${prizeWon} $OWL! Added to wallet.`);
       }
     } else if (isDraw && this.activeStakeDeducted > 0) {
       const balanceEl = document.getElementById('profile-wallet-balance');
@@ -2820,7 +2840,7 @@ class App {
     const files = 'abcdefgh';
     const fromCoord = `${files[bestMove.fromCol]}${8 - bestMove.fromRow}`;
     const toCoord = `${files[bestMove.col]}${8 - bestMove.row}`;
-    this.showToast(`?? Hint: Move ${fromCoord} ? ${toCoord}`);
+    this.showToast(`💡 Hint: Move ${fromCoord} → ${toCoord}`);
 
     setTimeout(() => {
       if (fromSquare) fromSquare.classList.remove('hint-move');
@@ -3118,7 +3138,7 @@ class App {
     } else {
       if (robinBtn) robinBtn.classList.add('active');
       if (standardBtn) standardBtn.classList.remove('active');
-      this.showToast('Robin Mode (NFT abilities enabled) ??');
+      this.showToast('Robin Mode (NFT abilities enabled) ⚔️');
     }
   }
 
@@ -3161,7 +3181,7 @@ class App {
     this.renderBoard();
     this.updatePlayerBars();
     this.startTimerTick();
-    this.showToast('Opponent Found: ShadowOwl (1180) ??');
+    this.showToast('Opponent Found: ShadowOwl (1180) ⚔️');
   }
 
   // --- Controls --------------------------------------
@@ -3306,7 +3326,7 @@ class App {
   toggleSound() {
     this.soundMuted = !this.soundMuted;
     const btn = document.getElementById('btn-toggle-sound');
-    if (btn) btn.innerHTML = this.soundMuted ? '?? SFX: Off' : '?? SFX: On';
+    if (btn) btn.innerHTML = this.soundMuted ? '🔊 SFX: Off' : '🔊 SFX: On';
     this.showToast(this.soundMuted ? 'Sound effects muted' : 'Sound effects enabled');
   }
 
@@ -3423,7 +3443,7 @@ class App {
     const labels = document.querySelectorAll('.coord-label');
     labels.forEach(l => l.style.display = this.showCoords ? '' : 'none');
     const btn = document.getElementById('btn-toggle-coords');
-    if (btn) btn.textContent = this.showCoords ? '?? Coords: On' : '?? Coords: Off';
+    if (btn) btn.textContent = this.showCoords ? '🧭 Coords: On' : '🧭 Coords: Off';
   }
 
   showToast(message) {
@@ -3538,7 +3558,7 @@ class App {
             </div>
           </div>
           <div style="font-size: 22px; filter: drop-shadow(0 0 6px rgba(201,151,0,0.5));">
-            ${i < 3 ? '??' : ''}
+            ${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : ''}
           </div>
         </div>`;
       }

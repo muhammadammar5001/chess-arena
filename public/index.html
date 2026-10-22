@@ -138,7 +138,7 @@
           <p
             style="font-size: 11px; font-weight: 600; color: #F5D36C; margin: 2px 0 4px 0; letter-spacing: 0.5px; opacity: 0.8;">
             Tactical Grandmaster Arena</p>
-          <p class="fantasy-brand-tagline">?? PLAY ? COMPETE ? EXPLORE</p>
+          <p class="fantasy-brand-tagline">⚔️ PLAY • 🏆 COMPETE • 🌲 EXPLORE</p>
         </div>
       </div>
 
@@ -289,27 +289,27 @@
   <!-- --------------- AI DIFFICULTY SELECT --------------- -->
   <div id="screen-ai-select" class="screen">
     <div class="screen-inner">
-      <button class="back-btn" onclick="app.showMatchmakingScreen()">? Back</button>
+      <button class="back-btn" onclick="app.showMatchmakingScreen()">← Back</button>
       <h2 class="screen-title">Choose Difficulty</h2>
       <p class="screen-desc">Select your opponent's strength</p>
 
       <div class="difficulty-cards">
         <button class="difficulty-card" onclick="app.startAIGame('easy')">
-          <div class="diff-icon">??</div>
+          <div class="diff-icon">🌱</div>
           <div class="diff-name">Easy</div>
           <div class="diff-desc">Beginner friendly</div>
           <div class="diff-depth">Depth 1</div>
         </button>
 
         <button class="difficulty-card" onclick="app.startAIGame('medium')">
-          <div class="diff-icon">?</div>
+          <div class="diff-icon">⚔️</div>
           <div class="diff-name">Medium</div>
           <div class="diff-desc">Casual challenge</div>
           <div class="diff-depth">Depth 3</div>
         </button>
 
         <button class="difficulty-card" onclick="app.startAIGame('hard')">
-          <div class="diff-icon">??</div>
+          <div class="diff-icon">👑</div>
           <div class="diff-name">Hard</div>
           <div class="diff-desc">Expert level</div>
           <div class="diff-depth">Depth 4</div>
@@ -491,7 +491,7 @@
 
       <!-- Back button -->
       <button class="back-circle-btn" onclick="app.cancelWaiting()"
-        style="align-self: flex-start; margin-bottom: 12px;">?</button>
+        style="align-self: flex-start; margin-bottom: 12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
       <h2 id="waiting-title" class="screen-title" style="margin-bottom: 4px;">Finding opponent...</h2>
       <p id="waiting-subtitle" class="screen-desc" style="margin-bottom: 24px;">Searching for the best match for you</p>
 
@@ -596,7 +596,7 @@
 
         <!-- Active Prize Pool -->
         <div id="active-prize-pool" class="active-prize-pool hidden">
-          <span>?? Prize Pool:</span>
+          <span>🏆 Prize Pool:</span>
           <span id="game-prize-amount" class="prize-value-small">100 Coins</span>
         </div>
 
@@ -724,7 +724,7 @@
             <span class="btn-label" id="btn-ingame-undo-label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">Undo
               <span class="undo-cost-badge" style="color: #FFD54F; font-size: 11px; font-weight: 700;">🪙50</span></span>
           </button>
-          <button class="btn-game-pill" id="btn-ingame-draw" onclick="app.offerDraw()" title="Offer Draw">
+          <button class="btn-game-pill" id="btn-ingame-draw" style="display: none;" onclick="app.offerDraw()" title="Offer Draw">
             <span class="btn-icon" style="display: inline-flex; align-items: center; justify-content: center;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88"/><path d="m18 10 2-2a2 2 0 0 0-3-3l-7 7a2 2 0 0 0 0 3l2 2"/></svg>
             </span>
@@ -750,7 +750,7 @@
         <div id="move-history-panel" class="move-history-panel hidden">
           <div class="history-header">
             <span>Move History</span>
-            <button class="close-btn" onclick="app.toggleHistory()">?</button>
+            <button class="close-btn" onclick="app.toggleHistory()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
           </div>
           <div id="move-history-list" class="history-list"></div>
         </div>
@@ -762,19 +762,15 @@
           style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #5A351D; padding-bottom: 8px; margin-bottom: 12px;">
           <span style="font-family: 'Georgia', serif; font-weight: 700; color: #FFD54F;">Tactile Emotes</span>
           <button class="close-btn mobile-only" onclick="app.toggleChat()"
-            style="background: none; border: none; color: #FFD54F; font-size: 18px; cursor: pointer;">?</button>
+            style="background: none; border: none; color: #FFD54F; font-size: 18px; cursor: pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
         </div>
         <!-- Preset Emote Medallions -->
         <div class="emote-buttons-grid"
           style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px;">
-          <button class="btn-plank" onclick="app.sendEmote('?? Good luck!')" style="font-size: 12px; padding: 10px;">??
-            Good luck!</button>
-          <button class="btn-plank" onclick="app.sendEmote('?? Nice move!')" style="font-size: 12px; padding: 10px;">??
-            Nice move!</button>
-          <button class="btn-plank" onclick="app.sendEmote('?? Oops!')" style="font-size: 12px; padding: 10px;">??
-            Oops!</button>
-          <button class="btn-plank" onclick="app.sendEmote('?? Good Game!')" style="font-size: 12px; padding: 10px;">??
-            Good Game!</button>
+          <button class="btn-plank" onclick="app.sendEmote('⚔️ Good luck!')" style="font-size: 12px; padding: 10px;">⚔️ Good luck!</button>
+          <button class="btn-plank" onclick="app.sendEmote('👏 Nice move!')" style="font-size: 12px; padding: 10px;">👏 Nice move!</button>
+          <button class="btn-plank" onclick="app.sendEmote('😅 Oops!')" style="font-size: 12px; padding: 10px;">😅 Oops!</button>
+          <button class="btn-plank" onclick="app.sendEmote('🤝 Good Game!')" style="font-size: 12px; padding: 10px;">🤝 Good Game!</button>
         </div>
         <div class="chat-messages" id="chat-messages"
           style="max-height: 120px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 8px; border: 1px solid #5A351D; font-size: 12px; color: #EBD2A5;">
@@ -789,7 +785,7 @@
     <div class="abilities-shell">
       <div class="screen-header-back">
         <div class="screen-header-left">
-          <button class="back-circle-btn" onclick="app.goHome()" title="Back">?</button>
+          <button class="back-circle-btn" onclick="app.goHome()" title="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
           <div class="header-title-block">
             <h2 class="header-page-title">Your Abilities</h2>
             <span class="header-page-subtitle">Robin Mode Tactics</span>
@@ -839,7 +835,7 @@
               <span class="ability-desc">Swap positions of two of your pieces.</span>
             </div>
           </div>
-          <span class="menu-card-chevron">?</span>
+          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
         </div>
 
         <div class="ability-card" id="ability-card-freeze" onclick="app.toggleAbility('freeze')">
@@ -852,7 +848,7 @@
               <span class="ability-desc">Temporarily disable an opponent's piece.</span>
             </div>
           </div>
-          <span class="menu-card-chevron">?</span>
+          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
         </div>
 
         <div class="ability-card" id="ability-card-second" onclick="app.toggleAbility('second')">
@@ -865,7 +861,7 @@
               <span class="ability-desc">Take back your last move before opponent responds.</span>
             </div>
           </div>
-          <span class="menu-card-chevron">?</span>
+          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
         </div>
 
         <div class="ability-card" id="ability-card-shield" onclick="app.toggleAbility('shield')">
@@ -878,7 +874,7 @@
               <span class="ability-desc">1 friendly piece cannot be captured on opponent's next turn.</span>
             </div>
           </div>
-          <span class="menu-card-chevron">?</span>
+          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
         </div>
 
         <div class="ability-card" id="ability-card-jump" onclick="app.toggleAbility('jump')">
@@ -891,7 +887,7 @@
               <span class="ability-desc">Vault directly over 1 obstacle in front to empty square ahead.</span>
             </div>
           </div>
-          <span class="menu-card-chevron">?</span>
+          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
         </div>
       </div>
 
@@ -906,14 +902,12 @@
     <div class="profile-page-shell">
       <div class="screen-header-back">
         <div class="screen-header-left">
-          <button class="back-circle-btn" onclick="app.goHome()" title="Back">?</button>
+          <button class="back-circle-btn" onclick="app.goHome()" title="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
           <div class="header-title-block">
             <h2 class="header-page-title">Profile</h2>
           </div>
         </div>
-        <button class="btn-settings" onclick="app.showModal('modal-settings')" title="Settings">
-          ??
-        </button>
+        <button class="btn-settings" onclick="app.showModal('modal-settings')" title="Settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
       </div>
 
       <div class="profile-hero-card"
@@ -1066,7 +1060,7 @@
     <div class="discover-shell">
       <div class="screen-header-back">
         <div class="screen-header-left">
-          <button class="back-circle-btn" onclick="app.goHome()" title="Back">?</button>
+          <button class="back-circle-btn" onclick="app.goHome()" title="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
           <div class="header-title-block">
             <h2 class="header-page-title">Shop</h2>
             <span class="header-page-subtitle">Owl's Gambit Ecosystem</span>
@@ -1080,7 +1074,7 @@
         <div
           style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(180deg, #3A2315 0%, #201108 100%); border: 1.5px solid #C99700; border-radius: 12px; padding: 10px 16px; margin-bottom: 16px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">
           <span style="font-family: 'Georgia', serif; font-weight: 700; color: #FDF7EC;">Your Gold Vault</span>
-          <span style="font-family: 'Georgia', serif; font-weight: 800; color: #FFD54F; font-size: 16px;">?? 1,000 Coins</span>
+          <span style="font-family: 'Georgia', serif; font-weight: 800; color: #FFD54F; font-size: 16px;">🪙 1,000 Coins</span>
         </div>
 
         <!-- Segmented Sub-Tabs Nav: Boards vs Pieces -->
@@ -1105,7 +1099,7 @@
         <div class="shop-tab-pane active" id="shop-pane-boards">
           <div class="shop-shelf">
             <div class="shop-shelf-title">
-              <span>?? Wooden Boards Collection</span>
+              <span>🪵 Wooden Boards Collection</span>
             </div>
             <div class="shop-grid">
               <!-- Classic Oak -->
@@ -1129,7 +1123,7 @@
                   </div>
                 </div>
                 <div class="shop-item-name">Emberwood</div>
-                <button class="btn-shop-action" onclick="app.equipCosmetic('board', 'ember')">Equip (300 ??)</button>
+                <button class="btn-shop-action" onclick="app.equipCosmetic('board', 'ember')">Equip (300 🪙)</button>
               </div>
 
               <!-- Moonlit Grove Board -->
@@ -1141,7 +1135,7 @@
                   </div>
                 </div>
                 <div class="shop-item-name">Moonlit Grove</div>
-                <button class="btn-shop-action" onclick="app.equipCosmetic('board', 'moonlit')">Equip (450 ??)</button>
+                <button class="btn-shop-action" onclick="app.equipCosmetic('board', 'moonlit')">Equip (450 🪙)</button>
               </div>
 
               <!-- Sakurawood Board -->
@@ -1153,7 +1147,7 @@
                   </div>
                 </div>
                 <div class="shop-item-name">Sakurawood</div>
-                <button class="btn-shop-action" onclick="app.equipCosmetic('board', 'sakura')">Equip (500 ??)</button>
+                <button class="btn-shop-action" onclick="app.equipCosmetic('board', 'sakura')">Equip (500 🪙)</button>
               </div>
 
               <!-- Walnut & Maple -->
@@ -1165,7 +1159,7 @@
                   </div>
                 </div>
                 <div class="shop-item-name">Walnut & Maple</div>
-                <button class="btn-shop-action" onclick="app.equipCosmetic('board', 'walnut-maple')">Equip (250 ??)</button>
+                <button class="btn-shop-action" onclick="app.equipCosmetic('board', 'walnut-maple')">Equip (250 🪙)</button>
               </div>
 
               <!-- Royal Ebony & Ivory -->
@@ -1177,7 +1171,7 @@
                   </div>
                 </div>
                 <div class="shop-item-name">Ebony & Ivory</div>
-                <button class="btn-shop-action" onclick="app.equipCosmetic('board', 'ebony-ivory')">Equip (Watch Ad ??)</button>
+                <button class="btn-shop-action" onclick="app.equipCosmetic('board', 'ebony-ivory')">Equip (Watch Ad 🎬)</button>
               </div>
             </div>
           </div>
@@ -1187,7 +1181,7 @@
         <div class="shop-tab-pane" id="shop-pane-pieces">
           <div class="shop-shelf">
             <div class="shop-shelf-title">
-              <span>?? Hand-Crafted Pieces Collection</span>
+              <span>♟️ Hand-Crafted Pieces Collection</span>
             </div>
             <div class="shop-grid">
               
@@ -1214,7 +1208,7 @@
                   <span style="font-size: 32px; color: #efc794; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));">?</span>
                 </div>
                 <div class="shop-item-name">Emberwood</div>
-                <button class="btn-shop-action" onclick="app.equipCosmetic('piece', 'ember')">Equip (350 ??)</button>
+                <button class="btn-shop-action" onclick="app.equipCosmetic('piece', 'ember')">Equip (350 🪙)</button>
               </div>
 
               <!-- Moonlit Grove Pieces -->
@@ -1223,7 +1217,7 @@
                   <span style="font-size: 32px; color: #d8e8ef; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));">?</span>
                 </div>
                 <div class="shop-item-name">Moonlit Grove</div>
-                <button class="btn-shop-action" onclick="app.equipCosmetic('piece', 'moonlit')">Equip (450 ??)</button>
+                <button class="btn-shop-action" onclick="app.equipCosmetic('piece', 'moonlit')">Equip (450 🪙)</button>
               </div>
 
               <!-- Sakurawood Pieces -->
@@ -1232,7 +1226,7 @@
                   <span style="font-size: 32px; color: #f7e2e0; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));">?</span>
                 </div>
                 <div class="shop-item-name">Sakurawood</div>
-                <button class="btn-shop-action" onclick="app.equipCosmetic('piece', 'sakura')">Equip (500 ??)</button>
+                <button class="btn-shop-action" onclick="app.equipCosmetic('piece', 'sakura')">Equip (500 🪙)</button>
               </div>
 
               <!-- Carved Mahogany -->
@@ -1241,7 +1235,7 @@
                   <span style="font-size: 32px; color: #D78A4B; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));">?</span>
                 </div>
                 <div class="shop-item-name">Carved Mahogany</div>
-                <button class="btn-shop-action" onclick="app.equipCosmetic('piece', 'carved-mahogany')">Equip (400 ??)</button>
+                <button class="btn-shop-action" onclick="app.equipCosmetic('piece', 'carved-mahogany')">Equip (400 🪙)</button>
               </div>
 
               <!-- Royal Brass & Gold -->
@@ -1250,7 +1244,7 @@
                   <span style="font-size: 32px; color: #FFD54F; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));">?</span>
                 </div>
                 <div class="shop-item-name">Royal Brass & Gold</div>
-                <button class="btn-shop-action" onclick="app.equipCosmetic('piece', 'royal-gold')">Equip (Watch Ad ??)</button>
+                <button class="btn-shop-action" onclick="app.equipCosmetic('piece', 'royal-gold')">Equip (Watch Ad 🎬)</button>
               </div>
             </div>
           </div>
@@ -1310,40 +1304,40 @@
   <!-- --------------- HOW TO PLAY SCREEN --------------- -->
   <div id="screen-howto" class="screen">
     <div class="screen-inner howto-content">
-      <button class="back-btn" onclick="app.showScreen('screen-home')">? Back</button>
+      <button class="back-btn" onclick="app.showScreen('screen-home')">← Back</button>
       <h2 class="screen-title">How to Play</h2>
 
       <div class="howto-sections">
         <div class="howto-section">
-          <h3>? Objective</h3>
-          <p>Checkmate your opponent's king ? trap it so it cannot escape capture.</p>
+          <h3>🎯 Objective</h3>
+          <p>Checkmate your opponent's king — trap it so it cannot escape capture.</p>
         </div>
 
         <div class="howto-section">
-          <h3>? Pieces</h3>
+          <h3>♟️ Pieces</h3>
           <div class="pieces-grid">
-            <div class="piece-info"><span class="piece-symbol">?</span><strong>King</strong> ? 1 square any direction
+            <div class="piece-info"><span class="piece-symbol">?</span><strong>King</strong> — 1 square any direction
             </div>
-            <div class="piece-info"><span class="piece-symbol">?</span><strong>Queen</strong> ? Any direction, any
+            <div class="piece-info"><span class="piece-symbol">?</span><strong>Queen</strong> — Any direction, any
               distance</div>
-            <div class="piece-info"><span class="piece-symbol">?</span><strong>Rook</strong> ? Horizontal & vertical
+            <div class="piece-info"><span class="piece-symbol">?</span><strong>Rook</strong> — Horizontal & vertical
             </div>
-            <div class="piece-info"><span class="piece-symbol">?</span><strong>Bishop</strong> ? Diagonals only</div>
-            <div class="piece-info"><span class="piece-symbol">?</span><strong>Knight</strong> ? L-shape, can jump</div>
-            <div class="piece-info"><span class="piece-symbol">?</span><strong>Pawn</strong> ? Forward 1 (2 from start),
+            <div class="piece-info"><span class="piece-symbol">?</span><strong>Bishop</strong> — Diagonals only</div>
+            <div class="piece-info"><span class="piece-symbol">?</span><strong>Knight</strong> — L-shape, can jump</div>
+            <div class="piece-info"><span class="piece-symbol">?</span><strong>Pawn</strong> — Forward 1 (2 from start),
               captures diagonally</div>
           </div>
         </div>
 
         <div class="howto-section">
-          <h3>? Special Moves</h3>
+          <h3>✨ Special Moves</h3>
           <p><strong>Castling:</strong> King moves 2 squares toward a rook; the rook jumps over.</p>
           <p><strong>En Passant:</strong> Capture a pawn that just double-moved past your pawn.</p>
           <p><strong>Promotion:</strong> A pawn reaching the far rank becomes a Queen, Rook, Bishop, or Knight.</p>
         </div>
 
         <div class="howto-section">
-          <h3>?? Controls</h3>
+          <h3>🎮 Controls</h3>
           <p>Tap a piece to select it, then tap a highlighted square to move.</p>
         </div>
       </div>
@@ -1429,7 +1423,7 @@
       </div>
 
       <div id="join-balance-warning" class="join-warning hidden">
-        ?? Insufficient balance to match this room's stake.
+        ⚠️ Insufficient balance to match this room's stake.
       </div>
 
       <div class="confirm-buttons" style="margin-top: 20px;">
@@ -1447,7 +1441,7 @@
   <div id="modal-tournaments" class="modal hidden">
     <div class="modal-overlay" onclick="app.hideModal('modal-tournaments')"></div>
     <div class="modal-content confirm-modal" style="max-width: 360px;">
-      <div style="font-size: 32px; margin-bottom: 8px;">??</div>
+      <div style="font-size: 32px; margin-bottom: 8px;">🏆</div>
       <h3 style=" font-size: 20px; color: #caa674; margin-bottom: 6px;">Owl's Gambit Arena</h3>
       <p style="color: #94a3b8; font-size: 13px; line-height: 1.5; margin-bottom: 16px;">
         Season 1 Championship with a <strong style="color: #f1dfbe;">50,000 Coins</strong> prize pool opens soon!
@@ -1456,11 +1450,11 @@
       <div class="confirm-buttons" style="flex-direction: column; gap: 8px;">
         <button class="btn btn-primary btn-small" style="width: 100%;"
           onclick="app.hideModal('modal-tournaments'); app.showModal('modal-spectate');">
-          ??? Spectate Live Match
+          👁️ Spectate Live Match
         </button>
         <button class="btn btn-secondary btn-small" style="width: 100%;"
           onclick="app.hideModal('modal-tournaments'); app.showAIDifficultySelect();">
-          ??? Practice with AI
+          🤖 Practice with AI
         </button>
         <button class="btn btn-tertiary btn-small" style="width: 100%;" onclick="app.hideModal('modal-tournaments')">
           Close
@@ -1504,7 +1498,7 @@
       <div class="profile-actions">
         <button class="btn btn-secondary btn-small" style="width: 100%; margin-bottom: 8px;"
           onclick="app.hideModal('modal-profile'); app.showScreen('screen-howto');">
-          ?? How to Play & Rules
+          📖 How to Play & Rules
         </button>
         <button class="btn btn-tertiary btn-small" style="width: 100%;" onclick="app.hideModal('modal-profile')">
           Close
@@ -1523,21 +1517,21 @@
           style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
           <span>Sound Effects</span>
           <button id="btn-toggle-sound" class="btn btn-secondary btn-small" onclick="app.toggleSound()">
-            ?? SFX: On
+            🔊 SFX: On
           </button>
         </div>
         <div class="setting-item"
           style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
           <span>Background Music</span>
           <button id="btn-toggle-music" class="btn btn-secondary btn-small" onclick="app.toggleMusic()">
-            ?? Music: On</button>
+            🎵 Music: On</button>
         </div>
         <div class="setting-item"
           style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
           <span>Game Guide</span>
           <button class="btn btn-secondary btn-small"
             onclick="app.hideModal('modal-settings'); app.showScreen('screen-howto');">
-            ?? View Rules
+            📜 View Rules
           </button>
         </div>
       </div>
@@ -1597,7 +1591,7 @@
     <div class="screen-inner">
       <div class="screen-header-back">
         <div class="screen-header-left">
-          <button class="back-circle-btn" onclick="app.goHome()" title="Back">?</button>
+          <button class="back-circle-btn" onclick="app.goHome()" title="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
           <div class="header-title-block">
             <h2 class="header-page-title">Rankings</h2>
           </div>
@@ -1848,7 +1842,7 @@
     <div class="discover-shell">
       <div class="screen-header-back">
         <div class="screen-header-left">
-          <button class="back-circle-btn" onclick="app.goHome()" title="Back">?</button>
+          <button class="back-circle-btn" onclick="app.goHome()" title="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
           <div class="header-title-block">
             <h2 class="header-page-title">Discover</h2>
             <span class="header-page-subtitle">Owl's Gambit Ecosystem</span>
@@ -1862,7 +1856,7 @@
 
         <div class="roadmap-item">
           <div class="roadmap-item-left">
-            <span class="roadmap-item-icon">??</span>
+            <span class="roadmap-item-icon">♟️</span>
             <span class="roadmap-item-title">Core Chess</span>
           </div>
           <div class="roadmap-progress-wrap">
@@ -1875,7 +1869,7 @@
 
         <div class="roadmap-item">
           <div class="roadmap-item-left">
-            <span class="roadmap-item-icon">??</span>
+            <span class="roadmap-item-icon">📱</span>
             <span class="roadmap-item-title">Mobile UI</span>
           </div>
           <div class="roadmap-progress-wrap">
@@ -1888,7 +1882,7 @@
 
         <div class="roadmap-item">
           <div class="roadmap-item-left">
-            <span class="roadmap-item-icon">??</span>
+            <span class="roadmap-item-icon">⚔️</span>
             <span class="roadmap-item-title">Online PvP</span>
           </div>
           <div class="roadmap-progress-wrap">
@@ -1901,20 +1895,20 @@
 
         <div class="roadmap-item" style="cursor: pointer;" onclick="app.showAbilitiesScreen()">
           <div class="roadmap-item-left">
-            <span class="roadmap-item-icon">?</span>
+            <span class="roadmap-item-icon">🏹</span>
             <span class="roadmap-item-title">Robin Mode</span>
           </div>
           <div class="roadmap-progress-wrap">
             <div class="roadmap-progress-bar">
               <div class="roadmap-progress-fill" style="width: 60%; background: #818cf8;"></div>
             </div>
-            <span class="roadmap-status-text in-progress">Preview ?</span>
+            <span class="roadmap-status-text in-progress">Preview →</span>
           </div>
         </div>
 
         <div class="roadmap-item">
           <div class="roadmap-item-left">
-            <span class="roadmap-item-icon">???</span>
+            <span class="roadmap-item-icon">💎</span>
             <span class="roadmap-item-title">NFT Integration</span>
           </div>
           <div class="roadmap-progress-wrap">
@@ -1927,14 +1921,14 @@
 
         <div class="roadmap-item" style="cursor: pointer;" onclick="app.showModal('modal-tournaments')">
           <div class="roadmap-item-left">
-            <span class="roadmap-item-icon">??</span>
+            <span class="roadmap-item-icon">🏆</span>
             <span class="roadmap-item-title">Tournaments</span>
           </div>
           <div class="roadmap-progress-wrap">
             <div class="roadmap-progress-bar">
               <div class="roadmap-progress-fill" style="width: 40%; background: #caa674;"></div>
             </div>
-            <span class="roadmap-status-text">Planned ?</span>
+            <span class="roadmap-status-text">Planned →</span>
           </div>
         </div>
       </div>

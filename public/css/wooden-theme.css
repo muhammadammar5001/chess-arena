@@ -1646,7 +1646,7 @@ body, html, .screen, .fantasy-home-screen, #screen-home, #screen-profile, .disco
 
 .btn-game-pill {
   flex: 1 !important;
-  display: flex !important;
+  display: flex;
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
