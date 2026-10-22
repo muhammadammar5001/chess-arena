@@ -120,14 +120,38 @@ class AIEngine {
     const moves = engine.getAllLegalMoves(engine.currentTurn);
     if (moves.length === 0) return null;
 
+    // Fast-path immediate win (checkmate) or free queen capture
+    for (const m of moves) {
+      const c = engine.clone();
+      const r = c.makeMove(m.fromRow, m.fromCol, m.row, m.col, m.promotion || null);
+      if (r && c.gameOver && c.gameResult && c.gameResult.winner === engine.currentTurn) {
+        return m; // Instant win found
+      }
+    }
+
     const aiColor = engine.currentTurn;
     let bestScore = -Infinity;
     let bestMoves = [];
 
-    // Order moves for better pruning
+    // Order moves for better pruning (captures & checks first)
     const orderedMoves = this.orderMoves(moves, engine);
 
-    for (const move of orderedMoves) {
+    // Limit moves searched per turn if position has massive branching to prevent thread-lock
+    const maxMovesToSearch = this.difficulty === 'easy' ? Math.min(18, orderedMoves.length) :
+                             this.difficulty === 'medium' ? Math.min(28, orderedMoves.length) :
+                             Math.min(38, orderedMoves.length);
+
+    this.startTime = Date.now();
+    this.timeBudgetMs = this.difficulty === 'easy' ? 300 : this.difficulty === 'medium' ? 700 : 1400;
+
+    for (let i = 0; i < maxMovesToSearch; i++) {
+      const move = orderedMoves[i];
+      
+      // Stop searching if exceeding time budget to keep browser 100% fluid
+      if (i > 0 && (Date.now() - this.startTime) > this.timeBudgetMs) {
+        break;
+      }
+
       const clone = engine.clone();
       clone.makeMove(move.fromRow, move.fromCol, move.row, move.col, move.promotion || null);
 
@@ -143,17 +167,23 @@ class AIEngine {
 
     // Add randomness for lower difficulties
     if (this.randomFactor > 0 && moves.length > 1) {
-      // Sometimes pick a random move instead
       if (Math.random() * 100 < this.randomFactor) {
         return moves[Math.floor(Math.random() * moves.length)];
       }
     }
 
-    // Pick randomly among equal best moves
-    return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+    // If search produced candidates, pick one, else fallback to top ordered move
+    if (bestMoves.length > 0) {
+      return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+    }
+    return orderedMoves[0] || moves[0];
   }
 
   minimax(engine, depth, alpha, beta, isMaximizing, aiColor) {
+    // Time cutoff inside recursive tree to avoid frozen loop
+    if (this.startTime && (Date.now() - this.startTime) > (this.timeBudgetMs + 200)) {
+      return this.evaluate(engine, aiColor);
+    }
     if (depth === 0 || engine.gameOver) {
       return this.evaluate(engine, aiColor);
     }

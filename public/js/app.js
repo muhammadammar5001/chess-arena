@@ -1,5 +1,5 @@
 /**
- * Owl's Gambit — App Controller
+ * Owl's Gambit � App Controller
  * Main application logic: screen management, board rendering, game flow.
  */
 
@@ -46,8 +46,8 @@ class App {
     
     this.setupDraggableChat();
     this.pieceSymbols = {
-      white: { king: '♔', queen: '♕', rook: '♖', bishop: '♗', knight: '♘', pawn: '♙' },
-      black: { king: '♚', queen: '♛', rook: '♜', bishop: '♝', knight: '♞', pawn: '♟' }
+      white: { king: '?', queen: '?', rook: '?', bishop: '?', knight: '?', pawn: '?' },
+      black: { king: '?', queen: '?', rook: '?', bishop: '?', knight: '?', pawn: '?' }
     };
 
     this.init();
@@ -82,7 +82,7 @@ class App {
       });
     }
 
-    // Join Room card click — expand/collapse the code input
+    // Join Room card click � expand/collapse the code input
     const joinCard = document.getElementById('join-room-card');
     const joinExpand = document.getElementById('join-room-expand');
     if (joinCard && joinExpand) {
@@ -120,7 +120,7 @@ class App {
       this.lastTap = now;
     }, { passive: false });
 
-    // ── Start ambient music on first user gesture (browser requires it) ──────
+    // -- Start ambient music on first user gesture (browser requires it) ------
     const startMusicOnFirstGesture = () => {
       document.removeEventListener('click',     startMusicOnFirstGesture, true);
       document.removeEventListener('touchstart', startMusicOnFirstGesture, true);
@@ -134,7 +134,7 @@ class App {
     document.addEventListener('keydown',    startMusicOnFirstGesture, { capture: true, once: true });
   }
 
-  // ─── Audio ─────────────────────────────────────────
+  // --- Audio -----------------------------------------
 
   initAudio() {
     if (!this.audioCtx) {
@@ -329,7 +329,7 @@ class App {
     }
   }
 
-  // ─── Screen Management ─────────────────────────────
+  // --- Screen Management -----------------------------
 
   showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => {
@@ -353,7 +353,7 @@ class App {
     }
   }
 
-  // ─── AI Game ───────────────────────────────────────
+  // --- AI Game ---------------------------------------
 
   showAIDifficultySelect() {
     this.showScreen('screen-ai-select');
@@ -390,23 +390,62 @@ class App {
   }
 
   makeAIMove() {
-    if (this.engine.gameOver) return;
+    if (!this.engine || this.engine.gameOver) return;
+    if (this.engine.currentTurn === this.playerColor) return;
 
-    const move = this.ai.getBestMove(this.engine);
-    if (!move) return;
+    this.isAnimatingMove = false;
 
-    const result = this.engine.makeMove(move.fromRow, move.fromCol, move.row, move.col, move.promotion || null);
-    if (result) {
-      this.animateMoveAndApply(result, () => {
-        if (this.engine.gameOver) {
-          this.playSound('gameover');
-          setTimeout(() => this.showGameOver(), 500);
+    // Run computation asynchronously so browser paints and UI stays completely responsive
+    setTimeout(() => {
+      try {
+        if (!this.engine || this.engine.gameOver) return;
+
+        let move = null;
+        try {
+          move = this.ai ? this.ai.getBestMove(this.engine) : null;
+        } catch (e) {
+          console.warn('[AI Engine] Search error, using fallback move:', e);
         }
-      });
-    }
-  }
 
-  // ─── Play with Friend & Staking Logic ───────────────
+        // Guaranteed fallback if minimax fails or times out
+        if (!move) {
+          const allMoves = this.engine.getAllLegalMoves(this.engine.currentTurn);
+          if (allMoves && allMoves.length > 0) {
+            move = allMoves[Math.floor(Math.random() * allMoves.length)];
+          }
+        }
+
+        if (!move) {
+          if (this.engine.isKingInCheck(this.engine.currentTurn)) {
+            this.engine.gameOver = true;
+            this.engine.gameResult = { winner: this.playerColor, reason: 'checkmate' };
+          } else {
+            this.engine.gameOver = true;
+            this.engine.gameResult = { winner: null, reason: 'stalemate' };
+          }
+          this.showGameOver();
+          return;
+        }
+
+        const result = this.engine.makeMove(move.fromRow, move.fromCol, move.row, move.col, move.promotion || null);
+        if (result) {
+          this.animateMoveAndApply(result, () => {
+            if (this.engine.gameOver) {
+              this.playSound('gameover');
+              setTimeout(() => this.showGameOver(), 500);
+            }
+          });
+        } else {
+          this.isAnimatingMove = false;
+          this.renderBoard();
+        }
+      } catch (err) {
+        console.error('[makeAIMove] Error:', err);
+        this.isAnimatingMove = false;
+        this.renderBoard();
+      }
+    }, 50);
+  }
 
   showPlayFriendScreen() {
     this.showScreen('screen-room');
@@ -502,7 +541,7 @@ class App {
       }
       if (this.pendingInviteBtn) {
         const btn = this.pendingInviteBtn;
-        btn.innerHTML = 'Invited ✓';
+        btn.innerHTML = 'Invited ?';
         btn.classList.add('invited');
         setTimeout(() => {
           if (btn) {
@@ -638,7 +677,7 @@ class App {
     setTimeout(() => { if (callback) callback(); }, 1500);
   }
 
-  // ─── Online Game ───────────────────────────────────
+  // --- Online Game -----------------------------------
 
   async findMatch() {
     if (!this.multiplayer) {
@@ -898,8 +937,8 @@ class App {
         const spectateBtn = document.getElementById('btn-leave-spectate');
         if (spectateBtn) spectateBtn.classList.add('hidden');
 
-        const youName = `You (${color === 'white' ? '♔' : '♚'})`;
-        const oppName = `${opponent || 'Opponent'} (${color === 'white' ? '♚' : '♔'})`;
+        const youName = `You (${color === 'white' ? '?' : '?'})`;
+        const oppName = `${opponent || 'Opponent'} (${color === 'white' ? '?' : '?'})`;
 
         if (timerMinutes) {
           this.timerMinutes = timerMinutes;
@@ -1078,8 +1117,8 @@ class App {
         this.timerMinutes = data.timerMinutes;
       }
 
-      const youName = `You (${data.color === 'white' ? '♔' : '♚'})`;
-      const oppName = `${data.opponent} (${data.color === 'white' ? '♚' : '♔'})`;
+      const youName = `You (${data.color === 'white' ? '?' : '?'})`;
+      const oppName = `${data.opponent} (${data.color === 'white' ? '?' : '?'})`;
 
       this.setupGameUI(youName, oppName, true);
       this.showScreen('screen-game');
@@ -1208,15 +1247,15 @@ class App {
       // From THIS client's perspective:
       //   - "bottom" avatar = the player on THIS device (their own side)
       //   - "top" avatar = the opponent
-      // So: if sender === my color → show on bottom bubble (MY bubble)
-      //     if sender !== my color → show on top bubble (OPPONENT's bubble)
+      // So: if sender === my color ? show on bottom bubble (MY bubble)
+      //     if sender !== my color ? show on top bubble (OPPONENT's bubble)
       if (sender === 'white' || sender === 'black') {
         let bubbleId;
         if (sender === this.playerColor) {
-          // I sent this message — show on my avatar (bottom)
+          // I sent this message � show on my avatar (bottom)
           bubbleId = 'bottom-chat-bubble';
         } else {
-          // Opponent sent — show on their avatar (top)
+          // Opponent sent � show on their avatar (top)
           bubbleId = 'top-chat-bubble';
         }
 
@@ -1336,7 +1375,7 @@ class App {
     });
   }
 
-  // ─── Game UI Setup ─────────────────────────────────
+  // --- Game UI Setup ---------------------------------
 
     setupGameUI(playerName, opponentName, isOnline) {
     document.getElementById('bottom-player-name').textContent = playerName;
@@ -1482,7 +1521,7 @@ class App {
     }
   }
 
-  // ─── Board Rendering ──────────────────────────────
+  // --- Board Rendering ------------------------------
 
   renderBoard() {
       const boardEl = document.getElementById('chess-board') || document.getElementById('board');
@@ -1603,7 +1642,7 @@ class App {
     }
   }
 
-  // ─── Square Click Handling ─────────────────────────
+  // --- Square Click Handling -------------------------
 
     
   getValidJumpTargets(row, col) {
@@ -1654,7 +1693,7 @@ class App {
             } else {
                 const ok = this.engine.validateAbility('shield', { row, col }, this.playerColor);
                 if (ok) {
-                    this.showToast('🛡️ Divine Shield active on ' + piece.type + '!');
+                    this.showToast('??? Divine Shield active on ' + piece.type + '!');
                     this.setupAbilitiesUI();
                 }
             }
@@ -1688,7 +1727,7 @@ class App {
                     } else {
                         const ok = this.engine.validateAbility('jump', jumpArgs, this.playerColor);
                         if (ok) {
-                            this.showToast('🪽 Pegasus Jump executed!');
+                            this.showToast('?? Pegasus Jump executed!');
                             this.setupAbilitiesUI();
                             if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
                                 setTimeout(() => this.makeAIMove(), 500);
@@ -1872,7 +1911,7 @@ class App {
     this.executeMove(fromRow, fromCol, toRow, toCol, null);
   }
 
-  // ─── Combat Kill FX & Piece Move Animation ──────────
+  // --- Combat Kill FX & Piece Move Animation ----------
 
   createCombatKillEffect(toSq) {
     if (!toSq) return;
@@ -1954,6 +1993,14 @@ class App {
     }
 
     this.isAnimatingMove = true;
+    // Safety watchdog: ensure isAnimatingMove NEVER remains stuck even if DOM transition fails
+    if (this._animWatchdog) clearTimeout(this._animWatchdog);
+    this._animWatchdog = setTimeout(() => {
+      if (this.isAnimatingMove) {
+        this.isAnimatingMove = false;
+        this.renderBoard();
+      }
+    }, 450);
 
     // Play sound on move start
     if (result.captured) {
@@ -2069,7 +2116,7 @@ class App {
     });
   }
 
-  // ─── Promotion ─────────────────────────────────────
+  // --- Promotion -------------------------------------
 
   showPromotionModal() {
     const modal = document.getElementById('modal-promotion');
@@ -2097,7 +2144,7 @@ class App {
     }
   }
 
-  // ─── Timer ─────────────────────────────────────────
+  // --- Timer -----------------------------------------
 
   startTimerTick() {
     this.stopTimerTick();
@@ -2165,7 +2212,7 @@ class App {
     bottomTimer.classList.toggle('low-time', this.timers[bottomColor] !== null && this.timers[bottomColor] < 30000);
   }
 
-  // ─── Player Bars ───────────────────────────────────
+  // --- Player Bars -----------------------------------
 
   updatePlayerBars() {
     if (!this.engine) return;
@@ -2207,7 +2254,7 @@ class App {
     this.updateTimerDisplay();
   }
 
-  // ─── Move History ──────────────────────────────────
+  // --- Move History ----------------------------------
 
   updateMoveHistory(moveData) {
     this.updateMoveHistoryUI();
@@ -2330,7 +2377,7 @@ class App {
     }
   }
 
-  // ─── Captured Pieces ──────────────────────────────
+  // --- Captured Pieces ------------------------------
 
   updateCapturedPieces() {
     const topColor = this.boardFlipped ? 'white' : 'black';
@@ -2362,13 +2409,13 @@ class App {
     document.getElementById('bottom-captured').textContent = '';
   }
 
-  // ─── Game Over ─────────────────────────────────────
+  // --- Game Over -------------------------------------
 
-  // ─── Game Over & Victory Screen ─────────────────────
+  // --- Game Over & Victory Screen ---------------------
 
-  // ══════════════════════════════════════════
+  // ------------------------------------------
   //  BACKGROUND MUSIC (Web Audio, procedural)
-  // ══════════════════════════════════════════
+  // ------------------------------------------
 
   startBgMusic() {
     if (!this.musicEnabled) return;
@@ -2384,7 +2431,7 @@ class App {
     if (ctx.state === 'suspended') ctx.resume();
     this.bgMusicRunning = true;
 
-    // Master gain — fade in slowly
+    // Master gain � fade in slowly
     const master = ctx.createGain();
     master.gain.setValueAtTime(0, ctx.currentTime);
     master.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 6);
@@ -2472,10 +2519,10 @@ class App {
     this.musicEnabled = !this.musicEnabled;
     const btn = document.getElementById('btn-toggle-music');
     if (this.musicEnabled) {
-      if (btn) btn.innerHTML = '🎵 Music: On';
+      if (btn) btn.innerHTML = '?? Music: On';
       this.startBgMusic();
     } else {
-      if (btn) btn.innerHTML = '🎵 Music: Off';
+      if (btn) btn.innerHTML = '?? Music: Off';
       this.stopBgMusic();
     }
     this.showToast(this.musicEnabled ? 'Music enabled' : 'Music muted');
@@ -2501,7 +2548,7 @@ class App {
         const prizeWon = this.currentStake * 2;
         currentBalance += prizeWon;
         balanceEl.textContent = currentBalance.toLocaleString();
-        this.showToast(`🏆 Won ${prizeWon} $OWL! Added to wallet.`);
+        this.showToast(`?? Won ${prizeWon} $OWL! Added to wallet.`);
       }
     } else if (isDraw && this.activeStakeDeducted > 0) {
       const balanceEl = document.getElementById('profile-wallet-balance');
@@ -2570,12 +2617,12 @@ class App {
 
     if (scoreEl) {
       if (isPlayerWin) scoreEl.textContent = '1 - 0';
-      else if (isDraw) scoreEl.textContent = '½ - ½';
+      else if (isDraw) scoreEl.textContent = '� - �';
       else scoreEl.textContent = '0 - 1';
     }
 
     const rawOppName = document.getElementById('top-player-name')?.textContent || 'ShadowOwl';
-    const cleanOppName = rawOppName.replace(/\s*\([♔♚]\)/, '');
+    const cleanOppName = rawOppName.replace(/\s*\([??]\)/, '');
     const currentOppRating = document.getElementById('top-player-rating')?.textContent || '1180';
     if (oppNameEl) oppNameEl.textContent = cleanOppName;
     if (oppRatingEl) oppRatingEl.textContent = currentOppRating;
@@ -2650,7 +2697,7 @@ class App {
     const playerNameEl = document.getElementById('victory-player-name');
     const playerRatingEl = document.getElementById('victory-player-rating');
     const rawPlayerName = document.getElementById('bottom-player-name')?.textContent || 'OwlRider';
-    const currentPlayerName = rawPlayerName.replace(/\s*\([♔♚]\)/, '');
+    const currentPlayerName = rawPlayerName.replace(/\s*\([??]\)/, '');
     const currentPlayerRating = document.getElementById('bottom-player-rating')?.textContent || '1240';
     if (playerNameEl) playerNameEl.textContent = currentPlayerName;
     if (playerRatingEl) playerRatingEl.textContent = currentPlayerRating;
@@ -2704,7 +2751,7 @@ class App {
     }
   }
 
-  // ─── In-Game 3-Action Controls (Undo, Hint, Resign) ──
+  // --- In-Game 3-Action Controls (Undo, Hint, Resign) --
 
   getHint() {
     if (!this.engine || this.engine.gameOver) {
@@ -2748,7 +2795,7 @@ class App {
     const files = 'abcdefgh';
     const fromCoord = `${files[bestMove.fromCol]}${8 - bestMove.fromRow}`;
     const toCoord = `${files[bestMove.col]}${8 - bestMove.row}`;
-    this.showToast(`💡 Hint: Move ${fromCoord} → ${toCoord}`);
+    this.showToast(`?? Hint: Move ${fromCoord} ? ${toCoord}`);
 
     setTimeout(() => {
       if (fromSquare) fromSquare.classList.remove('hint-move');
@@ -2835,14 +2882,14 @@ class App {
     this.updateCapturedPieces();
     this.rebuildMoveHistoryUI();
     this.updatePlayerBars();
-    this.showToast(`Move undone ↺ (-${cost} coins)`);
+    this.showToast(`Move undone ? (-${cost} coins)`);
   }
 
   rebuildMoveHistoryUI() {
     this.updateMoveHistoryUI();
   }
 
-  // ─── Robin Owls Navigation & Features ───────────────
+  // --- Robin Owls Navigation & Features ---------------
 
   updateBottomNav(tabName) {
     const tabIndices = { home: 0, rankings: 1, shop: 2, profile: 3, wallet: 3 };
@@ -2971,7 +3018,7 @@ class App {
       localStorage.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
     } catch(e) {}
     this.updateHomeAbilitiesDisplay();
-    this.showToast('Abilities confirmed! Tactical loadout saved ⚡');
+    this.showToast('Abilities confirmed! Tactical loadout saved ?');
     this.goHome();
   }
 
@@ -3009,7 +3056,7 @@ class App {
     } else {
       if (robinBtn) robinBtn.classList.add('active');
       if (standardBtn) standardBtn.classList.remove('active');
-      this.showToast('Robin Mode (NFT abilities enabled) 🔒');
+      this.showToast('Robin Mode (NFT abilities enabled) ??');
     }
   }
 
@@ -3052,10 +3099,10 @@ class App {
     this.renderBoard();
     this.updatePlayerBars();
     this.startTimerTick();
-    this.showToast('Opponent Found: ShadowOwl (1180) ⚔️');
+    this.showToast('Opponent Found: ShadowOwl (1180) ??');
   }
 
-  // ─── Controls ──────────────────────────────────────
+  // --- Controls --------------------------------------
 
   confirmResign() {
     this.showConfirm('Resign?', 'Are you sure you want to resign?', () => {
@@ -3164,7 +3211,7 @@ class App {
     this.showScreen('screen-home');
   }
 
-  // ─── Connection Status ─────────────────────────────
+  // --- Connection Status -----------------------------
 
   showConnectionStatus(status) {
     const el = document.getElementById('connection-status');
@@ -3178,7 +3225,7 @@ class App {
     document.getElementById('connection-status').classList.add('hidden');
   }
 
-  // ─── Modals ────────────────────────────────────────
+  // --- Modals ----------------------------------------
 
   showModal(id) {
     if (id === 'modal-profile') {
@@ -3197,7 +3244,7 @@ class App {
   toggleSound() {
     this.soundMuted = !this.soundMuted;
     const btn = document.getElementById('btn-toggle-sound');
-    if (btn) btn.innerHTML = this.soundMuted ? '🔇 SFX: Off' : '🔊 SFX: On';
+    if (btn) btn.innerHTML = this.soundMuted ? '?? SFX: Off' : '?? SFX: On';
     this.showToast(this.soundMuted ? 'Sound effects muted' : 'Sound effects enabled');
   }
 
@@ -3217,7 +3264,7 @@ class App {
     this.showModal('modal-confirm');
   }
 
-  // ─── Toast ─────────────────────────────────────────
+  // --- Toast -----------------------------------------
 
   
   handleAuthRequireUsername(wallet) {
@@ -3314,7 +3361,7 @@ class App {
     const labels = document.querySelectorAll('.coord-label');
     labels.forEach(l => l.style.display = this.showCoords ? '' : 'none');
     const btn = document.getElementById('btn-toggle-coords');
-    if (btn) btn.textContent = this.showCoords ? '🔤 Coords: On' : '🔤 Coords: Off';
+    if (btn) btn.textContent = this.showCoords ? '?? Coords: On' : '?? Coords: Off';
   }
 
   showToast(message) {
@@ -3429,7 +3476,7 @@ class App {
             </div>
           </div>
           <div style="font-size: 22px; filter: drop-shadow(0 0 6px rgba(201,151,0,0.5));">
-            ${i < 3 ? '🏆' : ''}
+            ${i < 3 ? '??' : ''}
           </div>
         </div>`;
       }
@@ -3558,7 +3605,7 @@ class App {
           const balEl = document.getElementById("wp-balance");
           const usdEl = document.getElementById("wp-usd");
           if (balEl) balEl.textContent = ethAmount + " ETH";
-          if (usdEl) usdEl.textContent = "≈ $" + Number(totalUSD).toLocaleString();
+          if (usdEl) usdEl.textContent = "� $" + Number(totalUSD).toLocaleString();
 
           // ETH asset row
           const ethAmtEl = document.getElementById("wp-eth-amount");
@@ -3580,7 +3627,7 @@ class App {
           const balEl = document.getElementById("wp-balance");
           const usdEl = document.getElementById("wp-usd");
           if (balEl) balEl.textContent = ethAmount + " ETH";
-          if (usdEl) usdEl.textContent = "≈ $" + Number(totalUSD).toLocaleString();
+          if (usdEl) usdEl.textContent = "� $" + Number(totalUSD).toLocaleString();
           const ethAmtEl = document.getElementById("wp-eth-amount");
           const ethFiatEl = document.getElementById("wp-eth-fiat");
           if (ethAmtEl) ethAmtEl.textContent = ethAmount;
@@ -3595,7 +3642,7 @@ class App {
 
 
 
-  // ─── Friends & Invitations System ───────────────
+  // --- Friends & Invitations System ---------------
   
 
   sendFriendRequest() {
