@@ -56,6 +56,11 @@ class App {
   setGameMode(mode) {
     this.matchType = 'robin';
     this.syncAbilitiesUI();
+    // Restore saved board & piece theme
+    const savedBoardTheme = localStorage.getItem('owl_board_theme') || 'classic-oak';
+    document.body.dataset.boardTheme = savedBoardTheme;
+    const savedPieceTheme = localStorage.getItem('owl_piece_theme') || 'staunton-boxwood';
+    document.body.dataset.pieceTheme = savedPieceTheme;
   }
 
   init() {

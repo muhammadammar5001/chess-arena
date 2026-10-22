@@ -1985,3 +1985,355 @@ body[data-board-theme="ebony-ivory"] .square.light {
 body[data-board-theme="ebony-ivory"] .square.dark {
   background-color: #2B2B2B !important;
 }
+
+/* ==========================================================================
+   2. EMBERWOOD THEME
+   ========================================================================== */
+[data-board-theme="ember"] {
+  --theme-accent: #ce7d45;
+
+  --aura: rgba(214, 112, 52, 0.27);
+  --aura-soft: rgba(141, 61, 26, 0.09);
+
+  --frame-a: #5c3524;
+  --frame-b: #3d2117;
+  --frame-c: #25130e;
+  --frame-d: #150a07;
+  --frame-sheen: rgba(255, 196, 137, 0.16);
+  --frame-vein-light: rgba(255, 224, 192, 0.02);
+  --frame-vein-dark: rgba(0, 0, 0, 0.045);
+  --frame-edge: rgba(12, 5, 3, 0.96);
+  --frame-inner-light: rgba(255, 196, 132, 0.24);
+  --frame-border: rgba(235, 168, 110, 0.24);
+  --frame-border-shadow: rgba(16, 6, 2, 0.4);
+  --rivet: rgba(232, 155, 96, 0.92);
+  --rivet-shadow: rgba(45, 18, 8, 0.48);
+  --frame-finish: rgba(255, 186, 120, 0.05);
+  --frame-finish-dark: rgba(12, 4, 2, 0.12);
+  --board-under: #3f2217;
+  --grain-dark: rgba(28, 10, 4, 0.26);
+  --grain-light: rgba(255, 192, 125, 0.08);
+  --grain-dark-2: rgba(16, 5, 2, 0.2);
+
+  --sq-light-base: #d7a16d;
+  --sq-light-glow: rgba(255, 232, 197, 0.22);
+  --sq-light-vein: rgba(99, 44, 14, 0.07);
+  --sq-light-vein-2: rgba(80, 36, 12, 0.045);
+  --sq-light-a: #e8bb86;
+  --sq-light-b: #cf925c;
+  --sq-light-c: #b87442;
+  --sq-dark-base: #613a2a;
+  --sq-dark-glow: rgba(255, 155, 86, 0.1);
+  --sq-dark-vein: rgba(15, 5, 2, 0.13);
+  --sq-dark-vein-2: rgba(255, 170, 108, 0.04);
+  --sq-dark-a: #784a34;
+  --sq-dark-b: #543024;
+  --sq-dark-c: #382119;
+  --sq-light-alt-base: #d29b68;
+  --sq-light-alt-glow: rgba(255, 225, 186, 0.2);
+  --sq-light-alt-vein: rgba(105, 48, 16, 0.06);
+  --sq-light-alt-a: #e2b17c;
+  --sq-light-alt-b: #c58a54;
+  --sq-light-alt-c: #ad6c3c;
+  --sq-dark-alt-base: #5b3526;
+  --sq-dark-alt-glow: rgba(255, 150, 80, 0.09);
+  --sq-dark-alt-vein: rgba(13, 4, 2, 0.13);
+  --sq-dark-alt-a: #6f402e;
+  --sq-dark-alt-b: #4c2a1f;
+  --sq-dark-alt-c: #321b13;
+
+  --marker-on-light: rgba(74, 31, 10, 0.52);
+  --marker-soft-on-light: rgba(74, 31, 10, 0.16);
+  --marker-on-dark: rgba(255, 224, 188, 0.7);
+  --marker-soft-on-dark: rgba(255, 224, 188, 0.16);
+  --last-glow: rgba(255, 191, 112, 0.12);
+  --last-fill: rgba(224, 112, 49, 0.22);
+  --last-edge: rgba(255, 205, 151, 0.18);
+  --select-cut: rgba(255, 215, 161, 0.96);
+  --select-glow: rgba(255, 151, 74, 0.38);
+  --select-piece-shadow: rgba(30, 9, 3, 0.55);
+  --check-glow: rgba(189, 54, 27, 0.68);
+  --check-glow-soft: rgba(122, 24, 10, 0.38);
+  --check-a: #c46a49;
+  --check-b: #7e2d22;
+  --check-edge: rgba(255, 190, 134, 0.14);
+  --check-pulse-soft: rgba(138, 30, 12, 0.14);
+  --check-edge-bright: rgba(255, 200, 148, 0.38);
+  --check-pulse: rgba(216, 63, 27, 0.3);
+  --check-piece-glow: rgba(255, 94, 35, 0.58);
+
+  --piece-light: url(#emberLight);
+  --piece-dark: url(#emberDark);
+  --piece-light-stroke: #713d24;
+  --piece-dark-stroke: #170b07;
+  --piece-light-shade: rgba(115, 52, 20, 0.22);
+  --piece-dark-shade: rgba(8, 2, 1, 0.3);
+  --piece-light-highlight: rgba(255, 244, 218, 0.25);
+  --piece-dark-highlight: rgba(255, 173, 104, 0.1);
+  --piece-light-detail: rgba(112, 61, 31, 0.58);
+  --piece-dark-detail: rgba(246, 171, 105, 0.28);
+  --piece-light-eye: #3b1d0e;
+  --piece-dark-eye: #f3b576;
+  --piece-shadow: rgba(24, 7, 2, 0.52);
+}
+
+/* ==========================================================================
+   MOONLIT GROVE THEME
+   ========================================================================== */
+[data-board-theme="moonlit"] {
+  --theme-accent: #76a8c2;
+
+  --aura: rgba(83, 144, 178, 0.25);
+  --aura-soft: rgba(47, 96, 126, 0.09);
+
+  --frame-a: #2d4254;
+  --frame-b: #1c2d3e;
+  --frame-c: #101e2c;
+  --frame-d: #08131e;
+  --frame-sheen: rgba(200, 235, 255, 0.15);
+  --frame-vein-light: rgba(205, 237, 255, 0.018);
+  --frame-vein-dark: rgba(0, 0, 0, 0.04);
+  --frame-edge: rgba(4, 10, 16, 0.96);
+  --frame-inner-light: rgba(190, 231, 255, 0.22);
+  --frame-border: rgba(156, 205, 230, 0.22);
+  --frame-border-shadow: rgba(3, 12, 18, 0.4);
+  --rivet: rgba(198, 230, 246, 0.92);
+  --rivet-shadow: rgba(15, 37, 50, 0.48);
+  --frame-finish: rgba(210, 240, 255, 0.05);
+  --frame-finish-dark: rgba(2, 7, 12, 0.12);
+  --board-under: #0c1a26;
+  --grain-dark: rgba(2, 10, 16, 0.24);
+  --grain-light: rgba(186, 232, 255, 0.055);
+  --grain-dark-2: rgba(0, 6, 10, 0.2);
+
+  --sq-light-base: #8fb4c5;
+  --sq-light-glow: rgba(240, 251, 255, 0.24);
+  --sq-light-vein: rgba(34, 78, 97, 0.065);
+  --sq-light-vein-2: rgba(30, 70, 88, 0.04);
+  --sq-light-a: #b9d6e0;
+  --sq-light-b: #93bccb;
+  --sq-light-c: #6e9dae;
+  --sq-dark-base: #1d3c52;
+  --sq-dark-glow: rgba(166, 222, 255, 0.1);
+  --sq-dark-vein: rgba(2, 9, 15, 0.15);
+  --sq-dark-vein-2: rgba(198, 239, 255, 0.035);
+  --sq-dark-a: #2d556d;
+  --sq-dark-b: #18344a;
+  --sq-dark-c: #0f2537;
+  --sq-light-alt-base: #86aab9;
+  --sq-light-alt-glow: rgba(235, 250, 255, 0.22);
+  --sq-light-alt-vein: rgba(30, 72, 90, 0.06);
+  --sq-light-alt-a: #afd0db;
+  --sq-light-alt-b: #8bb5c4;
+  --sq-light-alt-c: #6897a8;
+  --sq-dark-alt-base: #1a374d;
+  --sq-dark-alt-glow: rgba(160, 218, 255, 0.09);
+  --sq-dark-alt-vein: rgba(1, 7, 12, 0.14);
+  --sq-dark-alt-a: #294f67;
+  --sq-dark-alt-b: #152f44;
+  --sq-dark-alt-c: #0d2234;
+
+  --marker-on-light: rgba(18, 50, 65, 0.5);
+  --marker-soft-on-light: rgba(18, 50, 65, 0.16);
+  --marker-on-dark: rgba(220, 247, 255, 0.76);
+  --marker-soft-on-dark: rgba(220, 247, 255, 0.16);
+  --last-glow: rgba(171, 223, 255, 0.13);
+  --last-fill: rgba(72, 150, 190, 0.23);
+  --last-edge: rgba(205, 239, 255, 0.2);
+  --select-cut: rgba(210, 244, 255, 0.96);
+  --select-glow: rgba(93, 186, 229, 0.4);
+  --select-piece-shadow: rgba(3, 16, 27, 0.55);
+  --check-glow: rgba(189, 61, 79, 0.64);
+  --check-glow-soft: rgba(119, 26, 54, 0.38);
+  --check-a: #b45f72;
+  --check-b: #68263c;
+  --check-edge: rgba(255, 191, 204, 0.14);
+  --check-pulse-soft: rgba(127, 32, 54, 0.13);
+  --check-edge-bright: rgba(255, 208, 218, 0.38);
+  --check-pulse: rgba(203, 77, 103, 0.3);
+  --check-piece-glow: rgba(255, 99, 108, 0.5);
+
+  --piece-light: url(#moonPearl);
+  --piece-dark: url(#moonMidnight);
+  --piece-light-stroke: #46697f;
+  --piece-dark-stroke: #081927;
+  --piece-light-shade: rgba(49, 90, 112, 0.18);
+  --piece-dark-shade: rgba(2, 11, 18, 0.28);
+  --piece-light-highlight: rgba(255, 255, 255, 0.28);
+  --piece-dark-highlight: rgba(165, 219, 255, 0.1);
+  --piece-light-detail: rgba(60, 99, 120, 0.52);
+  --piece-dark-detail: rgba(173, 217, 242, 0.28);
+  --piece-light-eye: #1d3a4b;
+  --piece-dark-eye: #cbe9ff;
+  --piece-shadow: rgba(4, 14, 24, 0.5);
+}
+
+/* ==========================================================================
+   SAKURAWOOD THEME
+   ========================================================================== */
+[data-board-theme="sakura"] {
+  --theme-accent: #b87585;
+
+  --aura: rgba(191, 116, 134, 0.23);
+  --aura-soft: rgba(128, 66, 83, 0.08);
+
+  --frame-a: #6f4351;
+  --frame-b: #4f2b38;
+  --frame-c: #371c27;
+  --frame-d: #221018;
+  --frame-sheen: rgba(255, 220, 225, 0.16);
+  --frame-vein-light: rgba(255, 255, 255, 0.02);
+  --frame-vein-dark: rgba(0, 0, 0, 0.035);
+  --frame-edge: rgba(14, 5, 8, 0.95);
+  --frame-inner-light: rgba(255, 220, 225, 0.22);
+  --frame-border: rgba(245, 199, 205, 0.22);
+  --frame-border-shadow: rgba(22, 7, 11, 0.38);
+  --rivet: rgba(247, 206, 205, 0.92);
+  --rivet-shadow: rgba(57, 22, 30, 0.44);
+  --frame-finish: rgba(255, 230, 232, 0.05);
+  --frame-finish-dark: rgba(15, 4, 8, 0.1);
+  --board-under: #3a1a26;
+  --grain-dark: rgba(44, 13, 24, 0.2);
+  --grain-light: rgba(255, 228, 231, 0.065);
+  --grain-dark-2: rgba(30, 8, 16, 0.16);
+
+  --sq-light-base: #efd7d1;
+  --sq-light-glow: rgba(255, 251, 246, 0.3);
+  --sq-light-vein: rgba(143, 78, 84, 0.055);
+  --sq-light-vein-2: rgba(120, 63, 70, 0.035);
+  --sq-light-a: #faeae4;
+  --sq-light-b: #eccbc8;
+  --sq-light-c: #ddb5b4;
+  --sq-dark-base: #8e5466;
+  --sq-dark-glow: rgba(255, 210, 222, 0.11);
+  --sq-dark-vein: rgba(44, 14, 25, 0.1);
+  --sq-dark-vein-2: rgba(255, 225, 230, 0.04);
+  --sq-dark-a: #a8687a;
+  --sq-dark-b: #7b4356;
+  --sq-dark-c: #633244;
+  --sq-light-alt-base: #ebd0ca;
+  --sq-light-alt-glow: rgba(255, 248, 243, 0.27);
+  --sq-light-alt-vein: rgba(146, 80, 86, 0.05);
+  --sq-light-alt-a: #f7e5df;
+  --sq-light-alt-b: #e8c4c1;
+  --sq-light-alt-c: #d9afae;
+  --sq-dark-alt-base: #895061;
+  --sq-dark-alt-glow: rgba(255, 205, 218, 0.1);
+  --sq-dark-alt-vein: rgba(40, 12, 23, 0.1);
+  --sq-dark-alt-a: #a26375;
+  --sq-dark-alt-b: #763f52;
+  --sq-dark-alt-c: #5f2e40;
+
+  --marker-on-light: rgba(92, 41, 57, 0.5);
+  --marker-soft-on-light: rgba(92, 41, 57, 0.16);
+  --marker-on-dark: rgba(255, 232, 235, 0.76);
+  --marker-soft-on-dark: rgba(255, 232, 235, 0.16);
+  --last-glow: rgba(255, 203, 214, 0.13);
+  --last-fill: rgba(210, 108, 132, 0.22);
+  --last-edge: rgba(255, 225, 230, 0.2);
+  --select-cut: rgba(255, 227, 232, 0.96);
+  --select-glow: rgba(237, 142, 165, 0.38);
+  --select-piece-shadow: rgba(40, 9, 20, 0.5);
+  --check-glow: rgba(145, 40, 75, 0.62);
+  --check-glow-soft: rgba(92, 19, 47, 0.36);
+  --check-a: #ab5d76;
+  --check-b: #68233e;
+  --check-edge: rgba(255, 194, 208, 0.14);
+  --check-pulse-soft: rgba(105, 24, 50, 0.13);
+  --check-edge-bright: rgba(255, 210, 218, 0.38);
+  --check-pulse: rgba(174, 58, 92, 0.28);
+  --check-piece-glow: rgba(255, 118, 141, 0.5);
+
+  --piece-light: url(#sakuraPorcelain);
+  --piece-dark: url(#sakuraRosewood);
+  --piece-light-stroke: #7d4a53;
+  --piece-dark-stroke: #2d0e18;
+  --piece-light-shade: rgba(130, 67, 76, 0.16);
+  --piece-dark-shade: rgba(22, 4, 12, 0.25);
+  --piece-light-highlight: rgba(255, 250, 244, 0.3);
+  --piece-dark-highlight: rgba(255, 192, 205, 0.1);
+  --piece-light-detail: rgba(118, 69, 72, 0.5);
+  --piece-dark-detail: rgba(255, 206, 214, 0.26);
+  --piece-light-eye: #4b2029;
+  --piece-dark-eye: #ffd7dd;
+  --piece-shadow: rgba(35, 8, 18, 0.45);
+}
+
+/* Connect Dynamic Board Variables to Board Elements */
+[data-board-theme="ember"] .board-frame,
+[data-board-theme="moonlit"] .board-frame,
+[data-board-theme="sakura"] .board-frame {
+  background: linear-gradient(135deg, var(--frame-a) 0%, var(--frame-b) 50%, var(--frame-c) 100%) !important;
+  border-color: var(--frame-border) !important;
+  box-shadow: 0 10px 28px var(--frame-border-shadow) !important;
+}
+
+[data-board-theme="ember"] .square.light,
+[data-board-theme="moonlit"] .square.light,
+[data-board-theme="sakura"] .square.light {
+  background-color: var(--sq-light-base) !important;
+  background-image: linear-gradient(148deg, var(--sq-light-a) 0%, var(--sq-light-b) 62%, var(--sq-light-c) 100%) !important;
+}
+
+[data-board-theme="ember"] .square.dark,
+[data-board-theme="moonlit"] .square.dark,
+[data-board-theme="sakura"] .square.dark {
+  background-color: var(--sq-dark-base) !important;
+  background-image: linear-gradient(148deg, var(--sq-dark-a) 0%, var(--sq-dark-b) 58%, var(--sq-dark-c) 100%) !important;
+}
+
+/* Connect Pieces to Theme Gradients (both via [data-board-theme] or standalone [data-piece-theme]) */
+[data-board-theme="ember"] .chess-piece[data-color="w"] .piece-base,
+[data-board-theme="ember"] .chess-piece[data-color="w"] .piece-body,
+[data-piece-theme="ember"] .chess-piece[data-color="w"] .piece-base,
+[data-piece-theme="ember"] .chess-piece[data-color="w"] .piece-body {
+  fill: url(#emberLight) !important;
+  stroke: #713d24 !important;
+}
+[data-board-theme="ember"] .chess-piece[data-color="b"] .piece-base,
+[data-board-theme="ember"] .chess-piece[data-color="b"] .piece-body,
+[data-piece-theme="ember"] .chess-piece[data-color="b"] .piece-base,
+[data-piece-theme="ember"] .chess-piece[data-color="b"] .piece-body {
+  fill: url(#emberDark) !important;
+  stroke: #170b07 !important;
+}
+
+[data-board-theme="moonlit"] .chess-piece[data-color="w"] .piece-base,
+[data-board-theme="moonlit"] .chess-piece[data-color="w"] .piece-body,
+[data-piece-theme="moonlit"] .chess-piece[data-color="w"] .piece-base,
+[data-piece-theme="moonlit"] .chess-piece[data-color="w"] .piece-body {
+  fill: url(#moonPearl) !important;
+  stroke: #46697f !important;
+}
+[data-board-theme="moonlit"] .chess-piece[data-color="b"] .piece-base,
+[data-board-theme="moonlit"] .chess-piece[data-color="b"] .piece-body,
+[data-piece-theme="moonlit"] .chess-piece[data-color="b"] .piece-base,
+[data-piece-theme="moonlit"] .chess-piece[data-color="b"] .piece-body {
+  fill: url(#moonMidnight) !important;
+  stroke: #081927 !important;
+}
+
+[data-board-theme="sakura"] .chess-piece[data-color="w"] .piece-base,
+[data-board-theme="sakura"] .chess-piece[data-color="w"] .piece-body,
+[data-piece-theme="sakura"] .chess-piece[data-color="w"] .piece-base,
+[data-piece-theme="sakura"] .chess-piece[data-color="w"] .piece-body {
+  fill: url(#sakuraPorcelain) !important;
+  stroke: #7d4a53 !important;
+}
+[data-board-theme="sakura"] .chess-piece[data-color="b"] .piece-base,
+[data-board-theme="sakura"] .chess-piece[data-color="b"] .piece-body,
+[data-piece-theme="sakura"] .chess-piece[data-color="b"] .piece-base,
+[data-piece-theme="sakura"] .chess-piece[data-color="b"] .piece-body {
+  fill: url(#sakuraRosewood) !important;
+  stroke: #2d0e18 !important;
+}
+
+/* Previews for the new boards in shop */
+.board-preview-ember .sq-l { background-color: #d7a16d; }
+.board-preview-ember .sq-d { background-color: #613a2a; }
+
+.board-preview-moonlit .sq-l { background-color: #8fb4c5; }
+.board-preview-moonlit .sq-d { background-color: #1d3c52; }
+
+.board-preview-sakura .sq-l { background-color: #efd7d1; }
+.board-preview-sakura .sq-d { background-color: #8e5466; }
