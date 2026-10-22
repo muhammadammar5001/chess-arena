@@ -3362,7 +3362,7 @@ class App {
         });
       }
     } else if (type === 'piece') {
-      document.body.dataset.pieceTheme = id;
+      document.body.dataset.pieceTheme = id; if (this.engine) this.renderBoard();
       localStorage.setItem('owl_piece_theme', id);
       this.showToast('Equipped ' + id.replace('-', ' ') + ' pieces!');
       const piecesPane = document.getElementById('shop-pane-pieces');
