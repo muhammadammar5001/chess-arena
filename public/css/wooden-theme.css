@@ -2476,7 +2476,14 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="w"] .piece-detail,
   stroke: rgba(60, 55, 48, 0.6) !important;
 }
 
-/* Black Ebony pieces: pure obsidian with subtle silver rim for perfect definition on dark tiles */
+/* Black Ebony pieces: Charcoal Titanium with luminous Platinum Silver contours for crystal clear visibility on dark checks */
+body[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"],
+body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"],
+[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"],
+[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] {
+  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.6)) drop-shadow(0 5px 8px rgba(0, 0, 0, 0.85)) !important;
+}
+
 body[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-base,
 body[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-body,
 body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-base,
@@ -2486,30 +2493,32 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-body,
 [data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-base,
 [data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-body {
   fill: url(#ebonyIvoryDark) !important;
-  stroke: #111111 !important;
+  stroke: #c8cbd0 !important;
   stroke-width: 2.2 !important;
-  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.45)) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.8)) !important;
+  stroke-linejoin: round !important;
 }
 
 body[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-shade,
 body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-shade,
 [data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-shade,
 [data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-shade {
-  fill: rgba(0, 0, 0, 0.4) !important;
+  fill: rgba(0, 0, 0, 0.35) !important;
 }
 
 body[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-highlight,
 body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-highlight,
 [data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-highlight,
 [data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-highlight {
-  fill: rgba(255, 255, 255, 0.22) !important;
+  fill: rgba(255, 255, 255, 0.35) !important;
 }
 
 body[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-detail,
 body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-detail,
 [data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-detail,
 [data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-detail {
-  stroke: rgba(220, 220, 220, 0.45) !important;
+  stroke: #ffffff !important;
+  stroke-width: 1.8 !important;
+  opacity: 0.85 !important;
 }
 
 body[data-board-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
