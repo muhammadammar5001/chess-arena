@@ -546,7 +546,7 @@ class App {
       }
       if (this.pendingInviteBtn) {
         const btn = this.pendingInviteBtn;
-        btn.innerHTML = 'Invited ?';
+        btn.innerHTML = 'Invited ✓';
         btn.classList.add('invited');
         setTimeout(() => {
           if (btn) {
@@ -942,8 +942,8 @@ class App {
         const spectateBtn = document.getElementById('btn-leave-spectate');
         if (spectateBtn) spectateBtn.classList.add('hidden');
 
-        const youName = `You (${color === 'white' ? '?' : '?'})`;
-        const oppName = `${opponent || 'Opponent'} (${color === 'white' ? '?' : '?'})`;
+        const youName = `You (${color === 'white' ? 'White' : 'Black'})`;
+        const oppName = `${opponent || 'Opponent'} (${color === 'white' ? 'Black' : 'White'})`;
 
         if (timerMinutes) {
           this.timerMinutes = timerMinutes;
@@ -1127,8 +1127,8 @@ class App {
         this.timerMinutes = data.timerMinutes;
       }
 
-      const youName = `You (${data.color === 'white' ? '?' : '?'})`;
-      const oppName = `${data.opponent} (${data.color === 'white' ? '?' : '?'})`;
+      const youName = `You (${data.color === 'white' ? 'White' : 'Black'})`;
+      const oppName = `${data.opponent} (${data.color === 'white' ? 'Black' : 'White'})`;
 
       this.setupGameUI(youName, oppName, true);
       this.showScreen('screen-game');
@@ -1723,7 +1723,7 @@ class App {
             } else {
                 const ok = this.engine.validateAbility('shield', { row, col }, this.playerColor);
                 if (ok) {
-                    this.showToast('??? Divine Shield active on ' + piece.type + '!');
+                    this.showToast('🛡️ Divine Shield active on ' + piece.type + '!');
                     this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
                 }
             }
@@ -1757,7 +1757,7 @@ class App {
                     } else {
                         const ok = this.engine.validateAbility('jump', jumpArgs, this.playerColor);
                         if (ok) {
-                            this.showToast('?? Pegasus Jump executed!');
+                            this.showToast('🪽 Pegasus Jump executed!');
                             this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
                             if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
                                 setTimeout(() => this.makeAIMove(), 500);
@@ -2303,7 +2303,7 @@ class App {
       this.engine.moveHistory.forEach((move, i) => {
         const item = document.createElement('div');
         item.className = 'ticker-item';
-        item.textContent = (i % 2 === 0 ? ((Math.floor(i/2) + 1) + '. ') : '') + (move.notation || '?');
+        item.textContent = (i % 2 === 0 ? ((Math.floor(i/2) + 1) + '. ') : '') + (move.notation || '');
         list.appendChild(item);
       });
       list.scrollLeft = list.scrollWidth;
@@ -2564,10 +2564,10 @@ class App {
     this.musicEnabled = !this.musicEnabled;
     const btn = document.getElementById('btn-toggle-music');
     if (this.musicEnabled) {
-      if (btn) btn.innerHTML = '?? Music: On';
+      if (btn) btn.innerHTML = '🎵 Music: On';
       this.startBgMusic();
     } else {
-      if (btn) btn.innerHTML = '?? Music: Off';
+      if (btn) btn.innerHTML = '🎵 Music: Off';
       this.stopBgMusic();
     }
     this.showToast(this.musicEnabled ? 'Music enabled' : 'Music muted');
@@ -2662,7 +2662,7 @@ class App {
 
     if (scoreEl) {
       if (isPlayerWin) scoreEl.textContent = '1 - 0';
-      else if (isDraw) scoreEl.textContent = '? - ?';
+      else if (isDraw) scoreEl.textContent = '½ - ½';
       else scoreEl.textContent = '0 - 1';
     }
 
@@ -2965,7 +2965,7 @@ class App {
     this.updateCapturedPieces();
     this.rebuildMoveHistoryUI();
     this.updatePlayerBars();
-    this.showToast(`Move undone ? (-${cost} coins)`);
+    this.showToast(`Move undone ↩ (-${cost} coins)`);
   }
   rebuildMoveHistoryUI() {
     this.updateMoveHistoryUI();
@@ -3100,7 +3100,7 @@ class App {
       localStorage.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
     } catch(e) {}
     this.updateHomeAbilitiesDisplay();
-    this.showToast('Abilities confirmed! Tactical loadout saved ?');
+    this.showToast('Abilities confirmed! tactical loadout saved ✨');
     this.goHome();
   }
 
@@ -3687,7 +3687,7 @@ class App {
           const balEl = document.getElementById("wp-balance");
           const usdEl = document.getElementById("wp-usd");
           if (balEl) balEl.textContent = ethAmount + " ETH";
-          if (usdEl) usdEl.textContent = "? $" + Number(totalUSD).toLocaleString();
+          if (usdEl) usdEl.textContent = "≈ $" + Number(totalUSD).toLocaleString();
 
           // ETH asset row
           const ethAmtEl = document.getElementById("wp-eth-amount");
@@ -3709,7 +3709,7 @@ class App {
           const balEl = document.getElementById("wp-balance");
           const usdEl = document.getElementById("wp-usd");
           if (balEl) balEl.textContent = ethAmount + " ETH";
-          if (usdEl) usdEl.textContent = "? $" + Number(totalUSD).toLocaleString();
+          if (usdEl) usdEl.textContent = "≈ $" + Number(totalUSD).toLocaleString();
           const ethAmtEl = document.getElementById("wp-eth-amount");
           const ethFiatEl = document.getElementById("wp-eth-fiat");
           if (ethAmtEl) ethAmtEl.textContent = ethAmount;
