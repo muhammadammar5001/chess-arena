@@ -132,6 +132,16 @@
             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6" />
           </svg>
+        
+        <button class="fantasy-menu-card" onclick="app.showLuckyWheelModal()" style="margin-top: 8px;">
+          <div class="menu-card-left">
+            <div class="menu-icon-box" style="background: rgba(255, 213, 79, 0.15); color: #FFD54F; font-size: 18px;">🎡</div>
+            <div style="display:flex; flex-direction:column; align-items:flex-start;">
+              <span class="menu-card-label">Lucky Tavern Wheel</span>
+              <span style="font-size: 11px; color: #FFD54F; font-weight: 700;" id="home-lucky-wheel-badge">1 Free Spin Ready!</span>
+            </div>
+          </div>
+          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
         </button>
       </div>
       <!-- Bottom Navigation Dock (4 Tabs: Home, Rankings, Shop, Profile) -->
@@ -727,6 +737,19 @@
           used once per match.</p>
       </div>
 
+      <!-- Slot 1 & Slot 2 Loadout Status -->
+        <div id="abilities-slots-container" style="display: flex; justify-content: center; gap: 14px; margin: 12px auto 16px auto; max-width: 380px;">
+          <div style="flex: 1; background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%); border: 2px solid #C99700; border-radius: 10px; padding: 8px 10px; text-align: center;">
+            <div style="font-size: 10px; color: #F5D36C; font-weight: 700; letter-spacing: 0.5px;">SLOT 1 (ACTIVE)</div>
+            <div id="slot-1-display" style="font-size: 12px; color: #FFF; font-weight: 800; margin-top: 4px;">Pegasus Jump</div>
+          </div>
+          <div id="slot-2-box" style="flex: 1; background: linear-gradient(180deg, #2B160B 0%, #170904 100%); border: 2px dashed #8C6538; border-radius: 10px; padding: 8px 10px; text-align: center; position: relative;">
+            <div id="slot-2-header" style="font-size: 10px; color: #A58463; font-weight: 700; letter-spacing: 0.5px;">SLOT 2 (LOCKED)</div>
+            <div id="slot-2-content" style="margin-top: 4px;">
+              <button onclick="app.promptUnlockSlot2()" style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; border: none; border-radius: 6px; font-weight: 800; font-size: 10px; padding: 4px 8px; cursor: pointer;">Unlock (500🪙 / 🎬 3 Ads)</button>
+            </div>
+          </div>
+        </div>
       <div class="abilities-list">
         <div class="ability-card" id="ability-card-swap" onclick="app.toggleAbility('swap')">
           <div class="ability-left">
@@ -935,7 +958,8 @@
                   </div>
                 </div>
                 <div class="shop-item-name">Classic Oak</div>
-                <button class="btn-shop-action equipped" onclick="app.equipCosmetic('board', 'classic-oak')">Equipped</button>
+                <div style="font-size: 10px; color: #4ade80; font-weight: 700; margin-bottom: 4px;">Starter Board</div>
+                <button class="btn-shop-action equipped" onclick="app.buyOrEquipBoard('classic-oak')">Equipped</button>
               </div>
 
               <!-- Emberwood Board -->
@@ -947,7 +971,8 @@
                   </div>
                 </div>
                 <div class="shop-item-name">Emberwood</div>
-                <button class="btn-shop-action" onclick="app.equipCosmetic('board', 'ember')">Equip</button>
+                <div style="font-size: 10px; color: #F5D36C; font-weight: 700; margin-bottom: 4px;">Level 3 Required</div>
+                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('ember')">Unlock (1,200 🪙)</button>
               </div>
 
               <!-- Moonlit Grove Board -->
@@ -959,7 +984,8 @@
                   </div>
                 </div>
                 <div class="shop-item-name">Moonlit Grove</div>
-                <button class="btn-shop-action" onclick="app.equipCosmetic('board', 'moonlit')">Equip</button>
+                <div style="font-size: 10px; color: #F5D36C; font-weight: 700; margin-bottom: 4px;">Level 6 Required</div>
+                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('moonlit')">Unlock (2,500 🪙)</button>
               </div>
 
               <!-- Sakurawood Board -->
@@ -971,7 +997,8 @@
                   </div>
                 </div>
                 <div class="shop-item-name">Sakurawood</div>
-                <button class="btn-shop-action" onclick="app.equipCosmetic('board', 'sakura')">Equip</button>
+                <div style="font-size: 10px; color: #F5D36C; font-weight: 700; margin-bottom: 4px;">Level 9 Required</div>
+                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('sakura')">Unlock (4,000 🪙)</button>
               </div>
 
               <!-- Walnut & Maple -->
@@ -983,7 +1010,8 @@
                   </div>
                 </div>
                 <div class="shop-item-name">Walnut & Maple</div>
-                <button class="btn-shop-action" onclick="app.equipCosmetic('board', 'walnut-maple')">Equip</button>
+                <div style="font-size: 10px; color: #F5D36C; font-weight: 700; margin-bottom: 4px;">Level 12 Required</div>
+                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('walnut-maple')">Unlock (6,000 🪙)</button>
               </div>
 
               <!-- Royal Ebony & Ivory -->
@@ -995,7 +1023,8 @@
                   </div>
                 </div>
                 <div class="shop-item-name">Ebony & Ivory</div>
-                <button class="btn-shop-action" onclick="app.equipCosmetic('board', 'ebony-ivory')">Equip</button>
+                <div style="font-size: 10px; color: #F5D36C; font-weight: 700; margin-bottom: 4px;">Level 15 Required</div>
+                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('ebony-ivory')">Unlock (9,000 🪙)</button>
               </div>
             </div>
           </div>
@@ -1366,7 +1395,11 @@
             <span class="recap-meta-label">Moves</span>
             <span class="recap-meta-value" id="victory-meta-moves">42</span>
           </div>
-          <div class="recap-meta-row">
+                    <div class="recap-meta-row">
+            <span class="recap-meta-label">Coins Earned</span>
+            <span class="recap-meta-value" style="color: #FFD54F; font-weight: 800;" id="victory-meta-coins">+0 🪙</span>
+          </div>
+<div class="recap-meta-row">
             <span class="recap-meta-label">Rating Change</span>
             <span class="recap-meta-value highlight-green" id="victory-meta-rating">+25</span>
           </div>
@@ -1374,6 +1407,9 @@
       </div>
 
       <div class="victory-actions">
+                <button id="victory-btn-doubler" class="btn-lime" style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; font-weight: 800; margin-bottom: 8px;" onclick="app.claim3XMatchCoins()">
+          <span id="victory-btn-doubler-text">🎬 Watch Ad for 3X Coins (+180 🪙)</span>
+        </button>
         <button id="victory-btn-rematch" class="btn-lime" style="margin-bottom: 8px; display: none;"
           onclick="app.requestRematch()">
           <span>Rematch</span>
@@ -1416,7 +1452,24 @@
   <script src="/js/ad-service.js"></script>
   <script src="/js/platform.js"></script>
   <script src="/js/storage-service.js"></script>
-  <script src="/js/app.js?v=1792715271864"></script>
+  <script src="/js/economy-config.js?v=1793035870628"></script>
+  <script src="/js/app.js?v=1793035870629"></script>
+  <!-- Lucky Tavern Wheel Modal -->
+  <div id="modal-lucky-wheel" class="modal hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 99999; display: none; align-items: center; justify-content: center;">
+    <div style="background: linear-gradient(180deg, #3A2315 0%, #1A0D06 100%); border: 3px solid #C99700; border-radius: 20px; width: 90%; max-width: 360px; padding: 20px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.9); color: #FDF7EC; position: relative;">
+      <button onclick="app.closeLuckyWheelModal()" style="position: absolute; top: 12px; right: 14px; background: none; border: none; color: #F5D36C; font-size: 22px; cursor: pointer;">✕</button>
+      <h2 style="font-family: 'Cinzel', serif; font-size: 20px; color: #F5D36C; margin: 0 0 4px 0;">Lucky Tavern Wheel</h2>
+      <p style="font-size: 12px; color: #D6BD9B; margin: 0 0 14px 0;">Spin daily to win coins and skill charges!</p>
+      <div style="position: relative; width: 220px; height: 220px; margin: 0 auto 14px auto;">
+        <canvas id="lucky-wheel-canvas" width="220" height="220" style="border-radius: 50%; box-shadow: 0 0 20px rgba(201, 151, 0, 0.4);"></canvas>
+        <div style="position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 20px solid #FFD54F; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); z-index: 10;"></div>
+      </div>
+      <div id="lucky-wheel-result" style="min-height: 22px; font-weight: 800; color: #FFD54F; font-size: 13px; margin-bottom: 10px;"></div>
+      <button id="btn-spin-wheel" onclick="app.spinLuckyWheel()" class="btn-lime" style="font-weight: 800; font-size: 15px; width: 100%; padding: 12px 0;">
+        <span id="btn-spin-wheel-text">Spin for Free! 🎡</span>
+      </button>
+    </div>
+  </div>
 </body>
 
 </html>

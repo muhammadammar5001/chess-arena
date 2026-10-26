@@ -1,5 +1,5 @@
 /**
- * Owl's Gambit ? App Controller
+ * Chess Arena — App Controller
  * Main application logic: screen management, board rendering, game flow.
  */
 
@@ -21,7 +21,6 @@ class App {
     this.lastMove = null;
     this.audioCtx = null;
     this.selectedAIColor = 'white';
-    this.activeStakeDeducted = 0;
     this.pendingJoinData = null;
     this.soundMuted = false;
     this.musicEnabled = true;
@@ -29,10 +28,40 @@ class App {
     this.bgMusicNodes = [];
     this.bgMusicGain = null;
     this.isAnimatingMove = false;
-    this.matchType = 'robin'; // 'standard' or 'robin'
+    this.matchType = 'tactical'; // 'standard' or 'tactical'
+    this.lastRatingChange = 0;
+
+    // Player progression (local-first; synced from server when available)
+    this.playerStats = {
+      rating: 1200,
+      ai: { wins: 0, losses: 0, draws: 0 },
+      online: { wins: 0, losses: 0, draws: 0 },
+      hasServerStats: false
+    };
+    this.statsRecordedForGame = null;
+    this.platformProfile = null;
+
+    // Cloud-backed player profile (YouTube Playables / PlayGama / localStorage).
+    this.cloudProfile = null;
+    this.profileReady = null;
+    this.pendingProfileDraft = null;
+    this.onboardingPending = false;
+    this.ratingAtGameStart = null;
+    this.lastServerStats = null;
+    this.lastServerStatsGameId = null;
+    this.lastServerStatsAt = 0;
+    this.leaderboardTopPlayers = [];
+    this.leaderboardTotalPlayers = 0;
+    this.lastLeaderboardSyncAt = 0;
+    this.leaderboardSyncAttempts = 0;
+    this.leaderboardRetryTimer = null;
+    this._leaderboardSyncInFlight = null;
+    this._leaderboardSyncQueued = false;
+    this._leaderboardSyncDebounce = null;
+    this._profileRevision = 0;
     
     try {
-      let saved = JSON.parse(localStorage.getItem('owl_selected_abilities'));
+      let saved = JSON.parse(localStorage.getItem('chessarena_abilities'));
       if (Array.isArray(saved)) {
         saved = saved.filter(s => ['swap', 'freeze', 'second', 'shield', 'jump'].includes(s));
         if (saved.length > 2) saved = saved.slice(0, 2);
@@ -45,6 +74,28 @@ class App {
     }
     
     this.setupDraggableChat();
+    
+    // Economy & Monetization state
+    this.coins = 300;
+    this.playerLevel = 1;
+    this.playerXP = 0;
+    this.slot2Unlocked = false;
+    this.slot2AdsWatched = 0;
+    this.unlockedSkills = ['jump', 'second'];
+    this.skillCharges = { jump: 3, second: 3, freeze: 3, swap: 3, shield: 3 };
+    this.unlockedBoards = ['classic-oak'];
+    this.adTracking = {
+      date: new Date().toISOString().slice(0, 10),
+      dailyAdsWatched: 0,
+      dailyDoublersUsed: 0,
+      firstAdClaimed: false,
+      firstWinClaimedToday: false,
+      lastWheelDate: null,
+      wheelSpinsToday: 0
+    };
+    this.lastMatchCoinsEarned = 0;
+    this.lastMatchDoubled = false;
+    this.isSpinningWheel = false;
     this.pieceSymbols = {
       white: { king: '♔', queen: '♕', rook: '♖', bishop: '♗', knight: '♘', pawn: '♙' },
       black: { king: '♚', queen: '♛', rook: '♜', bishop: '♝', knight: '♞', pawn: '♟' }
@@ -53,26 +104,418 @@ class App {
     this.init();
   }
 
-  setGameMode(mode) {
-    this.matchType = 'robin';
-    this.syncAbilitiesUI();
-    // Restore saved board & piece theme
-    const savedBoardTheme = localStorage.getItem('owl_board_theme') || 'classic-oak';
+  applySavedCosmetics() {
+    const savedBoardTheme = localStorage.getItem('chessarena_board_theme') || 'classic-oak';
     document.body.dataset.boardTheme = savedBoardTheme;
-    const savedPieceTheme = localStorage.getItem('owl_piece_theme') || 'staunton-boxwood';
-    document.body.dataset.pieceTheme = savedPieceTheme;
+  }
+
+  // --- Account-linked player profile --------------------------------
+  // The cloud profile is the canonical profile for name, rating, totals,
+  // coins and the equipped board. Local storage is only the resilient mirror.
+
+  async initializeProfilePersistence() {
+    const storage = window.ChessArenaStorage;
+    if (!storage) return null;
+
+    try {
+      await storage.init();
+    } catch (e) {
+      console.warn('[Profile] storage init failed', e);
+    }
+
+    let profile = null;
+    try {
+      profile = await storage.loadProfile();
+    } catch (e) {
+      console.warn('[Profile] load failed', e);
+    }
+
+    if (profile && storage.isValidUsername(profile.username)) {
+      this.applyCloudProfile(profile);
+      this.syncLeaderboardProfile(profile, { silent: true, reason: 'startup' });
+      return profile;
+    }
+
+    const draft = profile || storage.createDraftProfile();
+    this.pendingProfileDraft = draft;
+    this.showOnboardingModal(draft);
+    return null;
+  }
+
+  attachUsernameSanitizer(input) {
+    if (!input) return;
+    const storage = window.ChessArenaStorage;
+    const sanitize = (value) => storage && storage.sanitizeUsername
+      ? storage.sanitizeUsername(value)
+      : String(value || '').replace(/[^a-z0-9]/gi, '').slice(0, 16);
+    input.maxLength = 16;
+    input.oninput = () => {
+      const clean = sanitize(input.value);
+      if (input.value !== clean) input.value = clean;
+    };
+  }
+
+  showOnboardingModal(draft) {
+    const modal = document.getElementById('username-modal');
+    const input = document.getElementById('username-input');
+    const btn = document.getElementById('btn-submit-username');
+    const cancelBtn = document.getElementById('btn-cancel-username');
+    const title = document.getElementById('username-modal-title');
+    const subtitle = document.getElementById('username-modal-subtitle');
+    if (!modal || !input || !btn || !title || !subtitle) return;
+
+    const storage = window.ChessArenaStorage;
+    const platform = this.getPlatformProfile();
+    const prefill = storage && platform && platform.name
+      ? storage.sanitizeUsername(platform.name)
+      : '';
+
+    this.onboardingPending = true;
+    this.attachUsernameSanitizer(input);
+    title.textContent = 'Enter Player Name';
+    subtitle.textContent = storage && storage.mode === 'youtube'
+      ? 'Your progress is saved to your YouTube account and follows you across devices.'
+      : 'Your progress is saved automatically. On YouTube Playables it follows your account.';
+    input.value = prefill.length >= 3 ? prefill : '';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    btn.textContent = 'Start Playing';
+    btn.disabled = false;
+    modal.classList.remove('hidden');
+    setTimeout(() => input.focus(), 120);
+
+    input.onkeydown = (event) => {
+      if (event.key === 'Enter') btn.click();
+    };
+
+    btn.onclick = async () => {
+      const username = storage && storage.sanitizeUsername
+        ? storage.sanitizeUsername(input.value)
+        : String(input.value || '').replace(/[^a-z0-9]/gi, '').slice(0, 16);
+      if (!storage || !storage.isValidUsername || !storage.isValidUsername(username)) {
+        this.showToast('Name must be 3-16 letters or numbers.');
+        input.focus();
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+      try {
+        const base = this.pendingProfileDraft || storage.createDraftProfile();
+        const profile = await storage.createProfile(username, { __draft: base });
+        this.pendingProfileDraft = null;
+        this.onboardingPending = false;
+        this.hideModal('username-modal');
+        this.applyCloudProfile(profile);
+        this.showToast(`Welcome, ${profile.username}!`);
+        this.syncLeaderboardProfile(profile, { reason: 'onboarding' });
+      } catch (e) {
+        console.warn('[Profile] onboarding failed', e);
+        this.showToast('Could not save your profile. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Start Playing';
+      }
+    };
+  }
+
+  getStorageBadgeLabel() {
+    const storage = window.ChessArenaStorage;
+    if (!storage) return null;
+    const mode = (typeof storage.getStatus === 'function' ? storage.getStatus().mode : storage.mode) || 'local';
+    if (mode === 'youtube') return 'YouTube Cloud';
+    if (mode === 'platform') return 'Cloud Save';
+    return 'Local Save';
+  }
+
+  applyCloudProfile(profile) {
+    if (!profile) return;
+    const storage = window.ChessArenaStorage;
+    const clean = storage && storage.normalizeProfile
+      ? storage.normalizeProfile(profile)
+      : profile;
+    if (!clean) return;
+
+    this.cloudProfile = clean;
+    if (clean.playerId) {
+      this.playerId = clean.playerId;
+      try { localStorage.setItem('chessarena_player_id', clean.playerId); } catch (e) { /* ignore */ }
+    }
+
+    const displayName = clean.username || (this.userProfile && this.userProfile.username) || '';
+    this.userProfile = Object.assign({}, this.userProfile || {}, {
+      playerId: clean.playerId,
+      username: displayName,
+      elo: clean.rating,
+      wins: clean.stats.wins,
+      losses: clean.stats.losses,
+      draws: clean.stats.draws
+    });
+
+    // Keep the legacy AI/online bucket shape for the rest of the UI, but all
+    // totals now come from the canonical cloud profile.
+    this.playerStats = {
+      rating: clean.rating,
+      ai: { wins: 0, losses: 0, draws: 0 },
+      online: {
+        wins: clean.stats.wins,
+        losses: clean.stats.losses,
+        draws: clean.stats.draws
+      },
+      hasServerStats: true
+    };
+
+    this.updateUserCoins(clean.coins, { persist: false });
+    if (clean.equipped && clean.equipped.board) {
+      document.body.dataset.boardTheme = clean.equipped.board;
+      try { localStorage.setItem('chessarena_board_theme', clean.equipped.board); } catch (e) { /* ignore */ }
+    }
+
+    this.savePlayerStats();
+    this.renderProfileStats();
+    this.applyIdentityToUI(
+      this.platformProfile && this.platformProfile.name,
+      this.platformProfile && this.platformProfile.avatar,
+      this.platformProfile && this.platformProfile.platformLabel
+    );
+    this.renderProfileRank(clean);
+    this.renderLeaderboardMyRank();
+  }
+
+  renderProfileRank(profile) {
+    const badge = document.getElementById('profile-rank-badge');
+    if (!badge) return;
+    const rank = profile && Number(profile.rank) > 0 ? Math.floor(Number(profile.rank)) : null;
+    badge.textContent = rank ? `#${rank}` : 'Unranked';
+    badge.title = rank ? 'Global leaderboard rank' : 'Play a rated match to enter the standings';
+  }
+
+  renderLeaderboardMyRank() {
+    const el = document.getElementById('leaderboard-my-rank');
+    if (!el) return;
+    if (!this.cloudProfile || !this.cloudProfile.username) {
+      el.textContent = 'Enter a player name to join the standings';
+      return;
+    }
+    const rank = Number(this.cloudProfile.rank);
+    const total = Number(this.leaderboardTotalPlayers);
+    if (rank > 0) {
+      el.textContent = `Your rank: #${rank}${total > 0 ? ' of ' + total : ''}`;
+    } else {
+      el.textContent = 'Unranked — finish a match to enter the standings';
+    }
+  }
+
+  async ensureProfileReady() {
+    if (this.profileReady) {
+      try { await this.profileReady; } catch (e) { /* ignore */ }
+    }
+    if (!this.cloudProfile || !this.cloudProfile.username) {
+      if (this.onboardingPending) {
+        this.showToast('Enter a player name to continue.');
+      }
+      return false;
+    }
+    return true;
+  }
+
+  async ensureServerProfileSynced() {
+    if (!this.cloudProfile || !this.cloudProfile.username) return false;
+    if (Date.now() - (this.lastLeaderboardSyncAt || 0) < 60000) return true;
+    const timeout = new Promise((resolve) => setTimeout(() => resolve(false), 2500));
+    return Promise.race([
+      this.syncLeaderboardProfile(this.cloudProfile, { silent: true, reason: 'pre-online' }),
+      timeout
+    ]);
+  }
+
+  async syncLeaderboardProfile(profile = this.cloudProfile, options = {}) {
+    if (!profile || !profile.username) return false;
+    if (this._leaderboardSyncInFlight) {
+      this._leaderboardSyncQueued = true;
+      return this._leaderboardSyncInFlight;
+    }
+
+    const snapshot = {
+      playerId: profile.playerId,
+      username: profile.username,
+      rating: profile.rating,
+      stats: {
+        wins: profile.stats ? profile.stats.wins : 0,
+        losses: profile.stats ? profile.stats.losses : 0,
+        draws: profile.stats ? profile.stats.draws : 0,
+        totalMatches: profile.stats ? profile.stats.totalMatches : 0,
+        winStreak: profile.stats ? profile.stats.winStreak : 0,
+        bestStreak: profile.stats ? profile.stats.bestStreak : 0
+      }
+    };
+
+    this._leaderboardSyncInFlight = (async () => {
+      let controller = null;
+      let timeout = null;
+      try {
+        controller = new AbortController();
+        timeout = setTimeout(() => controller.abort(), 8000);
+        const response = await fetch('/api/leaderboard/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(snapshot),
+          signal: controller.signal
+        });
+        if (!response.ok) {
+          const error = new Error('Leaderboard sync failed with ' + response.status);
+          error.permanent = response.status >= 400 && response.status < 500 && response.status !== 429;
+          throw error;
+        }
+
+        const data = await response.json();
+        const target = this.cloudProfile || profile;
+        const storage = window.ChessArenaStorage;
+        const canonical = storage && storage.sanitizeUsername
+          ? storage.sanitizeUsername(data.username || target.username)
+          : String(data.username || target.username || '').replace(/[^a-z0-9]/gi, '').slice(0, 16);
+
+        // The server keeps the newer profile when a reconnect presents an older
+        // cloud snapshot (for example a PvP game finished after the tab closed).
+        // Adopt those authoritative totals before saving the profile locally.
+        const serverStats = data.stats && typeof data.stats === 'object' ? data.stats : null;
+        if (serverStats && target.stats) {
+          const count = (value) => {
+            const n = Number(value);
+            return Number.isFinite(n) && n > 0 ? Math.min(10000000, Math.floor(n)) : 0;
+          };
+          const wins = count(serverStats.wins);
+          const losses = count(serverStats.losses);
+          const draws = count(serverStats.draws);
+          const serverTotal = wins + losses + draws;
+          const targetTotal = count(target.stats.wins) + count(target.stats.losses) + count(target.stats.draws);
+          if (serverTotal >= targetTotal) {
+            const serverRating = Number(data.rating);
+            target.stats = {
+              wins,
+              losses,
+              draws,
+              totalMatches: serverTotal,
+              winStreak: count(serverStats.winStreak),
+              bestStreak: Math.max(count(serverStats.winStreak), count(serverStats.bestStreak))
+            };
+            if (Number.isFinite(serverRating) && serverRating >= 100) {
+              target.rating = Math.min(4000, Math.max(100, Math.floor(serverRating)));
+            }
+            target.lastUpdated = Date.now();
+          }
+        }
+
+        if (canonical && canonical.length >= 3) target.username = canonical;
+        target.rank = Number(data.currentRank) > 0 ? Math.floor(Number(data.currentRank)) : null;
+        target.lastUpdated = Date.now();
+        this.cloudProfile = target;
+        this.lastLeaderboardSyncAt = Date.now();
+        this.leaderboardSyncAttempts = 0;
+        if (this.leaderboardRetryTimer) {
+          clearTimeout(this.leaderboardRetryTimer);
+          this.leaderboardRetryTimer = null;
+        }
+        this.leaderboardTotalPlayers = Math.max(0, Number(data.totalPlayers) || 0);
+        if (Array.isArray(data.topPlayers)) this.leaderboardTopPlayers = data.topPlayers;
+
+        if (storage && storage.saveProfile) {
+          storage.saveProfile(target).catch(() => {});
+        }
+        this.applyCloudProfile(target);
+        this.refreshLeaderboardIfVisible();
+
+        if (!options.silent && canonical && canonical !== snapshot.username) {
+          this.showToast(`That name was taken — you are now ${canonical}.`);
+        }
+        return true;
+      } catch (e) {
+        console.warn('[Leaderboard] sync failed', e && (e.message || e));
+        if (!e || !e.permanent) this.scheduleLeaderboardRetry();
+        if (!options.silent) this.showToast('Could not update rankings. Retrying in the background.');
+        return false;
+      } finally {
+        if (timeout) clearTimeout(timeout);
+        this._leaderboardSyncInFlight = null;
+        if (this._leaderboardSyncQueued) {
+          this._leaderboardSyncQueued = false;
+          setTimeout(() => {
+            if (this.cloudProfile) this.syncLeaderboardProfile(this.cloudProfile, { silent: true, reason: 'queued' });
+          }, 0);
+        }
+      }
+    })();
+
+    return this._leaderboardSyncInFlight;
+  }
+
+  queueLeaderboardSync(delay = 250) {
+    if (this._leaderboardSyncDebounce) clearTimeout(this._leaderboardSyncDebounce);
+    this._leaderboardSyncDebounce = setTimeout(() => {
+      this._leaderboardSyncDebounce = null;
+      if (this.cloudProfile && this.cloudProfile.username) {
+        this.syncLeaderboardProfile(this.cloudProfile, { silent: true, reason: 'match' });
+      }
+    }, Math.max(0, delay));
+  }
+
+  scheduleLeaderboardRetry() {
+    if (this.leaderboardRetryTimer || !this.cloudProfile || !this.cloudProfile.username) return;
+    if (this.leaderboardSyncAttempts >= 8) return;
+    const delay = Math.min(30000, 2000 * Math.pow(2, this.leaderboardSyncAttempts));
+    this.leaderboardSyncAttempts += 1;
+    this.leaderboardRetryTimer = setTimeout(() => {
+      this.leaderboardRetryTimer = null;
+      if (this.cloudProfile && this.cloudProfile.username) {
+        this.syncLeaderboardProfile(this.cloudProfile, { silent: true, reason: 'retry' });
+      }
+    }, delay);
+  }
+
+  refreshLeaderboardIfVisible() {
+    const screen = document.getElementById('screen-leaderboard');
+    if (screen && screen.classList.contains('active')) {
+      this.loadLeaderboardData();
+    }
+  }
+
+  createGuestId() {
+    const bytes = new Uint8Array(8);
+    if (window.crypto && window.crypto.getRandomValues) {
+      window.crypto.getRandomValues(bytes);
+    } else {
+      for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+    }
+    return 'guest_' + Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
   }
 
   init() {
-    if (!this.walletAddress) {
-      this.walletAddress = localStorage.getItem('owl_guest_id') || ('guest_' + Math.floor(1000 + Math.random() * 9000));
-      localStorage.setItem('owl_guest_id', this.walletAddress);
+    if (!this.playerId) {
+      this.playerId = localStorage.getItem('chessarena_player_id') || this.createGuestId();
+      localStorage.setItem('chessarena_player_id', this.playerId);
     }
     if (window.AdService) {
       window.AdService.init();
     }
+
+    // Restore cosmetics, local progression and platform identity (PlayGama / YouTube)
+    this.applySavedCosmetics();
+    this.loadPlayerStats();
+    this.renderProfileStats();
+    this.applyPlatformProfile();
+    this.updateUserCoins(this.getUserCoins());
     // Ensure abilities loaded from localStorage are displayed and synced on UI immediately
     this.syncAbilitiesUI();
+
+    // Load the account-linked profile after the local UI is usable. The prompt
+    // is shown only when the cloud profile has no valid player name.
+    this.profileReady = this.initializeProfilePersistence();
+    if (!this._profileRetryBound) {
+      this._profileRetryBound = true;
+      window.addEventListener('online', () => {
+        if (this.cloudProfile && this.cloudProfile.username) {
+          this.syncLeaderboardProfile(this.cloudProfile, { silent: true, reason: 'online' });
+        }
+      });
+    }
 
     // Enter key on room code input
     const roomInput = document.getElementById('room-code-input');
@@ -82,7 +525,7 @@ class App {
       });
     }
 
-    // Join Room card click ? expand/collapse the code input
+    // Join Room card click — expand/collapse the code input
     const joinCard = document.getElementById('join-room-card');
     const joinExpand = document.getElementById('join-room-expand');
     if (joinCard && joinExpand) {
@@ -341,16 +784,6 @@ class App {
       target.offsetHeight;
       target.classList.add('active');
     }
-
-    // Show/hide web3 header on home/stake screens
-    const web3Header = document.getElementById('web3-header');
-    if (web3Header) {
-      if (screenId === 'screen-home' || screenId === 'screen-stake' || screenId === 'screen-ai-select' || screenId === 'screen-room') {
-        web3Header.style.display = 'flex';
-      } else {
-        web3Header.style.display = 'none';
-      }
-    }
   }
 
   // --- AI Game ---------------------------------------
@@ -375,6 +808,11 @@ class App {
     this.lastMove = null;
     this.gameStartTime = Date.now();
     this.timers = { white: null, black: null };
+    this.statsRecordedForGame = null;
+    this.ratingAtGameStart = this.cloudProfile ? this.cloudProfile.rating : this.getTotalStats().rating;
+    this.lastServerStats = null;
+    this.lastServerStatsGameId = null;
+    this.lastServerStatsAt = 0;
 
     this.setupGameUI('You', `AI (${difficulty})`, false);
     this.startBgMusic();
@@ -452,115 +890,11 @@ class App {
     }, 50);
   }
 
-  showPlayFriendScreen() {
-    this.showScreen('screen-room');
-  }
-
   onCreateRoomClick() {
     const timerSelect = document.getElementById('timer-select');
     this.timerMinutes = timerSelect && timerSelect.value ? parseInt(timerSelect.value) : null;
-    this.showStakeScreen('create_room');
+    this.createRoom();
   }
-
-  showStakeScreen(action) {
-    this.stakeAction = action;
-    this.currentStake = 0;
-
-    const titleEl = document.getElementById('stake-screen-title');
-    const descEl = document.getElementById('stake-screen-desc');
-    const confirmBtn = document.getElementById('btn-confirm-stake');
-
-    if (action === 'create_room') {
-      if (titleEl) titleEl.textContent = 'Room Stake';
-      if (descEl) descEl.textContent = 'Choose the wager for your room. Your friend will match this stake.';
-      if (confirmBtn) confirmBtn.textContent = 'Confirm & Create Room';
-    } else if (action === 'invite') {
-      if (titleEl) titleEl.textContent = `Invite ${this.pendingInviteTarget}`;
-      if (descEl) descEl.textContent = `Choose the wager for your match against ${this.pendingInviteTarget}.`;
-      if (confirmBtn) confirmBtn.textContent = 'Send Invite';
-    } else {
-      if (titleEl) titleEl.textContent = 'Stake to Play';
-      if (descEl) descEl.textContent = 'Select the amount of USDT to wager. Winner takes the pool!';
-      if (confirmBtn) confirmBtn.textContent = 'Confirm & Find Match';
-    }
-
-    this.updateStakeUI();
-    this.showScreen('screen-stake');
-  }
-
-  onStakeBackClick() {
-    if (this.stakeAction === 'create_room') {
-      this.showScreen('screen-room');
-    } else {
-      this.showMatchmakingScreen();
-    }
-  }
-
-  selectStake(amount) {
-    this.currentStake = amount;
-    this.updateStakeUI();
-  }
-
-  updateStakeUI() {
-    const btns = document.querySelectorAll('.stake-btn');
-    btns.forEach(btn => {
-      const amtText = btn.querySelector('.stake-amount').textContent;
-      const amt = parseInt(amtText.replace('$', '').trim());
-      btn.classList.toggle('active', amt === this.currentStake);
-    });
-    const poolEl = document.getElementById('preview-prize-pool');
-    if (poolEl) poolEl.textContent = this.currentStake > 0 ? ('$' + (this.currentStake * 2)) : '****';
-  }
-
-  confirmStake() {
-    if (this.currentStake === 0) {
-      this.showToast('Please select a stake amount first');
-      return;
-    }
-    // Check balance
-    const balanceEl = document.getElementById('profile-wallet-balance');
-    let currentBalance = parseInt(balanceEl.textContent.replace(/,/g, ''));
-    if (currentBalance < this.currentStake) {
-      this.showToast('Insufficient $USDT balance!');
-      return;
-    }
-
-    // Deduct from mock wallet
-    currentBalance -= this.currentStake;
-    balanceEl.textContent = currentBalance.toLocaleString();
-    this.activeStakeDeducted = this.currentStake;
-
-    // Show active prize pool in game
-    document.getElementById('game-prize-amount').textContent = (this.currentStake * 2) + ' $USDT';
-    document.getElementById('active-prize-pool').classList.remove('hidden');
-
-    if (this.stakeAction === 'matchmaking') {
-      this.findMatch();
-    } else if (this.stakeAction === 'create_room') {
-      this.createRoom();
-    } else if (this.stakeAction === 'invite') {
-      this.pendingInviteMode = this.matchType || 'standard';
-      this.pendingInviteStake = this.currentStake;
-      if (this.multiplayer) {
-        this.multiplayer.createRoom(this.timerMinutes, this.currentStake, this.pendingInviteMode);
-      }
-      if (this.pendingInviteBtn) {
-        const btn = this.pendingInviteBtn;
-        btn.innerHTML = 'Invited ✓';
-        btn.classList.add('invited');
-        setTimeout(() => {
-          if (btn) {
-            btn.innerHTML = 'Invite';
-            btn.classList.remove('invited');
-          }
-        }, 5000);
-      }
-      this.showToast(`Invitation sent to ${this.pendingInviteTarget}`);
-    }
-  }
-
-
-
 
   startSlotMachine() {
     const machine = document.getElementById('avatar-slot-machine');
@@ -685,6 +1019,9 @@ class App {
   // --- Online Game -----------------------------------
 
   async findMatch() {
+    if (!(await this.ensureProfileReady())) return;
+    await this.ensureServerProfileSynced();
+
     if (!this.multiplayer) {
       this.multiplayer = new MultiplayerClient();
       this.setupMultiplayerCallbacks();
@@ -701,7 +1038,7 @@ class App {
 
     try {
       await this.multiplayer.connect();
-      this.multiplayer.findMatch(timerValue, this.currentStake, this.matchType, this.matchType === 'robin' ? (this.selectedAbilities || ['swap', 'freeze']) : []);
+      this.multiplayer.findMatch(timerValue, this.matchType, this.matchType === 'tactical' ? (this.selectedAbilities || ['swap', 'freeze']) : []);
     } catch {
       if (this.slotInterval) clearInterval(this.slotInterval);
       if (this.statusInterval) clearInterval(this.statusInterval);
@@ -711,6 +1048,9 @@ class App {
   }
 
   async createRoom() {
+    if (!(await this.ensureProfileReady())) return;
+    await this.ensureServerProfileSynced();
+
     if (!this.multiplayer) {
       this.multiplayer = new MultiplayerClient();
       this.setupMultiplayerCallbacks();
@@ -721,17 +1061,8 @@ class App {
       const timerSelect = document.getElementById('timer-select');
       const timerValue = timerSelect && timerSelect.value ? parseInt(timerSelect.value) : null;
       this.timerMinutes = timerValue;
-      this.multiplayer.createRoom(timerValue, this.currentStake || 0, this.matchType, this.matchType === 'robin' ? (this.selectedAbilities || ['swap', 'freeze']) : []);
+      this.multiplayer.createRoom(timerValue, this.matchType, this.matchType === 'tactical' ? (this.selectedAbilities || ['swap', 'freeze']) : []);
     } catch {
-      if (this.activeStakeDeducted > 0) {
-        const balanceEl = document.getElementById('profile-wallet-balance');
-        if (balanceEl) {
-          let currentBalance = parseInt(balanceEl.textContent.replace(/,/g, ''));
-          currentBalance += this.activeStakeDeducted;
-          balanceEl.textContent = currentBalance.toLocaleString();
-        }
-        this.activeStakeDeducted = 0;
-      }
       this.showToast('Failed to connect to server');
     }
   }
@@ -744,6 +1075,9 @@ class App {
       this.showToast('Enter a 6-character room code');
       return;
     }
+
+    if (!(await this.ensureProfileReady())) return;
+    await this.ensureServerProfileSynced();
 
     if (!this.multiplayer) {
       this.multiplayer = new MultiplayerClient();
@@ -760,32 +1094,17 @@ class App {
   }
 
   showJoinRoomConfirm(data) {
-    const stake = data.stake || 0;
     const roomCode = data.roomCode;
     const timerMinutes = data.timerMinutes;
-    const balanceEl = document.getElementById('profile-wallet-balance');
-    const currentBalance = balanceEl ? parseInt(balanceEl.textContent.replace(/,/g, '')) : 0;
-
-    if (stake > 0 && currentBalance < stake) {
-      this.showToast('Insufficient $OWL balance to join this room!');
-      return;
-    }
 
     // Populate the styled Room Info modal
     const codeEl = document.getElementById('join-room-code-display');
     const timerEl = document.getElementById('join-room-timer-display');
-    const stakeEl = document.getElementById('join-room-stake-display');
-    const poolEl = document.getElementById('join-room-pool-display');
-    const balEl = document.getElementById('join-user-balance-display');
 
     if (codeEl) codeEl.textContent = roomCode;
     if (timerEl) timerEl.textContent = timerMinutes ? timerMinutes + ' min' : 'No timer';
-    if (stakeEl) stakeEl.textContent = stake > 0 ? stake + ' $USDT' : 'Free';
-    if (poolEl) poolEl.textContent = stake > 0 ? (stake * 2) + ' $USDT' : 'No prize';
-    if (balEl) balEl.textContent = currentBalance.toLocaleString() + ' $USDT';
 
-    // Wire up the join button (override onclick to use pendingJoinData)
-    const joinBtn = document.getElementById('btn-join-confirm');
+    const joinBtn = document.getElementById('btn-confirm-join-room');
     if (joinBtn) joinBtn.onclick = () => this.confirmJoinRoom();
 
     this.showModal('modal-join-confirm');
@@ -793,24 +1112,7 @@ class App {
 
   confirmJoinRoom() {
     if (!this.pendingJoinData) return;
-    const { roomCode, stake } = this.pendingJoinData;
-
-    if (stake > 0) {
-      const balanceEl = document.getElementById('profile-wallet-balance');
-      let currentBalance = balanceEl ? parseInt(balanceEl.textContent.replace(/,/g, '')) : 0;
-      if (currentBalance < stake) {
-        this.showToast('Insufficient $USDT balance!');
-        return;
-      }
-      currentBalance -= stake;
-      balanceEl.textContent = currentBalance.toLocaleString();
-      this.activeStakeDeducted = stake;
-      this.currentStake = stake;
-
-      document.getElementById('game-prize-amount').textContent = (stake * 2) + ' $USDT';
-      document.getElementById('active-prize-pool').classList.remove('hidden');
-    }
-
+    const { roomCode } = this.pendingJoinData;
     this.hideModal('modal-join-confirm');
     this.pendingJoinData = null;
     this.multiplayer.joinRoom(roomCode, this.selectedAbilities || ['swap', 'freeze']);
@@ -834,6 +1136,8 @@ class App {
       this.showToast('Enter a 6-character room code');
       return;
     }
+
+    if (!(await this.ensureProfileReady())) return;
 
     if (!this.multiplayer) {
       this.multiplayer = new MultiplayerClient();
@@ -861,27 +1165,9 @@ class App {
   setupMultiplayerCallbacks() {
     const mp = this.multiplayer;
 
-    mp.onInviteRejected = () => {
-      this.showToast("Your friend didn't accept the invite.");
-      this.cancelWaiting();
-    };
-
     mp.onRoomCreated = (code, color) => {
       document.getElementById('display-room-code').textContent = code;
-      document.getElementById('waiting-title').textContent = 'Room Created! Waiting for opponent...';
-      
-      if (this.pendingInviteTarget) {
-        console.log('[DEBUG] Emitting invite_friend for:', this.pendingInviteTarget);
-        this.multiplayer.send({
-          type: 'invite_friend',
-          targetUsername: this.pendingInviteTarget,
-          roomCode: code,
-          stake: this.pendingInviteStake,
-          mode: this.pendingInviteMode
-        });
-        document.getElementById('waiting-title').textContent = `Waiting for ${this.pendingInviteTarget}...`;
-        this.pendingInviteTarget = null;
-      }
+      document.getElementById('waiting-title').textContent = 'Room created — waiting for opponent...';
       document.getElementById('waiting-room-info').style.display = 'block';
       document.getElementById('waiting-room-info').classList.remove('hidden');
       document.getElementById('waiting-spinner-container').classList.remove('hidden');
@@ -907,30 +1193,27 @@ class App {
       }
 
       this.pendingJoinData = data;
-      // Show join confirmation popup with stake info
+      // Show join confirmation popup
       this.showJoinRoomConfirm(data);
     };
 
-    mp.onGameStart = (color, opponent, timerMinutes, stake) => {
+    mp.onGameStart = (color, opponent, timerMinutes) => {
       try {
-        console.log("onGameStart triggered with", color, opponent, timerMinutes, stake);
+        console.log("onGameStart triggered with", color, opponent, timerMinutes);
         this.gameMode = 'online';
         this.playerColor = color;
         this.boardFlipped = color === 'black';
         this.engine = new ChessEngine();
         this.lastMove = null;
         if (!this.gameStartTime) this.gameStartTime = Date.now();
+        this.statsRecordedForGame = null;
+        this.ratingAtGameStart = this.cloudProfile ? this.cloudProfile.rating : this.getTotalStats().rating;
+        this.lastServerStats = null;
+        this.lastServerStatsGameId = null;
+        this.lastServerStatsAt = 0;
         const chatMessages = document.getElementById('chat-messages');
         if (chatMessages) chatMessages.innerHTML = ''; 
 
-        if (stake) {
-          this.currentStake = stake;
-          const prizeEl = document.getElementById('game-prize-amount');
-          if (prizeEl) prizeEl.textContent = (stake * 2) + ' $USDT';
-          const poolEl = document.getElementById('active-prize-pool');
-          if (poolEl) poolEl.classList.remove('hidden');
-        }
-        
         const resignBtn = document.getElementById('btn-ingame-resign');
         if (resignBtn) resignBtn.classList.remove('hidden');
         const drawBtn = document.getElementById('btn-ingame-draw');
@@ -1074,37 +1357,6 @@ class App {
     mp.onOpponentResigned = () => {
       // Handled by game_over event directly
     };
-
-    // --- Friend System Callbacks ---
-    mp.onFriendsList = (friends) => this.renderFriendsList(friends);
-    
-    mp.onGameInvite = (data) => {
-      const popup = document.getElementById('game-invite-popup');
-      if (!popup) return;
-      document.getElementById('invite-sender-name').textContent = data.sender;
-      document.getElementById('invite-amount').textContent = `${data.stake} $USDC`;
-      document.getElementById('invite-mode').textContent = data.mode.charAt(0).toUpperCase() + data.mode.slice(1);
-      
-      this.pendingIncomingInviteRoom = data.roomCode;
-      popup.classList.remove('hidden');
-      
-      if (this.inviteTimeout) clearTimeout(this.inviteTimeout);
-      this.inviteTimeout = setTimeout(() => {
-        this.rejectInvite();
-        this.showToast('Invite expired');
-      }, 10000);
-    };
-    mp.onFriendRequestsList = (requests) => this.renderFriendRequests(requests);
-    mp.onFriendRequestReceived = (req) => {
-      this.showToast(`New friend request from ${req.username}!`);
-      const badge = document.getElementById('friend-requests-badge');
-      if (badge) {
-        badge.style.display = 'inline-block';
-        badge.textContent = (parseInt(badge.textContent || '0') + 1).toString();
-      }
-    };
-    mp.onFriendRequestSuccess = (msg) => this.showToast(msg);
-    mp.onFriendRequestError = (msg) => this.showToast(msg);
 
     // Handle reconnection with full state recovery
     mp.onGameReconnect = (data) => {
@@ -1257,15 +1509,15 @@ class App {
       // From THIS client's perspective:
       //   - "bottom" avatar = the player on THIS device (their own side)
       //   - "top" avatar = the opponent
-      // So: if sender === my color ? show on bottom bubble (MY bubble)
-      //     if sender !== my color ? show on top bubble (OPPONENT's bubble)
+      // So: if sender === my color — show on bottom bubble (MY bubble)
+      //     if sender !== my color — show on top bubble (OPPONENT's bubble)
       if (sender === 'white' || sender === 'black') {
         let bubbleId;
         if (sender === this.playerColor) {
-          // I sent this message ? show on my avatar (bottom)
+          // I sent this message — show on my avatar (bottom)
           bubbleId = 'bottom-chat-bubble';
         } else {
-          // Opponent sent ? show on their avatar (top)
+          // Opponent sent — show on their avatar (top)
           bubbleId = 'top-chat-bubble';
         }
 
@@ -1296,6 +1548,10 @@ class App {
       setTimeout(() => this.showGameOver(), 300);
     };
 
+    mp.onStatsUpdate = (stats, gameId) => {
+      this.applyServerStats(stats, gameId);
+    };
+
     mp.onDrawOffered = () => {
       // Force-hide any blocking modals first
       this.hideModal('modal-confirm');
@@ -1309,7 +1565,6 @@ class App {
     };
 
     mp.onRematchAccepted = (color) => {
-      this.hideModal('modal-gameover');
       this.hideModal('modal-confirm');
       this.showScreen('screen-game');
       setTimeout(() => this.startBgMusic(), 500);
@@ -1318,6 +1573,7 @@ class App {
       this.engine = new ChessEngine();
         this.lastMove = null;
         if (!this.gameStartTime) this.gameStartTime = Date.now();
+        this.statsRecordedForGame = null;
 
       if (this.timerMinutes) {
         this.timers.white = this.timerMinutes * 60 * 1000;
@@ -1358,18 +1614,10 @@ class App {
       clearInterval(this.slotInterval);
       this.slotInterval = null;
     }
-    if (this.activeStakeDeducted > 0) {
-      const balanceEl = document.getElementById('profile-wallet-balance');
-      if (balanceEl) {
-        let currentBalance = parseInt(balanceEl.textContent.replace(/,/g, ''));
-        currentBalance += this.activeStakeDeducted;
-        balanceEl.textContent = currentBalance.toLocaleString();
-        this.showToast(`Stake of ${this.activeStakeDeducted} $OWL refunded`);
-      }
-      this.activeStakeDeducted = 0;
+    if (this.statusInterval) {
+      clearInterval(this.statusInterval);
+      this.statusInterval = null;
     }
-    const prizePoolEl = document.getElementById('active-prize-pool');
-    if (prizePoolEl) prizePoolEl.classList.add('hidden');
 
     this.showScreen('screen-home');
   }
@@ -1393,7 +1641,7 @@ class App {
     
     const topAvatar = document.getElementById('top-player-avatar');
     if (topAvatar) {
-       topAvatar.src = this.opponentAvatarSrc || '/assets/shadow_owl_avatar.gif';
+       topAvatar.src = this.opponentAvatarSrc || '/assets/avatar-default.svg';
     }
 
     // Show/hide online-only controls
@@ -1531,6 +1779,7 @@ class App {
       } else {
         const ok = this.engine.validateAbility('second', null, this.playerColor);
         if (ok) {
+          this.consumeSkillCharge('second');
           this.showToast('Second Chance used!');
           this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
           this.renderBoard();
@@ -1723,6 +1972,7 @@ class App {
             } else {
                 const ok = this.engine.validateAbility('shield', { row, col }, this.playerColor);
                 if (ok) {
+                    this.consumeSkillCharge('shield');
                     this.showToast('🛡️ Divine Shield active on ' + piece.type + '!');
                     this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
                 }
@@ -1757,6 +2007,7 @@ class App {
                     } else {
                         const ok = this.engine.validateAbility('jump', jumpArgs, this.playerColor);
                         if (ok) {
+                            this.consumeSkillCharge('jump');
                             this.showToast('🪽 Pegasus Jump executed!');
                             this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
                             if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
@@ -1803,7 +2054,8 @@ class App {
                 this.showToast('Cannot freeze a King');
                 return;
             }
-            this.multiplayer.send({ type: 'use_ability', ability: 'freeze', args: { row, col } });
+            this.consumeSkillCharge('freeze');
+            if (this.gameMode === 'online') { this.multiplayer.send({ type: 'use_ability', ability: 'freeze', args: { row, col } }); } else { this.engine.validateAbility('freeze', { row, col }, this.playerColor); this.showToast('❄️ Piece Frozen for 3 turns!'); }
             this.activeAbility = null;
             this.renderBoard(); // Clear selection UI
             return;
@@ -2476,7 +2728,7 @@ class App {
     if (ctx.state === 'suspended') ctx.resume();
     this.bgMusicRunning = true;
 
-    // Master gain ? fade in slowly
+    // Master gain — fade in slowly
     const master = ctx.createGain();
     master.gain.setValueAtTime(0, ctx.currentTime);
     master.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 6);
@@ -2582,28 +2834,11 @@ class App {
   }
 
   showVictoryScreen(result) {
+    // Persist the finished game (once per session) before rendering the recap
+    this.recordGameResult(result);
+
     const isPlayerWin = result.winner ? (result.winner === this.playerColor) : false;
     const isDraw = !result.winner;
-
-    // Manage stakes
-    if (result.winner && isPlayerWin && this.activeStakeDeducted > 0) {
-      const balanceEl = document.getElementById('profile-wallet-balance');
-      if (balanceEl) {
-        let currentBalance = parseInt(balanceEl.textContent.replace(/,/g, ''));
-        const prizeWon = this.currentStake * 2;
-        currentBalance += prizeWon;
-        balanceEl.textContent = currentBalance.toLocaleString();
-        this.showToast(`🏆 Won ${prizeWon} $OWL! Added to wallet.`);
-      }
-    } else if (isDraw && this.activeStakeDeducted > 0) {
-      const balanceEl = document.getElementById('profile-wallet-balance');
-      if (balanceEl) {
-        let currentBalance = parseInt(balanceEl.textContent.replace(/,/g, ''));
-        currentBalance += this.activeStakeDeducted;
-        balanceEl.textContent = currentBalance.toLocaleString();
-      }
-    }
-    this.activeStakeDeducted = 0;
 
     const titleEl = document.getElementById('victory-title-heading');
     const subheadingEl = document.getElementById('victory-subheading');
@@ -2635,11 +2870,11 @@ class App {
     const heroImg = document.getElementById('victory-hero-img');
     if (heroImg) {
       if (isPlayerWin) {
-        heroImg.src = '/assets/owl_victory_crowned.png';
+        heroImg.src = '/assets/victory.svg';
       } else if (isDraw) {
-        heroImg.src = '/assets/Rival Owls Seal a Draw.png';
+        heroImg.src = '/assets/draw.svg';
       } else {
-        heroImg.src = '/assets/owl_defeat.jpg';
+        heroImg.src = '/assets/defeat.svg';
       }
     }
 
@@ -2666,28 +2901,14 @@ class App {
       else scoreEl.textContent = '0 - 1';
     }
 
-    const rawOppName = document.getElementById('top-player-name')?.textContent || 'ShadowOwl';
-    const cleanOppName = rawOppName.replace(/\s*\([??]\)/, '');
-    const currentOppRating = document.getElementById('top-player-rating')?.textContent || '1180';
+    const rawOppName = document.getElementById('top-player-name')?.textContent || 'Opponent';
+    const cleanOppName = rawOppName.replace(/\s*\(\d+\)/, '').replace(/\s*\((White|Black)\)$/, '');
+    const currentOppRating = document.getElementById('top-player-rating')?.textContent || '1200';
     if (oppNameEl) oppNameEl.textContent = cleanOppName;
     if (oppRatingEl) oppRatingEl.textContent = currentOppRating;
 
-    const addFriendBtn = document.getElementById('btn-add-friend-gameover');
-    if (addFriendBtn) {
-      if (this.gameMode === 'online' && cleanOppName !== 'ShadowOwl') {
-        const isFriend = this.friendsList && this.friendsList.some(f => f.username === cleanOppName);
-        if (isFriend) {
-          addFriendBtn.style.display = 'none';
-        } else {
-          addFriendBtn.style.display = '';
-        }
-      } else {
-        addFriendBtn.style.display = 'none';
-      }
-    }
-
     if (modeEl) {
-      modeEl.textContent = this.matchType === 'robin' ? 'Robin Mode' : 'Standard';
+      modeEl.textContent = this.matchType === 'tactical' ? 'Tactical Mode' : 'Standard';
     }
 
     let durationText = '12 min 34 sec';
@@ -2703,19 +2924,10 @@ class App {
     if (movesEl) movesEl.textContent = moveCount;
 
     if (ratingEl) {
-      if (isPlayerWin) {
-        ratingEl.textContent = '+25';
-        ratingEl.className = 'recap-meta-value highlight-green';
-        ratingEl.style.color = '';
-      } else if (isDraw) {
-        ratingEl.textContent = '+0';
-        ratingEl.className = 'recap-meta-value';
-        ratingEl.style.color = '#94a3b8';
-      } else {
-        ratingEl.textContent = '-18';
-        ratingEl.className = 'recap-meta-value';
-        ratingEl.style.color = '#ef4444';
-      }
+      const change = Number(this.lastRatingChange) || 0;
+      ratingEl.textContent = change > 0 ? '+' + change : (change < 0 ? String(change) : '+0');
+      ratingEl.className = change > 0 ? 'recap-meta-value highlight-green' : 'recap-meta-value';
+      ratingEl.style.color = change > 0 ? '' : (change < 0 ? '#ef4444' : '#94a3b8');
     }
 
     
@@ -2741,8 +2953,8 @@ class App {
     
     const playerNameEl = document.getElementById('victory-player-name');
     const playerRatingEl = document.getElementById('victory-player-rating');
-    const rawPlayerName = document.getElementById('bottom-player-name')?.textContent || 'OwlRider';
-    const currentPlayerName = rawPlayerName.replace(/\s*\([??]\)/, '');
+    const rawPlayerName = document.getElementById('bottom-player-name')?.textContent || 'Player';
+    const currentPlayerName = rawPlayerName.replace(/\s*\(\d+\)/, '');
     const currentPlayerRating = document.getElementById('bottom-player-rating')?.textContent || '1240';
     if (playerNameEl) playerNameEl.textContent = currentPlayerName;
     if (playerRatingEl) playerRatingEl.textContent = currentPlayerRating;
@@ -2767,32 +2979,14 @@ class App {
     this.showScreen('screen-victory');
   }
 
-  addFriend(username) {
-    if (!username || username === 'AI') {
-      this.showToast('Cannot add AI as a friend');
-      return;
-    }
-    const btn = document.getElementById('btn-add-friend-gameover');
-    if (btn) {
-      btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-      btn.style.backgroundColor = '#22c55e';
-      btn.style.borderColor = '#22c55e';
-      btn.style.color = '#fff';
-      btn.title = 'Friend Request Sent';
-      btn.style.transform = 'scale(1)';
-    }
-    this.showToast('Friend Request Sent!');
-    console.log(`Friend request sent to ${username}`);
-  }
-
   restartGame() {
     if (this.gameMode === 'ai') {
       const difficulty = this.ai ? this.ai.difficulty : 'medium';
       this.startAIGame(difficulty);
     } else if (this.gameMode === 'online') {
-      this.showMatchmakingScreen('matchmaking');
+      this.findMatch();
     } else {
-      this.startMatchAgainstShadowOwl();
+      this.goHome();
     }
   }
 
@@ -2809,15 +3003,16 @@ class App {
     }
 
     this.hintCountInMatch = (this.hintCountInMatch || 0) + 1;
-    const hintCost = Math.pow(2, this.hintCountInMatch - 1) * 20;
+    const hintCosts = (window.ECONOMY_CONFIG && window.ECONOMY_CONFIG.hintsAndUndos && window.ECONOMY_CONFIG.hintsAndUndos.hintCosts) || [25, 50, 100, 200];
+    const hintIdx = Math.max(0, this.hintCountInMatch - 1);
+    const hintCost = hintCosts[hintIdx] !== undefined ? hintCosts[hintIdx] : hintCosts[hintCosts.length - 1] * Math.pow(2, hintIdx - (hintCosts.length - 1));
     if ((this.coins || 0) < hintCost) {
       this.showToast(`Need ${hintCost} coins for hint! (You have ${this.coins || 0})`);
       this.hintCountInMatch--;
       return;
     }
     this.coins -= hintCost;
-    try { localStorage.setItem('owl_coins', this.coins); } catch(e){}
-    this.updateCoinDisplay();
+    this.updateUserCoins(this.coins);
 
     const hintAI = new AIEngine('hard');
     const bestMove = hintAI.getBestMove(this.engine);
@@ -2840,7 +3035,7 @@ class App {
     const files = 'abcdefgh';
     const fromCoord = `${files[bestMove.fromCol]}${8 - bestMove.fromRow}`;
     const toCoord = `${files[bestMove.col]}${8 - bestMove.row}`;
-    this.showToast(`💡 Hint: Move ${fromCoord} → ${toCoord}`);
+    this.showToast(`💡 Hint: Move ${fromCoord} to ${toCoord}`);
 
     setTimeout(() => {
       if (fromSquare) fromSquare.classList.remove('hint-move');
@@ -2849,40 +3044,41 @@ class App {
   }
 
   getUserCoins() {
+    if (this.coins !== undefined && this.coins !== null) return this.coins;
     let saved = localStorage.getItem('owl_coins');
     if (saved !== null) {
       const parsed = parseInt(saved, 10);
       if (!isNaN(parsed)) return parsed;
     }
-    const balanceEl = document.getElementById('profile-wallet-balance');
-    if (balanceEl) {
-      const parsed = parseInt(balanceEl.textContent.replace(/,/g, ''), 10);
-      if (!isNaN(parsed)) return parsed;
-    }
-    return 1000;
+    return 300;
   }
 
-  updateUserCoins(newAmount) {
-    this.coins = newAmount;
+  updateUserCoins(newAmount, options = {}) {
+    const amount = Math.max(0, Math.floor(Number(newAmount) || 0));
+    this.coins = amount;
     try {
-      localStorage.setItem('owl_coins', newAmount);
+      localStorage.setItem('chessarena_coins', amount);
     } catch(e) {}
-    
-    const profileEl = document.getElementById('profile-wallet-balance');
-    if (profileEl) profileEl.textContent = newAmount.toLocaleString();
 
-    const walletBalEl = document.getElementById('wallet-balance');
-    if (walletBalEl && walletBalEl.textContent.includes('Coin')) {
-      walletBalEl.textContent = newAmount.toLocaleString() + ' Coins';
+    if (this.cloudProfile && options.persist !== false) {
+      this.cloudProfile.coins = amount;
+      this.cloudProfile.lastUpdated = Date.now();
+      if (window.ChessArenaStorage) {
+        window.ChessArenaStorage.saveProfile(this.cloudProfile).catch(() => {});
+      }
     }
 
-    const joinBalEl = document.getElementById('join-user-balance-display');
-    if (joinBalEl) joinBalEl.textContent = newAmount.toLocaleString() + ' Coins';
+    const homeEl = document.getElementById('home-coin-balance');
+    if (homeEl) homeEl.textContent = amount.toLocaleString() + ' Coins';
+
+    const shopEl = document.getElementById('shop-coin-balance');
+    if (shopEl) shopEl.textContent = '🪙 ' + amount.toLocaleString() + ' Coins';
   }
 
   getUndoCost() {
     const count = this.undoCountInMatch || 0;
-    return 50 * Math.pow(2, count);
+    const costs = (window.ECONOMY_CONFIG && window.ECONOMY_CONFIG.hintsAndUndos && window.ECONOMY_CONFIG.hintsAndUndos.undoCosts) || [50, 100, 200];
+    return costs[count] !== undefined ? costs[count] : costs[costs.length - 1] * Math.pow(2, count - (costs.length - 1));
   }
 
   updateUndoButtonUI() {
@@ -2901,7 +3097,7 @@ class App {
       undoBtn.classList.remove('disabled');
       undoBtn.style.opacity = '1';
       if (labelEl) {
-        labelEl.innerHTML = `Undo <span class="undo-cost-badge" style="color: #FFD54F; font-size: 11px; font-weight: 700;">🪙${cost}</span>`;
+        labelEl.innerHTML = `Undo <span class="undo-cost-badge" style="color: #FFD54F; font-size: 11px; font-weight: 700;">Coins ${cost}</span>`;
       }
     }
   }
@@ -2965,16 +3161,16 @@ class App {
     this.updateCapturedPieces();
     this.rebuildMoveHistoryUI();
     this.updatePlayerBars();
-    this.showToast(`Move undone ↩ (-${cost} coins)`);
+    this.showToast(`Move undone (-${cost} coins)`);
   }
   rebuildMoveHistoryUI() {
     this.updateMoveHistoryUI();
   }
 
-  // --- Robin Owls Navigation & Features ---------------
+  // --- Navigation & Features ---------------
 
   updateBottomNav(tabName) {
-    const tabIndices = { home: 0, rankings: 1, shop: 2, profile: 3, wallet: 3 };
+    const tabIndices = { home: 0, rankings: 1, shop: 2, profile: 3 };
     const targetIdx = tabIndices[tabName] !== undefined ? tabIndices[tabName] : 0;
 
     document.querySelectorAll('.fantasy-bottom-nav').forEach(nav => {
@@ -2988,31 +3184,490 @@ class App {
 
   showProfileScreen() {
     this.updateBottomNav('profile');
+    this.loadPlayerStats();
+    this.renderProfileStats();
+    this.renderProfileRank(this.cloudProfile);
+    this.applyPlatformProfile();
     this.showScreen('screen-profile');
   }
 
-  showDiscoverScreen() {
-    this.updateBottomNav('discover');
-    this.showScreen('screen-discover');
+  // --- Player stats ---------------------------------
+  // Progression is stored locally first so it works in any webview (including
+  // YouTube Playables), then reconciled with the server profile when online.
+  statsStorageKey() {
+    const identity = (this.userProfile && this.userProfile.username)
+      ? String(this.userProfile.username).toLowerCase()
+      : String(this.playerId || 'guest');
+    return 'chessarena_stats_v1_' + identity;
+  }
+
+  loadPlayerStats() {
+    const toCount = (value) => {
+      const n = Number(value);
+      return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+    };
+    const stored = (() => {
+      try { return JSON.parse(localStorage.getItem(this.statsStorageKey()) || 'null'); }
+      catch (e) { return null; }
+    })();
+
+    const stats = {
+      rating: 1200,
+      ai: { wins: 0, losses: 0, draws: 0 },
+      online: { wins: 0, losses: 0, draws: 0 },
+      hasServerStats: false
+    };
+
+    if (stored) {
+      const rating = Number(stored.rating);
+      if (Number.isFinite(rating) && rating > 0) stats.rating = Math.floor(rating);
+      ['ai', 'online'].forEach((bucket) => {
+        if (!stored[bucket]) return;
+        stats[bucket].wins = toCount(stored[bucket].wins);
+        stats[bucket].losses = toCount(stored[bucket].losses);
+        stats[bucket].draws = toCount(stored[bucket].draws);
+      });
+      stats.hasServerStats = stored.hasServerStats === true;
+    }
+
+    // Server profile is authoritative for online play: merge without ever
+    // lowering a locally tracked count (offline play may not have synced yet).
+    const user = this.userProfile;
+    if (user) {
+      if (Number.isFinite(Number(user.elo)) && Number(user.elo) > 0) {
+        stats.rating = Math.floor(Number(user.elo));
+      }
+      stats.online.wins = Math.max(stats.online.wins, toCount(user.wins));
+      stats.online.losses = Math.max(stats.online.losses, toCount(user.losses));
+      stats.online.draws = Math.max(stats.online.draws, toCount(user.draws));
+      stats.hasServerStats = true;
+    }
+
+    this.playerStats = stats;
+    this.savePlayerStats();
+    return stats;
+  }
+
+  savePlayerStats() {
+    if (!this.playerStats) return;
+    try {
+      localStorage.setItem(this.statsStorageKey(), JSON.stringify(this.playerStats));
+    } catch (e) { /* storage may be unavailable; keep in-memory stats */ }
+  }
+
+  getTotalStats() {
+    // The cloud profile is the single source of truth for the visible totals.
+    if (this.cloudProfile && this.cloudProfile.stats) {
+      const stats = this.cloudProfile.stats;
+      const wins = Math.max(0, Number(stats.wins) || 0);
+      const losses = Math.max(0, Number(stats.losses) || 0);
+      const draws = Math.max(0, Number(stats.draws) || 0);
+      const total = wins + losses + draws;
+      return {
+        rating: Math.max(100, Number(this.cloudProfile.rating) || 1200),
+        wins,
+        losses,
+        draws,
+        total,
+        winRate: total > 0 ? Math.round((wins / total) * 100) : 0
+      };
+    }
+
+    const s = this.playerStats || this.loadPlayerStats();
+    const wins = s.ai.wins + s.online.wins;
+    const losses = s.ai.losses + s.online.losses;
+    const draws = s.ai.draws + s.online.draws;
+    const total = wins + losses + draws;
+    return {
+      rating: s.rating,
+      wins,
+      losses,
+      draws,
+      total,
+      winRate: total > 0 ? Math.round((wins / total) * 100) : 0
+    };
+  }
+
+  renderProfileStats() {
+    const totals = this.getTotalStats();
+    const setText = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    };
+    setText('stat-rating', totals.rating);
+    setText('stat-wins', totals.wins);
+    setText('stat-losses', totals.losses);
+    setText('stat-winrate', totals.winRate + '%');
+    document.querySelectorAll('.fantasy-rating').forEach(el => { el.textContent = 'Rating ' + totals.rating; });
+  }
+
+  refreshRecapRating() {
+    const ratingEl = document.getElementById('victory-meta-rating');
+    if (!ratingEl || this.gameMode !== 'online') return;
+    const change = Number(this.lastRatingChange) || 0;
+    ratingEl.textContent = change > 0 ? '+' + change : (change < 0 ? String(change) : '+0');
+    ratingEl.className = change > 0 ? 'recap-meta-value highlight-green' : 'recap-meta-value';
+    ratingEl.style.color = change > 0 ? '' : (change < 0 ? '#ef4444' : '#94a3b8');
+  }
+
+  // Applies authoritative stats coming from the server (Mongo profile).
+  applyServerStats(stats, gameId) {
+    if (!stats) return;
+    const current = this.loadPlayerStats();
+    const hasRatingStart = this.ratingAtGameStart !== null &&
+      this.ratingAtGameStart !== undefined &&
+      Number.isFinite(Number(this.ratingAtGameStart));
+    const ratingBefore = hasRatingStart
+      ? Number(this.ratingAtGameStart)
+      : (this.cloudProfile ? this.cloudProfile.rating : current.rating);
+    const toCount = (value) => {
+      const n = Number(value);
+      return Number.isFinite(n) && n >= 0 ? Math.floor(n) : null;
+    };
+    const wins = toCount(stats.wins);
+    const losses = toCount(stats.losses);
+    const draws = toCount(stats.draws);
+    const elo = toCount(stats.elo);
+
+    const serverWins = wins === null ? 0 : wins;
+    const serverLosses = losses === null ? 0 : losses;
+    const serverDraws = draws === null ? 0 : draws;
+    const explicitServerTotal = Number.isFinite(Number(stats.totalMatches))
+      ? Math.max(0, Math.floor(Number(stats.totalMatches)))
+      : 0;
+    const serverTotal = Math.max(explicitServerTotal, serverWins + serverLosses + serverDraws);
+    const cloudStats = this.cloudProfile ? this.cloudProfile.stats : null;
+    const cloudTotal = cloudStats
+      ? Math.max(
+        Number.isFinite(Number(cloudStats.totalMatches)) ? Math.max(0, Math.floor(Number(cloudStats.totalMatches))) : 0,
+        (toCount(cloudStats.wins) || 0) + (toCount(cloudStats.losses) || 0) + (toCount(cloudStats.draws) || 0)
+      )
+      : 0;
+    const serverIsCurrent = !this.cloudProfile || serverTotal >= cloudTotal;
+
+    if (wins !== null) current.online.wins = Math.max(current.online.wins, wins);
+    if (losses !== null) current.online.losses = Math.max(current.online.losses, losses);
+    if (draws !== null) current.online.draws = Math.max(current.online.draws, draws);
+    if (elo !== null && elo > 0 && serverIsCurrent) current.rating = elo;
+    current.hasServerStats = true;
+    this.playerStats = current;
+    this.savePlayerStats();
+
+    // The server increments the synced total profile, so those values can be
+    // treated as authoritative unless they would erase newer local/cloud totals.
+    const canApplyCloud = this.cloudProfile && serverIsCurrent && elo !== null && elo > 0;
+
+    if (canApplyCloud) {
+      this._profileRevision += 1;
+      const updated = JSON.parse(JSON.stringify(this.cloudProfile));
+      updated.rating = elo;
+      updated.stats.wins = serverWins;
+      updated.stats.losses = serverLosses;
+      updated.stats.draws = serverDraws;
+      updated.stats.totalMatches = serverWins + serverLosses + serverDraws;
+      if (Number.isFinite(Number(stats.winStreak))) updated.stats.winStreak = Math.max(0, Math.floor(Number(stats.winStreak)));
+      if (Number.isFinite(Number(stats.bestStreak))) updated.stats.bestStreak = Math.max(0, Math.floor(Number(stats.bestStreak)));
+      updated.stats.bestStreak = Math.max(updated.stats.bestStreak || 0, updated.stats.winStreak || 0);
+      updated.lastUpdated = Date.now();
+      this.cloudProfile = updated;
+      this.lastServerStats = stats;
+      this.lastServerStatsGameId = gameId || (this.multiplayer && this.multiplayer.gameId) || null;
+      this.lastServerStatsAt = Date.now();
+      if (window.ChessArenaStorage) {
+        window.ChessArenaStorage.saveProfile(updated).catch(() => {});
+      }
+      this.applyCloudProfile(updated);
+      this.queueLeaderboardSync(300);
+    } else {
+      // Server data is stale relative to the cloud profile (for example a DB
+      // reconnect). Let the local match hook update and resync the profile.
+      this.lastServerStats = null;
+      this.lastServerStatsGameId = null;
+      this.lastServerStatsAt = 0;
+    }
+
+    this.lastRatingChange = (canApplyCloud ? elo : current.rating) - ratingBefore;
+    this.renderProfileStats();
+    this.refreshRecapRating();
+  }
+
+  // Records a finished game exactly once per game session.
+  recordGameResult(result) {
+    if (!result) return;
+    if (this.playerColor === 'spectator') return;
+    const mode = this.gameMode === 'online' ? 'online' : 'ai';
+    const gameId = (this.multiplayer && this.multiplayer.gameId) ? this.multiplayer.gameId : null;
+    const sessionKey = mode + ':' + (gameId || ('local:' + (this.gameStartTime || 'unknown')));
+    if (this.statsRecordedForGame === sessionKey) return;
+    this.statsRecordedForGame = sessionKey;
+
+    let outcome = 'draw';
+    if (result.winner) outcome = result.winner === this.playerColor ? 'win' : 'loss';
+
+    const fallbackRating = this.loadPlayerStats().rating;
+    const hasRatingStart = this.ratingAtGameStart !== null &&
+      this.ratingAtGameStart !== undefined &&
+      Number.isFinite(Number(this.ratingAtGameStart));
+    const ratingBefore = hasRatingStart
+      ? Number(this.ratingAtGameStart)
+      : (this.cloudProfile ? this.cloudProfile.rating : fallbackRating);
+    const opponentName = mode === 'ai'
+      ? `AI (${(this.ai && this.ai.difficulty) || 'medium'})`
+      : (document.getElementById('top-player-name')?.textContent || 'Opponent');
+
+    // Cloud profile path: update the canonical profile, persist to YouTube
+    // Playables cloud storage, then sync the global leaderboard rank.
+    if (this.cloudProfile && window.ChessArenaStorage) {
+      let authoritative = null;
+      if (mode === 'online' && this.lastServerStats) {
+        const sameGame = this.lastServerStatsGameId && gameId
+          ? this.lastServerStatsGameId === gameId
+          : (Date.now() - this.lastServerStatsAt < 20000);
+        if (sameGame) authoritative = this.lastServerStats;
+      }
+
+      let ratingDelta = 0;
+      if (authoritative) {
+        const serverElo = Number(authoritative.elo);
+        this.lastRatingChange = Number.isFinite(serverElo) ? serverElo - ratingBefore : 0;
+      } else if (mode === 'online') {
+        ratingDelta = outcome === 'win' ? 24 : outcome === 'loss' ? -24 : 0;
+        this.lastRatingChange = ratingDelta;
+      } else {
+        const difficulty = (this.ai && this.ai.difficulty) || 'medium';
+        const opponentRating = { easy: 800, medium: 1200, hard: 1600 }[difficulty] || 1200;
+        const expected = 1 / (1 + Math.pow(10, (opponentRating - ratingBefore) / 400));
+        const score = outcome === 'win' ? 1 : outcome === 'loss' ? 0 : 0.5;
+        ratingDelta = Math.round(16 * (score - expected));
+        this.lastRatingChange = ratingDelta;
+      }
+      this.refreshRecapRating();
+
+      const revision = ++this._profileRevision;
+      try {
+        window.ChessArenaStorage.updateMatchStats(outcome, ratingDelta, {
+          mode,
+          opponent: opponentName,
+          authoritative,
+          ratingBefore
+        }).then((updated) => {
+          if (!updated) return;
+          if (this._profileRevision !== revision) {
+            // A newer authoritative server update landed while the cloud/mirror
+            // write was in flight. Keep its rating/stat totals and only merge
+            // the freshly recorded match history entry.
+            const current = this.cloudProfile;
+            if (current && Array.isArray(updated.matchHistory) &&
+                updated.matchHistory.length > (current.matchHistory || []).length) {
+              current.matchHistory = updated.matchHistory;
+              if (window.ChessArenaStorage) {
+                window.ChessArenaStorage.saveProfile(current).catch(() => {});
+              }
+            }
+            this.refreshRecapRating();
+            this.queueLeaderboardSync(200);
+            return;
+          }
+          this.cloudProfile = updated;
+          this.applyCloudProfile(updated);
+          this.lastRatingChange = updated.rating - ratingBefore;
+          this.refreshRecapRating();
+          this.queueLeaderboardSync(200);
+        }).catch((e) => {
+          console.warn('[Profile] match save failed', e);
+          this.showToast('Profile save failed — your local progress is safe.');
+        });
+      } catch (e) {
+        console.warn('[Profile] match update failed', e);
+      }
+      return;
+    }
+
+    // Legacy local-only fallback (storage service unavailable).
+    const stats = this.loadPlayerStats();
+    const bucket = stats[mode];
+    if (outcome === 'win') bucket.wins += 1;
+    else if (outcome === 'loss') bucket.losses += 1;
+    else bucket.draws += 1;
+
+    if (mode === 'online') {
+      const k = 24;
+      stats.rating = Math.max(100, stats.rating + (outcome === 'win' ? k : outcome === 'loss' ? -k : 0));
+    } else {
+      const difficulty = (this.ai && this.ai.difficulty) || 'medium';
+      const opponentRating = { easy: 800, medium: 1200, hard: 1600 }[difficulty] || 1200;
+      const expected = 1 / (1 + Math.pow(10, (opponentRating - ratingBefore) / 400));
+      const score = outcome === 'win' ? 1 : outcome === 'loss' ? 0 : 0.5;
+      const delta = Math.round(16 * (score - expected));
+      stats.rating = Math.max(100, ratingBefore + delta);
+    }
+
+    this.lastRatingChange = stats.rating - ratingBefore;
+    this.playerStats = stats;
+    this.savePlayerStats();
+    this.renderProfileStats();
+  }
+
+  // --- Platform identity (PlayGama / YouTube Playables) ---------------
+  getPlatformProfile() {
+    if (this.platformProfile) return this.platformProfile;
+    const platform = window.ChessArenaPlatform;
+    if (platform && typeof platform.getCached === 'function') {
+      const cached = platform.getCached();
+      if (cached) this.platformProfile = cached;
+    }
+    return this.platformProfile || null;
+  }
+
+  getPreferredDisplayName() {
+    if (this.cloudProfile && this.cloudProfile.username) return String(this.cloudProfile.username);
+    const profile = this.getPlatformProfile();
+    const platformName = profile && profile.name ? String(profile.name).trim() : '';
+    if (platformName) return platformName;
+    if (this.userProfile && this.userProfile.username) return String(this.userProfile.username);
+    return null;
+  }
+
+  adoptPlatformIdentity(profile) {
+    if (!profile || !profile.id || this.cloudProfile || (this.userProfile && this.userProfile.username)) return;
+    if (String(this.playerId || '').startsWith('usr_')) return;
+    const platformId = String(profile.platform || 'platform').toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 24) || 'platform';
+    const accountId = String(profile.id).toLowerCase().replace(/[^a-z0-9_-]+/g, '').slice(0, 48);
+    if (!accountId) return;
+
+    const nextId = 'plat_' + platformId + '_' + accountId;
+    if (nextId === this.playerId) return;
+
+    const previousId = this.playerId;
+    this.playerId = nextId;
+    try {
+      localStorage.setItem('chessarena_player_id', nextId);
+      // Preserve local progress when moving from a generated guest ID to the
+      // signed-in platform account for the first time.
+      if (previousId && previousId !== nextId) {
+        const oldKey = 'chessarena_stats_v1_' + String(previousId).toLowerCase();
+        const newKey = 'chessarena_stats_v1_' + nextId.toLowerCase();
+        const oldStats = localStorage.getItem(oldKey);
+        if (oldStats && !localStorage.getItem(newKey)) localStorage.setItem(newKey, oldStats);
+      }
+    } catch (e) { /* ignore storage errors */ }
+  }
+
+  async applyPlatformProfile() {
+    const platform = window.ChessArenaPlatform;
+    if (!platform) {
+      this.applyIdentityToUI(null, null, null);
+      return;
+    }
+    const cached = typeof platform.getCached === 'function' ? platform.getCached() : null;
+    if (cached) {
+      this.platformProfile = cached;
+      this.adoptPlatformIdentity(cached);
+      this.applyIdentityToUI(cached.name, cached.avatar, cached.platformLabel);
+    }
+    if (!platform.whenReady) return;
+    try {
+      const profile = await platform.whenReady;
+      if (profile) {
+        this.platformProfile = profile;
+        this.adoptPlatformIdentity(profile);
+        this.applyIdentityToUI(profile.name, profile.avatar, profile.platformLabel);
+      }
+    } catch (e) { /* not on a supported platform — keep local identity */ }
+  }
+
+  applyIdentityToUI(platformName, platformAvatar, platformLabel) {
+    const localName = (this.userProfile && this.userProfile.username) || null;
+    // The cloud/server username is authoritative once authenticated. Before
+    // that, fall back to the host platform's display name.
+    const displayName = localName || platformName;
+    const displayAvatar = platformAvatar || null;
+
+    if (displayName) {
+      document.querySelectorAll('.fantasy-username').forEach(el => { el.textContent = displayName; });
+      document.querySelectorAll('.profile-hero-name').forEach(el => { el.textContent = displayName; });
+      const bottomPlayer = document.getElementById('bottom-player-name');
+      if (bottomPlayer) bottomPlayer.textContent = displayName;
+      const victoryPlayer = document.getElementById('victory-player-name');
+      if (victoryPlayer) victoryPlayer.textContent = displayName;
+      const mainProfileName = document.getElementById('main-profile-name');
+      if (mainProfileName) mainProfileName.textContent = displayName;
+    }
+
+    if (displayAvatar) {
+      const heroAvatar = document.getElementById('profile-hero-avatar');
+      if (heroAvatar) heroAvatar.src = displayAvatar;
+      document.querySelectorAll('.fantasy-avatar-img').forEach(img => { img.src = displayAvatar; });
+      document.querySelectorAll('.nav-profile-avatar-img').forEach(img => { img.src = displayAvatar; });
+    }
+
+    const badge = document.getElementById('profile-platform-source');
+    if (badge) {
+      const storageLabel = this.getStorageBadgeLabel();
+      if (storageLabel) {
+        badge.textContent = storageLabel;
+        badge.style.display = 'inline-block';
+      } else if (platformLabel && platformName) {
+        badge.textContent = platformLabel;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
   }
 
   syncAbilitiesUI() {
-    const valid = ['swap', 'freeze', 'second', 'shield', 'jump'];
+    const valid = ['jump', 'second', 'freeze', 'swap', 'shield'];
     if (!Array.isArray(this.selectedAbilities)) {
-      this.selectedAbilities = ['swap', 'freeze'];
+      this.selectedAbilities = ['jump'];
     }
-    this.selectedAbilities = this.selectedAbilities.filter(a => valid.includes(a));
-    if (this.selectedAbilities.length > 2) {
+    const unlocked = this.unlockedSkills || ['jump', 'second'];
+    this.selectedAbilities = this.selectedAbilities
+      .map(s => s === 'undo' ? 'second' : s)
+      .filter(a => valid.includes(a) && unlocked.includes(a));
+
+    if (!this.slot2Unlocked && this.selectedAbilities.length > 1) {
+      this.selectedAbilities = [this.selectedAbilities[0]];
+    } else if (this.selectedAbilities.length > 2) {
       this.selectedAbilities = this.selectedAbilities.slice(0, 2);
+    }
+    if (this.selectedAbilities.length === 0 && unlocked.length > 0) {
+      this.selectedAbilities = [unlocked[0]];
     }
 
     valid.forEach(id => {
       const card = document.getElementById(`ability-card-${id}`);
+      const isUnlocked = unlocked.includes(id);
+      const charges = this.getSkillCharges(id);
+
       if (card) {
         if (this.selectedAbilities.includes(id)) {
           card.classList.add('selected');
         } else {
           card.classList.remove('selected');
+        }
+
+        // Render charges and unlock/refill controls inside card
+        let badgeEl = card.querySelector('.ability-economy-badge');
+        if (!badgeEl) {
+          badgeEl = document.createElement('div');
+          badgeEl.className = 'ability-economy-badge';
+          badgeEl.style.cssText = 'display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 11px;';
+          const info = card.querySelector('.ability-info');
+          if (info) info.appendChild(badgeEl);
+        }
+
+        if (isUnlocked) {
+          badgeEl.innerHTML = `<span style="color: #FFD54F; font-weight: 700;">Charges: ${charges}/5</span>
+            <button onclick="event.stopPropagation(); app.refillSkill('${id}', 1, 50)" style="background: #3A2315; border: 1px solid #C99700; color: #FFD54F; border-radius: 4px; padding: 2px 5px; font-size: 10px; cursor: pointer;" title="Refill 1 Charge for 50 Coins">+1 (50🪙)</button>
+            <button onclick="event.stopPropagation(); app.refillSkillViaAd('${id}')" style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; border: none; border-radius: 4px; padding: 2px 5px; font-size: 10px; font-weight: 800; cursor: pointer;" title="Watch Ad for +2 Charges">🎬 +2</button>`;
+        } else {
+          const catalog = window.ECONOMY_CONFIG?.skills?.catalog || [];
+          const skillItem = catalog.find(s => s.id === id);
+          const reqLvl = skillItem?.reqLevel || 1;
+          const cost = skillItem?.cost || 500;
+          badgeEl.innerHTML = `<span style="color: #A58463; font-weight: 700;">Locked (Level ${reqLvl})</span>
+            <button onclick="event.stopPropagation(); app.promptUnlockSkill('${id}')" style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; border: none; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: 800; cursor: pointer;">Unlock (${cost.toLocaleString()}🪙)</button>`;
         }
       }
 
@@ -3024,7 +3679,7 @@ class App {
           medallion.style.boxShadow = '0 0 12px rgba(255, 213, 79, 0.7)';
           medallion.style.transform = 'scale(1.1)';
         } else {
-          medallion.style.opacity = '0.35';
+          medallion.style.opacity = isUnlocked ? '0.5' : '0.2';
           medallion.style.borderColor = '#5A351C';
           medallion.style.boxShadow = 'none';
           medallion.style.transform = 'scale(1)';
@@ -3032,12 +3687,13 @@ class App {
       }
     });
 
+    this.syncSlotUI();
     this.updateHomeAbilitiesDisplay();
   }
 
   showAbilitiesScreen() {
     try {
-      let saved = JSON.parse(localStorage.getItem('owl_selected_abilities'));
+      let saved = JSON.parse(localStorage.getItem('chessarena_abilities'));
       if (Array.isArray(saved) && saved.length === 2) {
         this.selectedAbilities = [...saved];
       }
@@ -3047,22 +3703,43 @@ class App {
   }
 
   toggleAbility(abilityId) {
-    const valid = ['swap', 'freeze', 'second', 'shield', 'jump'];
-    if (!valid.includes(abilityId)) return;
+    const valid = ['jump', 'second', 'freeze', 'swap', 'shield'];
+    const id = abilityId === 'undo' ? 'second' : abilityId;
+    if (!valid.includes(id)) return;
+
+    const unlocked = this.unlockedSkills || ['jump', 'second'];
+    if (!unlocked.includes(id)) {
+      this.promptUnlockSkill(id);
+      return;
+    }
+
     if (!Array.isArray(this.selectedAbilities)) {
       this.selectedAbilities = [];
     }
-    const idx = this.selectedAbilities.indexOf(abilityId);
+
+    const idx = this.selectedAbilities.indexOf(id);
     if (idx !== -1) {
-      // Already selected -> Deselect on click!
+      // Deselect
       this.selectedAbilities.splice(idx, 1);
     } else {
-      // Not selected -> Select (if 2 already selected, replace the oldest one)
-      if (this.selectedAbilities.length >= 2) {
-        this.selectedAbilities.shift();
+      const maxSlots = this.slot2Unlocked ? 2 : 1;
+      if (this.selectedAbilities.length >= maxSlots) {
+        if (!this.slot2Unlocked) {
+          this.showToast('Slot 2 is locked! Unlock Slot 2 (500🪙 or 3 Ads) to equip 2 abilities.');
+          this.promptUnlockSlot2();
+          return;
+        } else {
+          // Replace oldest
+          this.selectedAbilities.shift();
+        }
       }
-      this.selectedAbilities.push(abilityId);
+      this.selectedAbilities.push(id);
     }
+
+    try {
+      localStorage.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
+    } catch (e) {}
+
     this.syncAbilitiesUI();
   }
 
@@ -3092,15 +3769,16 @@ class App {
   }
 
   confirmAbilities() {
-    if (!this.selectedAbilities || this.selectedAbilities.length < 2) {
-      this.showToast('Please select exactly 2 abilities to continue!');
+    const minRequired = 1;
+    if (!this.selectedAbilities || this.selectedAbilities.length < minRequired) {
+      this.showToast('Please select at least 1 ability to continue!');
       return;
     }
     try {
       localStorage.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
     } catch(e) {}
     this.updateHomeAbilitiesDisplay();
-    this.showToast('Abilities confirmed! tactical loadout saved ✨');
+    this.showToast('Loadout saved! Abilities equipped for battle ⚔️');
     this.goHome();
   }
 
@@ -3125,63 +3803,6 @@ class App {
       this.matchmakingTimeout = null;
     }
     this.goHome();
-  }
-
-  setMatchmakingMode(mode) {
-    this.currentMatchMode = mode;
-    const standardBtn = document.getElementById('mode-btn-standard');
-    const robinBtn = document.getElementById('mode-btn-robin');
-    if (mode === 'standard') {
-      if (standardBtn) standardBtn.classList.add('active');
-      if (robinBtn) robinBtn.classList.remove('active');
-      this.showToast('Standard mode selected');
-    } else {
-      if (robinBtn) robinBtn.classList.add('active');
-      if (standardBtn) standardBtn.classList.remove('active');
-      this.showToast('Robin Mode (NFT abilities enabled) ⚔️');
-    }
-  }
-
-  startMatchAgainstShadowOwl() {
-    if (this.matchmakingTimeout) {
-      clearTimeout(this.matchmakingTimeout);
-      this.matchmakingTimeout = null;
-    }
-    this.gameMode = 'ai';
-    this.playerColor = 'white';
-    this.boardFlipped = false;
-    this.engine = new ChessEngine();
-    this.ai = new AIEngine('medium');
-    this.lastMove = null;
-    this.gameStartTime = Date.now();
-    this.timers = { white: 10 * 60 * 1000, black: 10 * 60 * 1000 };
-
-    const topName = document.getElementById('top-player-name');
-    const topRating = document.getElementById('top-player-rating');
-    const topAvatar = document.getElementById('top-player-avatar');
-    const bottomName = document.getElementById('bottom-player-name');
-    const bottomRating = document.getElementById('bottom-player-rating');
-    const bottomAvatar = document.getElementById('bottom-player-avatar');
-
-    if (topName) topName.textContent = 'ShadowOwl';
-    if (topRating) topRating.textContent = '1180';
-    if (topAvatar) topAvatar.src = this.opponentAvatarSrc || '/assets/shadow_owl_avatar.gif';
-    if (bottomName) bottomName.textContent = 'OwlRider';
-    if (bottomRating) bottomRating.textContent = '1240';
-    if (bottomAvatar) bottomAvatar.src = '/assets/owl_avatar.jpg';
-
-    const drawBtn = document.getElementById('btn-ingame-draw');
-    if (drawBtn) drawBtn.style.display = 'none';
-    const resignBtn = document.getElementById('btn-ingame-resign');
-    if (resignBtn) resignBtn.style.display = '';
-
-    this.clearMoveHistory();
-    this.clearCapturedPieces();
-    this.showScreen('screen-game');
-    this.renderBoard();
-    this.updatePlayerBars();
-    this.startTimerTick();
-    this.showToast('Opponent Found: ShadowOwl (1180) ⚔️');
   }
 
   // --- Controls --------------------------------------
@@ -3226,8 +3847,11 @@ class App {
     if (this.gameMode === 'online' && this.multiplayer) {
       this.multiplayer.requestRematch();
       this.showToast('Rematch requested');
-      document.getElementById('btn-rematch').disabled = true;
-      document.getElementById('btn-rematch').textContent = 'Waiting...';
+      const rematchBtn = document.getElementById('victory-btn-rematch');
+      if (rematchBtn) {
+        rematchBtn.disabled = true;
+        rematchBtn.textContent = 'Waiting...';
+      }
     }
   }
 
@@ -3244,7 +3868,6 @@ class App {
     }
     
     // Hide all possible open modals
-    this.hideModal('modal-gameover');
     this.hideModal('modal-confirm');
     this.hideModal('modal-draw-offer');
     this.hideModal('modal-spectate');
@@ -3276,7 +3899,7 @@ class App {
     }
 
     try {
-      let saved = JSON.parse(localStorage.getItem('owl_selected_abilities'));
+      let saved = JSON.parse(localStorage.getItem('chessarena_abilities'));
       if (Array.isArray(saved) && saved.length === 2) {
         this.selectedAbilities = saved;
       } else if (!this.selectedAbilities || this.selectedAbilities.length < 2) {
@@ -3310,13 +3933,6 @@ class App {
   // --- Modals ----------------------------------------
 
   showModal(id) {
-    if (id === 'modal-profile') {
-      const balanceEl = document.getElementById('profile-wallet-balance');
-      const profileBalEl = document.getElementById('profile-wallet-balance');
-      if (balanceEl && profileBalEl) {
-        profileBalEl.textContent = balanceEl.textContent;
-      }
-    }
     const modal = document.getElementById(id);
     if (modal) modal.classList.remove('hidden');
   }
@@ -3326,7 +3942,7 @@ class App {
   toggleSound() {
     this.soundMuted = !this.soundMuted;
     const btn = document.getElementById('btn-toggle-sound');
-    if (btn) btn.innerHTML = this.soundMuted ? '🔊 SFX: Off' : '🔊 SFX: On';
+    if (btn) btn.innerHTML = this.soundMuted ? 'SFX: Off' : 'SFX: On';
     this.showToast(this.soundMuted ? 'Sound effects muted' : 'Sound effects enabled');
   }
 
@@ -3349,77 +3965,145 @@ class App {
   // --- Toast -----------------------------------------
 
   
-  handleAuthRequireUsername(wallet) {
+  handleAuthRequireUsername(playerId, forceEdit = false) {
+    // An existing cloud profile already has a name. Legacy server rows that
+    // still lack a username can be repaired silently instead of prompting the
+    // player again. The pencil button passes forceEdit=true.
+    if (!forceEdit && this.cloudProfile && this.cloudProfile.username &&
+        window.ChessArenaStorage && window.ChessArenaStorage.isValidUsername(this.cloudProfile.username)) {
+      this.syncLeaderboardProfile(this.cloudProfile, { silent: true, reason: 'auth-require' }).then(() => {
+        if (this.multiplayer && this.multiplayer.isConnected && this.cloudProfile) {
+          this.multiplayer.send({
+            type: 'set_username',
+            playerId: this.cloudProfile.playerId,
+            username: this.cloudProfile.username
+          });
+        }
+      });
+      return;
+    }
+
     const modal = document.getElementById('username-modal');
     const input = document.getElementById('username-input');
     const btn = document.getElementById('btn-submit-username');
     const cancelBtn = document.getElementById('btn-cancel-username');
     const title = document.getElementById('username-modal-title');
     const subtitle = document.getElementById('username-modal-subtitle');
-    
-    if (modal && input && btn) {
-      // Differentiate between Create and Edit based on existing user profile
-      if (this.userProfile && this.userProfile.username) {
-        title.textContent = "Edit Profile";
-        subtitle.textContent = "Change your username below.";
-        input.value = this.userProfile.username;
-        cancelBtn.style.display = 'block';
-      } else {
-        title.textContent = "Create Profile";
-        subtitle.textContent = "Welcome! Please choose a unique username.";
-        input.value = "";
-        cancelBtn.style.display = 'none'; // Can't cancel initial creation
+    if (!modal || !input || !btn) {
+      this.showToast('Profile editing is unavailable right now.');
+      return;
+    }
+
+    const storage = window.ChessArenaStorage;
+    this.onboardingPending = false;
+    this.pendingProfileDraft = null;
+    this.attachUsernameSanitizer(input);
+    title.textContent = 'Edit Player Name';
+    subtitle.textContent = 'This is the name other players see on the leaderboard.';
+    input.value = (this.cloudProfile && this.cloudProfile.username) ||
+      (this.userProfile && this.userProfile.username) || '';
+    if (cancelBtn) cancelBtn.style.display = 'block';
+    btn.textContent = 'Save';
+    btn.disabled = false;
+    modal.classList.remove('hidden');
+    setTimeout(() => input.focus(), 120);
+
+    if (cancelBtn) {
+      cancelBtn.onclick = () => {
+        modal.classList.add('hidden');
+      };
+    }
+    input.onkeydown = (event) => {
+      if (event.key === 'Enter') btn.click();
+    };
+
+    btn.onclick = async () => {
+      const username = storage && storage.sanitizeUsername
+        ? storage.sanitizeUsername(input.value)
+        : String(input.value || '').replace(/[^a-z0-9]/gi, '').slice(0, 16);
+      if (!storage || !storage.isValidUsername || !storage.isValidUsername(username)) {
+        this.showToast('Name must be 3-16 letters or numbers.');
+        input.focus();
+        return;
       }
-      
-      modal.classList.remove('hidden');
-      input.focus();
-      
-      if (cancelBtn) {
-        cancelBtn.onclick = () => {
+
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+      try {
+        if (storage) {
+          const base = this.cloudProfile || storage.createDraftProfile();
+          const profile = await storage.createProfile(username, { __draft: base });
+          this.applyCloudProfile(profile);
           modal.classList.add('hidden');
-        };
-      }
-      
-      btn.onclick = () => {
-        const username = input.value.trim();
-        if (username.length >= 3) {
-          modal.classList.add('hidden');
-          if (this.multiplayer && this.multiplayer.ws) {
-            this.multiplayer.send({ type: 'set_username', walletAddress: wallet, username: username });
+          this.syncLeaderboardProfile(profile, { reason: 'rename' });
+          if (this.multiplayer && this.multiplayer.isConnected) {
+            this.multiplayer.send({
+              type: 'set_username',
+              playerId: profile.playerId,
+              username: profile.username
+            });
           }
         } else {
-          this.showToast("Username must be at least 3 characters.");
+          // Legacy fallback if storage-service.js is unavailable.
+          if (!this.multiplayer) {
+            this.multiplayer = new MultiplayerClient();
+            this.setupMultiplayerCallbacks();
+          }
+          if (!this.multiplayer.isConnected) await this.multiplayer.connect();
+          this.multiplayer.send({ type: 'set_username', playerId: playerId || this.playerId, username });
+          modal.classList.add('hidden');
         }
-      };
-    } else {
-      this.showToast("Username is required to play online.");
-    }
+      } catch (e) {
+        console.warn('[Profile] rename failed', e);
+        this.showToast('Could not save your name. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Save';
+      }
+    };
   }
 
-  handleAuthSuccess(user) {
-    this.userProfile = user;
-    this.showToast(`Welcome back, ${user.username}!`);
-    
-    // Update all instances of the username in the DOM
-    document.querySelectorAll('.fantasy-username').forEach(el => el.textContent = user.username);
-    document.querySelectorAll('.profile-name').forEach(el => el.textContent = user.username);
-    document.querySelectorAll('.profile-hero-name').forEach(el => el.textContent = user.username);
-    document.querySelectorAll('.wallet-panel-name').forEach(el => el.textContent = user.username);
-    
-    const bottomPlayer = document.getElementById('bottom-player-name');
-    if (bottomPlayer) bottomPlayer.textContent = user.username;
-    
-    const victoryPlayer = document.getElementById('victory-player-name');
-    if (victoryPlayer) victoryPlayer.textContent = user.username;
-    
-    // Update Stats in Profile (keeping existing layout structure if possible, or basic stats)
-    const profileStats = document.getElementById('profile-stats-content');
-    // For now we'll just update the numeric values if they have specific IDs, but the HTML doesn't seem to have IDs for stats yet.
-    // We'll replace the text content of the stat numbers using querySelector on the known DOM structure.
-    
-    // Let's just update the profile name which is what was requested:
-    const mainProfileName = document.getElementById('main-profile-name');
-    if (mainProfileName) mainProfileName.textContent = user.username;
+  handleAuthSuccess(user, created) {
+    const cloud = this.cloudProfile;
+    const previousKey = this.statsStorageKey();
+    const previousName = this.userProfile && this.userProfile.username;
+    const displayName = (cloud && cloud.username) || (user && user.username) || 'Player';
+
+    this.userProfile = Object.assign({}, user || {}, {
+      playerId: cloud ? cloud.playerId : (user && user.playerId),
+      username: displayName,
+      elo: cloud ? cloud.rating : (user && user.elo),
+      wins: cloud ? cloud.stats.wins : (user && user.wins),
+      losses: cloud ? cloud.stats.losses : (user && user.losses),
+      draws: cloud ? cloud.stats.draws : (user && user.draws)
+    });
+
+    const nameChanged = previousName && previousName !== displayName;
+    this.showToast(created || nameChanged ? `Playing as ${displayName}` : `Welcome back, ${displayName}!`);
+
+    const newKey = this.statsStorageKey();
+    if (previousKey !== newKey) {
+      try {
+        const guestStats = localStorage.getItem(previousKey);
+        if (guestStats && !localStorage.getItem(newKey)) {
+          localStorage.setItem(newKey, guestStats);
+        }
+      } catch (e) { /* ignore storage errors */ }
+    }
+
+    if (cloud) {
+      // The cloud profile is canonical; the server will be brought in line by
+      // the sync request below instead of overwriting newer local progress.
+      this.applyCloudProfile(cloud);
+      this.syncLeaderboardProfile(cloud, { silent: true, reason: 'auth' });
+    } else {
+      if (user && user.playerId) {
+        this.playerId = user.playerId;
+        try { localStorage.setItem('chessarena_player_id', this.playerId); } catch (e) { /* ignore */ }
+      }
+      this.loadPlayerStats();
+      this.renderProfileStats();
+      this.applyIdentityToUI();
+    }
   }
 
   sendEmote(text) {
@@ -3458,69 +4142,39 @@ class App {
   }
 
 
-  switchShopTab(tab) {
-    const tabBtns = document.querySelectorAll('.shop-subtab');
-    const panes = document.querySelectorAll('.shop-tab-pane');
-    tabBtns.forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.tab === tab);
-    });
-    panes.forEach(pane => {
-      pane.classList.toggle('active', pane.id === 'shop-pane-' + tab);
-    });
-  }
-
   equipCosmetic(type, id) {
-    if (type === 'board') {
-      document.body.dataset.boardTheme = id;
-      localStorage.setItem('owl_board_theme', id);
-      this.showToast('Equipped ' + id.replace('-', ' ') + ' board!');
-      const boardPane = document.getElementById('shop-pane-boards');
-      if (boardPane) {
-        boardPane.querySelectorAll('.shop-item-card').forEach(card => {
-          const btn = card.querySelector('.btn-shop-action');
-          if (card.dataset.id === id) {
-            card.classList.add('equipped');
-            if (btn) { btn.classList.add('equipped'); btn.textContent = 'Equipped'; }
-          } else {
-            card.classList.remove('equipped');
-            if (btn && btn.classList.contains('equipped')) {
-              btn.classList.remove('equipped');
-              btn.textContent = 'Equip';
-            }
-          }
-        });
+    if (type !== 'board') return;
+    document.body.dataset.boardTheme = id;
+    try { localStorage.setItem('chessarena_board_theme', id); } catch (e) { /* ignore */ }
+    if (this.cloudProfile) {
+      this.cloudProfile.equipped = Object.assign({}, this.cloudProfile.equipped || {}, { board: id });
+      this.cloudProfile.lastUpdated = Date.now();
+      if (window.ChessArenaStorage) {
+        window.ChessArenaStorage.saveProfile(this.cloudProfile).catch(() => {});
       }
-    } else if (type === 'piece') {
-      document.body.dataset.pieceTheme = id; if (this.engine) this.renderBoard();
-      localStorage.setItem('owl_piece_theme', id);
-      this.showToast('Equipped ' + id.replace('-', ' ') + ' pieces!');
-      const piecesPane = document.getElementById('shop-pane-pieces');
-      if (piecesPane) {
-        piecesPane.querySelectorAll('.shop-item-card').forEach(card => {
-          const btn = card.querySelector('.btn-shop-action');
-          if (card.dataset.id === id) {
-            card.classList.add('equipped');
-            if (btn) { btn.classList.add('equipped'); btn.textContent = 'Equipped'; }
-          } else {
-            card.classList.remove('equipped');
-            if (btn && btn.classList.contains('equipped')) {
-              btn.classList.remove('equipped');
-              btn.textContent = 'Equip';
-            }
-          }
-        });
-      }
-    } else if (type === 'table') {
-      document.body.dataset.tableTheme = id;
-      localStorage.setItem('owl_table_theme', id);
-      this.showToast('Equipped ' + id + ' table!');
     }
+    this.showToast('Equipped ' + id.replace('-', ' ') + ' board!');
+    const boardPane = document.getElementById('shop-pane-boards');
+    if (!boardPane) return;
+    boardPane.querySelectorAll('.shop-item-card').forEach(card => {
+      const btn = card.querySelector('.btn-shop-action');
+      if (card.dataset.id === id) {
+        card.classList.add('equipped');
+        if (btn) { btn.classList.add('equipped'); btn.textContent = 'Equipped'; }
+      } else {
+        card.classList.remove('equipped');
+        if (btn && btn.classList.contains('equipped')) {
+          btn.classList.remove('equipped');
+          btn.textContent = 'Equip';
+        }
+      }
+    });
   }
 
   showShopScreen() {
     this.updateBottomNav('shop');
     this.showScreen('screen-shop');
-    const savedBoard = localStorage.getItem('owl_board_theme') || 'classic-oak';
+    const savedBoard = localStorage.getItem('chessarena_board_theme') || 'classic-oak';
     const boardPane = document.getElementById('shop-pane-boards');
     if (boardPane) {
       boardPane.querySelectorAll('.shop-item-card').forEach(card => {
@@ -3538,370 +4192,790 @@ class App {
       });
     }
   }
-  showLeaderboardScreen() {
+  async showLeaderboardScreen() {
     this.updateBottomNav('rankings');
     this.showScreen('screen-leaderboard');
     const list = document.getElementById('leaderboard-list');
-    if (list && list.children.length === 0) {
-      let html = '';
-      const names = ['OwlMaster', 'NightWatcher', 'SilentWing', 'ShadowBeak', 'LunaTalons'];
-      for (let i = 0; i < 100; i++) {
-        let name = i < 5 ? names[i] : 'Player_' + (1000 + i);
-        let rating = 2500 - (i * 12);
-        let rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-        html += `<div class="ranking-card" style="background: linear-gradient(180deg, #4A2E1B 0%, #2A170C 100%); border: 1.5px solid #8C6538; border-radius: 12px; padding: 12px 18px; margin-bottom: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: space-between;">
-          <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
-            <div style="font-family: 'Georgia', serif; font-size: 20px; font-weight: 800; width: 32px; text-align: center; color: ${i === 0 ? '#FFD700' : i === 1 ? '#E0E0E0' : i === 2 ? '#CD7F32' : '#C99700'};">${i+1}</div>
-            <div style="display: flex; flex-direction: column;">
-              <div class="ranking-name" style="font-family: 'Georgia', serif; font-weight: 700; color: #FDF7EC; font-size: 16px; letter-spacing: 0.5px;">${name}</div>
-              <div style="font-size: 13px; color: #D6BD9B; font-weight: 600; margin-top: 2px;">Rating: <span style="color: #FFD54F; font-weight: 800;">${rating}</span></div>
-            </div>
+    if (!list) return;
+
+    list.innerHTML = '<p style="color: #D6BD9B; text-align: center; margin: 24px 0;">Loading rankings…</p>';
+    this.renderLeaderboardMyRank();
+
+    if (this.cloudProfile && this.cloudProfile.username) {
+      this.syncLeaderboardProfile(this.cloudProfile, { silent: true, reason: 'view' });
+    }
+    await this.loadLeaderboardData();
+  }
+
+  async loadLeaderboardData() {
+    const list = document.getElementById('leaderboard-list');
+    if (!list) return;
+    try {
+      const response = await fetch('/api/leaderboard', { headers: { Accept: 'application/json' } });
+      if (!response.ok) throw new Error('Request failed');
+      const data = await response.json();
+      const players = Array.isArray(data.players) ? data.players : [];
+      this.renderLeaderboardData(players, Number(data.totalPlayers) || players.length);
+    } catch (e) {
+      list.innerHTML = '<p style="color: #D6BD9B; text-align: center; margin: 24px 0;">Rankings are unavailable right now.</p>';
+      this.renderLeaderboardMyRank();
+    }
+  }
+
+  renderLeaderboardData(players, totalPlayers) {
+    const list = document.getElementById('leaderboard-list');
+    if (!list) return;
+    this.leaderboardTopPlayers = Array.isArray(players) ? players : [];
+    this.leaderboardTotalPlayers = Math.max(0, Number(totalPlayers) || this.leaderboardTopPlayers.length);
+
+    if (this.leaderboardTopPlayers.length === 0) {
+      list.innerHTML = '<div style="text-align: center; padding: 36px 18px; color: #D6BD9B;">' +
+        '<div style="font-size: 34px; margin-bottom: 10px;">♟️</div>' +
+        '<p style="margin: 0 0 6px; color: #FDF7EC; font-weight: 700;">No ranked players yet</p>' +
+        '<p style="margin: 0; font-size: 13px;">Play a match to claim the first spot.</p></div>';
+      this.renderLeaderboardMyRank();
+      return;
+    }
+
+    const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch]));
+
+    const myId = this.cloudProfile && this.cloudProfile.playerId;
+    list.innerHTML = this.leaderboardTopPlayers.map((player, i) => {
+      const rank = Number(player.rank) > 0 ? Math.floor(Number(player.rank)) : i + 1;
+      const medal = ['🥇', '🥈', '🥉'][rank - 1] || '';
+      const rankColor = rank === 1 ? '#FFD700' : rank === 2 ? '#E0E0E0' : rank === 3 ? '#CD7F32' : '#C99700';
+      const name = escapeHtml(player.username || 'Player');
+      const rating = Number(player.rating != null ? player.rating : player.elo) || 1200;
+      const wins = Number(player.wins) || 0;
+      const losses = Number(player.losses) || 0;
+      const isMe = myId && player.playerId === myId;
+      const border = isMe ? '2px solid #F5D36C' : '1.5px solid #8C6538';
+      const youTag = isMe
+        ? ' <span style="font-size:10px; color:#20120B; background:#F5D36C; border-radius:9999px; padding:1px 6px; margin-left:4px;">YOU</span>'
+        : '';
+      return `<div class="ranking-card" style="background: linear-gradient(180deg, #4A2E1B 0%, #2A170C 100%); border: ${border}; border-radius: 12px; padding: 12px 18px; margin-bottom: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
+          <div style="font-family: 'Georgia', serif; font-size: 20px; font-weight: 800; width: 32px; text-align: center; color: ${rankColor};">${rank}</div>
+          <div style="display: flex; flex-direction: column;">
+            <div class="ranking-name" style="font-family: 'Georgia', serif; font-weight: 700; color: #FDF7EC; font-size: 16px; letter-spacing: 0.5px;">${name}${youTag}</div>
+            <div style="font-size: 13px; color: #D6BD9B; font-weight: 600; margin-top: 2px;">Rating: <span style="color: #FFD54F; font-weight: 800;">${rating}</span> · ${wins}W / ${losses}L</div>
           </div>
-          <div style="font-size: 22px; filter: drop-shadow(0 0 6px rgba(201,151,0,0.5));">
-            ${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : ''}
-          </div>
-        </div>`;
+        </div>
+        <div style="font-size: 22px; filter: drop-shadow(0 0 6px rgba(201,151,0,0.5));">${medal}</div>
+      </div>`;
+    }).join('');
+    this.renderLeaderboardMyRank();
+  }
+
+
+  // --- Economy & Monetization Engine ---
+  initEconomy() {
+    try {
+      const savedCoins = localStorage.getItem('owl_coins');
+      if (savedCoins !== null) {
+        this.coins = parseInt(savedCoins, 10) || 300;
+      } else {
+        this.coins = (window.ECONOMY_CONFIG?.currency?.startingCoins) || 300;
+        localStorage.setItem('owl_coins', this.coins);
       }
-      list.innerHTML = html;
+
+      this.playerLevel = parseInt(localStorage.getItem('owl_player_level'), 10) || 1;
+      this.playerXP = parseInt(localStorage.getItem('owl_player_xp'), 10) || 0;
+      this.slot2Unlocked = localStorage.getItem('owl_slot2_unlocked') === 'true';
+      this.slot2AdsWatched = parseInt(localStorage.getItem('owl_slot2_ads'), 10) || 0;
+
+      let savedSkills = JSON.parse(localStorage.getItem('owl_unlocked_skills') || 'null');
+      if (Array.isArray(savedSkills) && savedSkills.length > 0) {
+        this.unlockedSkills = savedSkills.map(s => s === 'undo' ? 'second' : s);
+      } else {
+        this.unlockedSkills = ['jump', 'second'];
+        localStorage.setItem('owl_unlocked_skills', JSON.stringify(this.unlockedSkills));
+      }
+
+      let savedCharges = JSON.parse(localStorage.getItem('owl_skill_charges') || 'null');
+      if (savedCharges && typeof savedCharges === 'object') {
+        this.skillCharges = savedCharges;
+      } else {
+        this.skillCharges = { jump: 3, second: 3, freeze: 3, swap: 3, shield: 3 };
+        localStorage.setItem('owl_skill_charges', JSON.stringify(this.skillCharges));
+      }
+
+      let savedBoards = JSON.parse(localStorage.getItem('owl_unlocked_boards') || 'null');
+      if (Array.isArray(savedBoards) && savedBoards.length > 0) {
+        this.unlockedBoards = savedBoards;
+      } else {
+        this.unlockedBoards = ['classic-oak'];
+        localStorage.setItem('owl_unlocked_boards', JSON.stringify(this.unlockedBoards));
+      }
+
+      const today = new Date().toISOString().slice(0, 10);
+      let tracking = JSON.parse(localStorage.getItem('owl_ad_tracking') || 'null');
+      if (tracking && tracking.date === today) {
+        this.adTracking = tracking;
+      } else {
+        this.adTracking = {
+          date: today,
+          dailyAdsWatched: 0,
+          dailyDoublersUsed: 0,
+          firstAdClaimed: false,
+          firstWinClaimedToday: false,
+          lastWheelDate: tracking ? tracking.lastWheelDate : null,
+          wheelSpinsToday: 0
+        };
+        this.saveAdTracking();
+      }
+
+      // Slot 1 & 2 validation on selected abilities
+      const valid = ['jump', 'second', 'freeze', 'swap', 'shield'];
+      if (!Array.isArray(this.selectedAbilities)) {
+        this.selectedAbilities = ['jump'];
+      }
+      this.selectedAbilities = this.selectedAbilities
+        .map(s => s === 'undo' ? 'second' : s)
+        .filter(s => valid.includes(s) && this.unlockedSkills.includes(s));
+
+      if (!this.slot2Unlocked && this.selectedAbilities.length > 1) {
+        this.selectedAbilities = [this.selectedAbilities[0]];
+      } else if (this.selectedAbilities.length > 2) {
+        this.selectedAbilities = this.selectedAbilities.slice(0, 2);
+      }
+      if (this.selectedAbilities.length === 0) {
+        this.selectedAbilities = [this.unlockedSkills[0] || 'jump'];
+      }
+      localStorage.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
+
+      this.updateCoinsDisplay();
+      this.syncSlotUI();
+      this.syncShopUI();
+      this.updateLuckyWheelBadge();
+    } catch (e) {
+      console.warn('initEconomy error:', e);
     }
   }
 
-  disconnectWallet() {
-    this.walletAddress = null;
-    
-    // Reset Header Button
-    const btn = document.getElementById('btn-connect-wallet');
-    if (btn) {
-      btn.style.background = '#C99700';
-      btn.style.color = '#20120B';
-      btn.onclick = () => this.connectWallet();
-      const bal = document.getElementById('wallet-balance');
-      if(bal) bal.textContent = 'Connect';
-    }
-    
-    // Hide Disconnect Button in Profile
-    const disconnectBtn = document.getElementById('btn-disconnect-wallet');
-    if (disconnectBtn) disconnectBtn.style.display = 'none';
-    const profileWallet = document.getElementById('profile-wallet-address');
-    if (profileWallet) {
-      profileWallet.textContent = '';
-      profileWallet.style.display = 'none';
-    }
-    
-    this.showToast('Wallet Disconnected');
-    this.goHome();
+  saveAdTracking() {
+    try {
+      localStorage.setItem('owl_ad_tracking', JSON.stringify(this.adTracking));
+    } catch (e) {}
   }
 
-  async connectWallet() {
-    if (typeof window.ethereum !== 'undefined') {
+  updateCoinsDisplay() {
+    const val = (this.coins || 0).toLocaleString();
+    const vaultCoins = document.getElementById('shop-gold-vault-coins');
+    if (vaultCoins) vaultCoins.textContent = `🪙 ${val}`;
+
+    const shopLvl = document.getElementById('shop-player-level');
+    if (shopLvl) shopLvl.textContent = this.playerLevel || 1;
+
+    const profileBal = document.getElementById('profile-wallet-balance');
+    if (profileBal) profileBal.textContent = val;
+
+    const walletBal = document.getElementById('wallet-balance');
+    if (walletBal) walletBal.textContent = `${val} Coins`;
+
+    const joinBal = document.getElementById('join-user-balance-display');
+    if (joinBal) joinBal.textContent = `${val} Coins`;
+  }
+
+  addCoins(amount, reason = '') {
+    this.coins = Math.max(0, (this.coins || 0) + Number(amount));
+    try {
+      localStorage.setItem('owl_coins', this.coins);
+    } catch (e) {}
+    this.updateCoinsDisplay();
+    return this.coins;
+  }
+
+  spendCoins(amount, reason = '') {
+    const cost = Number(amount);
+    if ((this.coins || 0) < cost) {
+      return false;
+    }
+    this.coins -= cost;
+    try {
+      localStorage.setItem('owl_coins', this.coins);
+    } catch (e) {}
+    this.updateCoinsDisplay();
+    return true;
+  }
+
+  addXP(amount) {
+    this.playerXP = (this.playerXP || 0) + Number(amount);
+    const baseXp = window.ECONOMY_CONFIG?.progression?.baseXpPerLevel || 100;
+    let leveledUp = false;
+
+    while (this.playerXP >= this.playerLevel * baseXp) {
+      this.playerXP -= this.playerLevel * baseXp;
+      this.playerLevel = (this.playerLevel || 1) + 1;
+      leveledUp = true;
+    }
+
+    try {
+      localStorage.setItem('owl_player_level', this.playerLevel);
+      localStorage.setItem('owl_player_xp', this.playerXP);
+    } catch (e) {}
+
+    if (leveledUp) {
+      this.showToast(`🎉 Level Up! You reached Level ${this.playerLevel}! Check Shop for new boards & skills.`);
+      this.updateCoinsDisplay();
+      this.syncShopUI();
+    }
+  }
+
+  async claimFreeAdCoins() {
+    const maxDaily = window.ECONOMY_CONFIG?.ads?.maxDailyRewarded || 6;
+    if (this.adTracking.dailyAdsWatched >= maxDaily) {
+      this.showToast(`Daily gold vault limit reached (${maxDaily}/${maxDaily}). Come back tomorrow!`);
+      return;
+    }
+
+    this.showToast('Loading Rewarded Ad...');
+    const result = await window.AdService.showRewarded('daily_gold_vault');
+    if (result && result.rewarded) {
+      const reward = this.adTracking.firstAdClaimed
+        ? (window.ECONOMY_CONFIG?.ads?.rewardCoins || 100)
+        : (window.ECONOMY_CONFIG?.ads?.firstAdOfDayBonus || 150);
+      this.adTracking.firstAdClaimed = true;
+      this.adTracking.dailyAdsWatched++;
+      this.saveAdTracking();
+      this.addCoins(reward, 'daily_gold_vault_ad');
+      this.showToast(`🪙 +${reward} Coins added to your vault! (${this.adTracking.dailyAdsWatched}/${maxDaily} today)`);
+    } else {
+      this.showToast('Ad was not completed. No coins awarded.');
+    }
+  }
+
+  getSkillCharges(abilityId) {
+    const id = abilityId === 'undo' ? 'second' : abilityId;
+    if (!this.skillCharges) this.skillCharges = {};
+    if (this.skillCharges[id] === undefined) this.skillCharges[id] = 3;
+    return this.skillCharges[id];
+  }
+
+  consumeSkillCharge(abilityId) {
+    const id = abilityId === 'undo' ? 'second' : abilityId;
+    if (!this.skillCharges) this.skillCharges = {};
+    const cur = this.skillCharges[id] || 0;
+    this.skillCharges[id] = Math.max(0, cur - 1);
+    try {
+      localStorage.setItem('owl_skill_charges', JSON.stringify(this.skillCharges));
+    } catch (e) {}
+    this.syncAbilitiesUI();
+    return this.skillCharges[id];
+  }
+
+  refillSkill(abilityId, count = 1, cost = 50) {
+    const id = abilityId === 'undo' ? 'second' : abilityId;
+    const max = window.ECONOMY_CONFIG?.skills?.maxCharges || 5;
+    const current = this.getSkillCharges(id);
+    if (current >= max) {
+      this.showToast(`Charges already full (${max}/${max})!`);
+      return;
+    }
+
+    if (!this.spendCoins(cost, `refill_${id}`)) {
+      this.showToast(`Need ${cost} Coins! (You have ${this.coins.toLocaleString()})`);
+      return;
+    }
+
+    this.skillCharges[id] = Math.min(max, current + count);
+    try {
+      localStorage.setItem('owl_skill_charges', JSON.stringify(this.skillCharges));
+    } catch (e) {}
+    this.syncAbilitiesUI();
+    this.showToast(`✨ Refilled ${count} charge(s)! Current: ${this.skillCharges[id]}/${max}`);
+  }
+
+  async refillSkillViaAd(abilityId) {
+    const id = abilityId === 'undo' ? 'second' : abilityId;
+    const max = window.ECONOMY_CONFIG?.skills?.maxCharges || 5;
+    const current = this.getSkillCharges(id);
+    if (current >= max) {
+      this.showToast(`Charges already full (${max}/${max})!`);
+      return;
+    }
+
+    this.showToast('Loading Rewarded Ad...');
+    const result = await window.AdService.showRewarded(`skill_refill_${id}`);
+    if (result && result.rewarded) {
+      const add = window.ECONOMY_CONFIG?.skills?.adRefillCharges || 2;
+      this.skillCharges[id] = Math.min(max, current + add);
       try {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        this.walletAddress = accounts[0];
-        
-        // Update UI
-        const shortAddr = this.walletAddress.substring(0,6) + '...' + this.walletAddress.substring(38);
-        const btn = document.getElementById('btn-connect-wallet');
-        if (btn) {
-          btn.style.background = 'rgba(181, 176, 255, 0.2)';
-          btn.style.color = '#f1f0ff';
-          btn.onclick = () => this.showProfileScreen(); // Change behavior to open profile after connect
-          const bal = document.getElementById('wallet-balance');
-          if(bal) bal.textContent = shortAddr;
+        localStorage.setItem('owl_skill_charges', JSON.stringify(this.skillCharges));
+      } catch (e) {}
+      this.syncAbilitiesUI();
+      this.showToast(`✨ Ad complete! +${add} Charges added! Current: ${this.skillCharges[id]}/${max}`);
+    } else {
+      this.showToast('Ad was not completed.');
+    }
+  }
+
+  promptUnlockSkill(abilityId) {
+    const id = abilityId === 'undo' ? 'second' : abilityId;
+    const catalog = window.ECONOMY_CONFIG?.skills?.catalog || [];
+    const skill = catalog.find(s => s.id === id);
+    if (!skill) return;
+
+    if (this.playerLevel < skill.reqLevel) {
+      this.showToast(`Requires Player Level ${skill.reqLevel}! (Your level: ${this.playerLevel})`);
+      return;
+    }
+
+    if (this.coins < skill.cost) {
+      this.showToast(`Need ${skill.cost.toLocaleString()} Coins to unlock ${skill.name}! (You have ${this.coins.toLocaleString()})`);
+      return;
+    }
+
+    if (confirm(`Unlock ${skill.name} for ${skill.cost} Coins?`)) {
+      if (this.spendCoins(skill.cost, `unlock_skill_${id}`)) {
+        if (!this.unlockedSkills.includes(id)) {
+          this.unlockedSkills.push(id);
+          localStorage.setItem('owl_unlocked_skills', JSON.stringify(this.unlockedSkills));
         }
-        
-        const profileWallet = document.getElementById('profile-wallet-address');
-        if (profileWallet) {
-          profileWallet.textContent = shortAddr;
-          profileWallet.style.display = 'inline-block';
-        }
-        
-        this.showToast('Wallet Connected!');
-        const disconnectBtn = document.getElementById('btn-disconnect-wallet');
-        if (disconnectBtn) disconnectBtn.style.display = 'block';
-        
-        // Send to backend if socket is open
-        // Ensure multiplayer is connected before authenticating
-        if (!this.multiplayer) {
-          this.multiplayer = new MultiplayerClient();
-          this.setupMultiplayerCallbacks();
-          await this.multiplayer.connect();
-        } else if (this.multiplayer.ws && this.multiplayer.ws.readyState !== WebSocket.OPEN) {
-          await this.multiplayer.connect();
-        }
-        
-        if (this.multiplayer && this.multiplayer.ws && this.multiplayer.ws.readyState === WebSocket.OPEN) {
-          this.multiplayer.send({ type: 'authenticate', walletAddress: this.walletAddress });
-        }
-      } catch (err) {
-        console.error(err);
-        this.showToast('Wallet connection failed.');
+        this.skillCharges[id] = 3;
+        localStorage.setItem('owl_skill_charges', JSON.stringify(this.skillCharges));
+        this.syncAbilitiesUI();
+        this.showToast(`🎉 ${skill.name} unlocked with 3 free charges!`);
+      }
+    }
+  }
+
+  syncSlotUI() {
+    const slot1Display = document.getElementById('slot-1-display');
+    const slot2Box = document.getElementById('slot-2-box');
+    const slot2Header = document.getElementById('slot-2-header');
+    const slot2Content = document.getElementById('slot-2-content');
+
+    const nameMap = {
+      'jump': 'Pegasus Jump',
+      'second': 'Second Chance',
+      'undo': 'Second Chance',
+      'freeze': 'Piece Freeze',
+      'swap': 'Tactical Swap',
+      'shield': 'Divine Shield'
+    };
+
+    if (slot1Display) {
+      const s1 = this.selectedAbilities[0];
+      slot1Display.textContent = s1 ? (nameMap[s1] || s1) : 'None';
+    }
+
+    if (slot2Box && slot2Header && slot2Content) {
+      if (this.slot2Unlocked) {
+        slot2Box.style.border = '2px solid #C99700';
+        slot2Box.style.background = 'linear-gradient(180deg, #3A2315 0%, #1F1008 100%)';
+        slot2Header.style.color = '#F5D36C';
+        slot2Header.textContent = 'SLOT 2 (ACTIVE)';
+        const s2 = this.selectedAbilities[1];
+        slot2Content.innerHTML = `<div style="font-size: 12px; color: #FFF; font-weight: 800;">${s2 ? (nameMap[s2] || s2) : 'Empty (Tap ability to equip)'}</div>`;
+      } else {
+        slot2Box.style.border = '2px dashed #8C6538';
+        slot2Box.style.background = 'linear-gradient(180deg, #2B160B 0%, #170904 100%)';
+        slot2Header.style.color = '#A58463';
+        slot2Header.textContent = 'SLOT 2 (LOCKED)';
+        const adsText = this.slot2AdsWatched > 0 ? `(${this.slot2AdsWatched}/3 Ads)` : '500🪙 / 🎬 3 Ads';
+        slot2Content.innerHTML = `<button onclick="app.promptUnlockSlot2()" style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; border: none; border-radius: 6px; font-weight: 800; font-size: 10px; padding: 4px 8px; cursor: pointer;">Unlock (${adsText})</button>`;
+      }
+    }
+  }
+
+  async promptUnlockSlot2() {
+    if (this.slot2Unlocked) {
+      this.showToast('Slot 2 is already unlocked!');
+      return;
+    }
+
+    const choice = confirm(`Unlock Skill Slot 2?\n\nClick OK to spend 500 Coins.\nClick Cancel to watch a Rewarded Ad (${this.slot2AdsWatched}/3 watched).`);
+    if (choice) {
+      if (this.spendCoins(500, 'unlock_slot2')) {
+        this.slot2Unlocked = true;
+        localStorage.setItem('owl_slot2_unlocked', 'true');
+        this.syncSlotUI();
+        this.showToast('🎉 Slot 2 Unlocked! You can now equip 2 abilities!');
+      } else {
+        this.showToast(`Need 500 Coins! (You have ${this.coins.toLocaleString()})`);
       }
     } else {
-      this.showToast('Please install MetaMask or an EVM wallet.');
-    }
-  }
-
-
-
-  toggleWalletPanel() {
-    this.showProfileScreen();
-    return;
-    const panel = document.getElementById("wallet-panel");
-    const backdrop = document.getElementById("wallet-panel-backdrop");
-    if (!panel || !backdrop) return;
-
-    const isOpen = panel.style.display !== "none";
-    panel.style.display = isOpen ? "none" : "block";
-    if (!isOpen) this.updateBottomNav("wallet");
-    backdrop.style.display = isOpen ? "none" : "block";
-
-    if (!isOpen) {
-      // Update address
-      const addr = document.getElementById("wp-address");
-      if (addr) {
-        if (this.walletAddress) {
-          const short = this.walletAddress.substring(0,6) + "..." + this.walletAddress.substring(38);
-          addr.textContent = short;
+      this.showToast('Loading Rewarded Ad...');
+      const res = await window.AdService.showRewarded('unlock_slot_2');
+      if (res && res.rewarded) {
+        this.slot2AdsWatched = (this.slot2AdsWatched || 0) + 1;
+        localStorage.setItem('owl_slot2_ads', this.slot2AdsWatched);
+        if (this.slot2AdsWatched >= 3) {
+          this.slot2Unlocked = true;
+          localStorage.setItem('owl_slot2_unlocked', 'true');
+          this.syncSlotUI();
+          this.showToast('🎉 Slot 2 Unlocked! (3/3 Ads watched). You can now equip 2 abilities!');
         } else {
-          addr.textContent = "Not Connected";
-        }
-      }
-      const connectBtn = document.getElementById("wp-connect-btn");
-      if (connectBtn) {
-        connectBtn.style.display = this.walletAddress ? "none" : "flex";
-      }
-
-      // Random amounts: ETH between 0.05 and 3.5, USDT between 10 and 500
-      const ethAmount = (Math.random() * 3.45 + 0.05).toFixed(4);
-      const usdtAmount = (Math.random() * 490 + 10).toFixed(2);
-
-      // Fetch live ETH price from CoinGecko public API
-      fetch("https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd")
-        .then(r => r.json())
-        .then(data => {
-          const ethPrice = data.ethereum.usd;
-          const ethUSD = (parseFloat(ethAmount) * ethPrice).toFixed(2);
-          const totalUSD = (parseFloat(ethUSD) + parseFloat(usdtAmount)).toFixed(2);
-
-          // Balance card
-          const balEl = document.getElementById("wp-balance");
-          const usdEl = document.getElementById("wp-usd");
-          if (balEl) balEl.textContent = ethAmount + " ETH";
-          if (usdEl) usdEl.textContent = "≈ $" + Number(totalUSD).toLocaleString();
-
-          // ETH asset row
-          const ethAmtEl = document.getElementById("wp-eth-amount");
-          const ethFiatEl = document.getElementById("wp-eth-fiat");
-          if (ethAmtEl) ethAmtEl.textContent = ethAmount;
-          if (ethFiatEl) ethFiatEl.textContent = "$" + Number(ethUSD).toLocaleString();
-
-          // USDT asset row
-          const usdtAmtEl = document.getElementById("wp-usdt-amount");
-          const usdtFiatEl = document.getElementById("wp-usdt-fiat");
-          if (usdtAmtEl) usdtAmtEl.textContent = usdtAmount;
-          if (usdtFiatEl) usdtFiatEl.textContent = "$" + usdtAmount;
-        })
-        .catch(() => {
-          // Fallback if no internet: use approximate ETH price
-          const ethPrice = 2580;
-          const ethUSD = (parseFloat(ethAmount) * ethPrice).toFixed(2);
-          const totalUSD = (parseFloat(ethUSD) + parseFloat(usdtAmount)).toFixed(2);
-          const balEl = document.getElementById("wp-balance");
-          const usdEl = document.getElementById("wp-usd");
-          if (balEl) balEl.textContent = ethAmount + " ETH";
-          if (usdEl) usdEl.textContent = "≈ $" + Number(totalUSD).toLocaleString();
-          const ethAmtEl = document.getElementById("wp-eth-amount");
-          const ethFiatEl = document.getElementById("wp-eth-fiat");
-          if (ethAmtEl) ethAmtEl.textContent = ethAmount;
-          if (ethFiatEl) ethFiatEl.textContent = "$" + Number(ethUSD).toLocaleString();
-          const usdtAmtEl = document.getElementById("wp-usdt-amount");
-          const usdtFiatEl = document.getElementById("wp-usdt-fiat");
-          if (usdtAmtEl) usdtAmtEl.textContent = usdtAmount;
-          if (usdtFiatEl) usdtFiatEl.textContent = "$" + usdtAmount;
-        });
-    }
-  }
-
-
-
-  // --- Friends & Invitations System ---------------
-  
-
-  sendFriendRequest() {
-    const input = document.getElementById('add-friend-input');
-    if (!input || !input.value.trim()) return;
-    if (!this.walletAddress) { this.showToast('Connect your wallet first!'); return; }
-    if (this.multiplayer && this.multiplayer.ws) {
-      this.multiplayer.send({ type: 'send_friend_request', targetUsername: input.value.trim(), walletAddress: this.walletAddress });
-      input.value = '';
-    }
-  }
-
-  showFriendRequests() {
-    const modal = document.getElementById('friend-requests-modal');
-    if (modal) {
-      modal.classList.remove('hidden');
-      if (this.multiplayer && this.multiplayer.ws) {
-        this.multiplayer.send({ type: 'get_friend_requests', walletAddress: this.walletAddress });
-      }
-      const badge = document.getElementById('friend-requests-badge');
-      if (badge) {
-        badge.style.display = 'none';
-        badge.textContent = '0';
-      }
-    }
-  }
-
-  respondFriendRequest(id, action) {
-    if (this.multiplayer && this.multiplayer.ws) {
-      this.multiplayer.send({ type: 'respond_friend_request', requestId: id, action: action, walletAddress: this.walletAddress });
-    }
-  }
-
-  renderFriendRequests(requests) {
-    const list = document.getElementById('friend-requests-list');
-    if (!list) return;
-    
-    if (!requests || requests.length === 0) {
-      list.innerHTML = '<p style="color: rgba(255,255,255,0.5); text-align: center; margin: 20px 0;">No incoming requests.</p>';
-      return;
-    }
-    
-    let html = '';
-    requests.forEach(req => {
-      html += `
-        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; border: 1px solid rgba(181, 176, 255, 0.2);">
-          <span style="font-weight: bold; color: white;">${req.username}</span>
-          <div style="display: flex; gap: 8px;">
-            <button onclick="app.respondFriendRequest('${req.id}', 'declined')" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 6px 12px; border-radius: 6px; cursor: pointer;">Reject</button>
-            <button onclick="app.respondFriendRequest('${req.id}', 'accepted')" style="background: #F5D36C; color: #20120B; font-weight: bold; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer;">Accept</button>
-          </div>
-        </div>
-      `;
-    });
-    list.innerHTML = html;
-  }
-
-  loadFriends() {
-    if (this.multiplayer && this.multiplayer.ws && this.multiplayer.ws.readyState === WebSocket.OPEN) {
-      this.multiplayer.send({ type: 'get_friends', walletAddress: this.walletAddress });
-    }
-  }
-
-  renderFriendsList(friends) {
-    const container = document.querySelector('.friends-list');
-    if (!container) return;
-
-    if (!friends || friends.length === 0) {
-      container.innerHTML = '<p style="color: rgba(255,255,255,0.5); text-align: center; padding: 20px 0; font-size: 14px;">No friends yet. Add someone above!</p>';
-      return;
-    }
-
-    let html = '';
-    friends.forEach(f => {
-      html += `
-        <div class="friend-item">
-          <div class="friend-avatar-wrap">
-            <img src="/assets/owl_avatar.jpg" onerror="this.src='/assets/10.jpg'" />
-            <div class="online-indicator"></div>
-          </div>
-          <div class="friend-info">
-            <span class="friend-name">${f.username}</span>
-            <span class="friend-rating">${f.elo || 1200}</span>
-          </div>
-          <button class="btn-invite-friend" onclick="app.inviteFriend('${f.username}', this)">Invite</button>
-        </div>
-      `;
-    });
-    container.innerHTML = html;
-  }
-
-  toggleFriendsList() {
-    const sidebar = document.getElementById('friends-sidebar');
-    if (sidebar) {
-      const isOpening = sidebar.classList.contains('closed');
-      if (isOpening) {
-        sidebar.classList.remove('closed');
-        if (this.walletAddress) {
-          this.loadFriends();
+          this.syncSlotUI();
+          this.showToast(`🎬 Ad watched! Progress: ${this.slot2AdsWatched}/3. Watch ${3 - this.slot2AdsWatched} more to unlock Slot 2!`);
         }
       } else {
-        sidebar.classList.add('closed');
+        this.showToast('Ad was not completed.');
       }
     }
   }
 
-  inviteFriend(username, btn) {
-    this.pendingInviteTarget = username;
-    this.pendingInviteBtn = btn;
-    this.timerMinutes = 10;
-    
-    const sidebar = document.getElementById('friends-sidebar');
-    if (sidebar) sidebar.classList.add('closed');
-    
-    this.showStakeScreen('invite');
-  }
+  buyOrEquipBoard(boardId) {
+    const boards = window.ECONOMY_CONFIG?.boards || [];
+    const board = boards.find(b => b.id === boardId);
+    if (!board) return;
 
-  simulateIncomingInvite() {
-    const popup = document.getElementById('game-invite-popup');
-    if (popup) {
-      document.getElementById('invite-sender-name').textContent = 'ShadowOwl';
-      document.getElementById('invite-amount').textContent = '100 $OWL';
-      document.getElementById('invite-mode').textContent = 'Robin';
-      popup.classList.remove('hidden');
-      
-      const sidebar = document.getElementById('friends-sidebar');
-      if (sidebar && !sidebar.classList.contains('closed')) {
-        sidebar.classList.add('closed');
+    if (this.unlockedBoards && this.unlockedBoards.includes(boardId)) {
+      this.equipCosmetic('board', boardId);
+      this.syncShopUI();
+      return;
+    }
+
+    // Check level requirement
+    if (this.playerLevel < board.reqLevel) {
+      this.showToast(`Requires Player Level ${board.reqLevel}! (Your level: ${this.playerLevel})`);
+      return;
+    }
+
+    // Check coins
+    if (this.coins < board.cost) {
+      this.showToast(`Need ${board.cost.toLocaleString()} Coins for ${board.name}! (You have ${this.coins.toLocaleString()})`);
+      return;
+    }
+
+    if (confirm(`Unlock ${board.name} for ${board.cost.toLocaleString()} Coins?`)) {
+      if (this.spendCoins(board.cost, `unlock_board_${boardId}`)) {
+        if (!this.unlockedBoards.includes(boardId)) {
+          this.unlockedBoards.push(boardId);
+          localStorage.setItem('owl_unlocked_boards', JSON.stringify(this.unlockedBoards));
+        }
+        this.equipCosmetic('board', boardId);
+        this.syncShopUI();
+        this.showToast(`🎉 Unlocked and equipped ${board.name}!`);
       }
-      
-      clearTimeout(this.inviteTimeout);
-      this.inviteTimeout = setTimeout(() => {
-        popup.classList.add('hidden');
-      }, 15000);
     }
   }
 
-  acceptInvite() {
-    if (this.inviteTimeout) clearTimeout(this.inviteTimeout);
-    const popup = document.getElementById('game-invite-popup');
-    if (popup) popup.classList.add('hidden');
-    
-    this.showToast('Connecting to match...');
-    
-    if (this.pendingIncomingInviteRoom && this.multiplayer) {
-      this.multiplayer.joinRoom(this.pendingIncomingInviteRoom);
-      
-      const animContainer = document.getElementById('matchmaking-animation');
-      const waitingInfo = document.getElementById('waiting-room-info');
-      const spinner = document.getElementById('waiting-spinner-container');
-      const cancelBtn = document.getElementById('btn-cancel-waiting');
-      if (animContainer) animContainer.classList.add('hidden');
-      if (waitingInfo) waitingInfo.classList.remove('hidden');
-      if (spinner) spinner.classList.remove('hidden');
-      if (cancelBtn) cancelBtn.style.display = 'none';
+  syncShopUI() {
+    this.updateCoinsDisplay();
+    const savedBoard = localStorage.getItem('owl_board_theme') || 'classic-oak';
+    const boardPane = document.getElementById('shop-pane-boards');
+    if (!boardPane) return;
 
-      this.showScreen('screen-waiting');
-      const waitingTitle = document.getElementById('waiting-title');
-      if (waitingTitle) waitingTitle.textContent = 'Joining Room...';
+    const boards = window.ECONOMY_CONFIG?.boards || [];
+
+    boardPane.querySelectorAll('.shop-item-card').forEach(card => {
+      const id = card.dataset.id;
+      const bConfig = boards.find(b => b.id === id);
+      const btn = card.querySelector('.btn-shop-action');
+      const isUnlocked = this.unlockedBoards && this.unlockedBoards.includes(id);
+      const isEquipped = (id === savedBoard);
+
+      if (isEquipped) {
+        card.classList.add('equipped');
+        if (btn) {
+          btn.classList.add('equipped');
+          btn.textContent = 'Equipped';
+          btn.style.background = '';
+        }
+      } else if (isUnlocked) {
+        card.classList.remove('equipped');
+        if (btn) {
+          btn.classList.remove('equipped');
+          btn.textContent = 'Equip';
+          btn.style.background = '';
+        }
+      } else {
+        card.classList.remove('equipped');
+        if (btn && bConfig) {
+          btn.classList.remove('equipped');
+          const canAfford = this.coins >= bConfig.cost;
+          const meetsLvl = this.playerLevel >= bConfig.reqLevel;
+          btn.textContent = `Unlock (${bConfig.cost.toLocaleString()} 🪙)`;
+          btn.style.opacity = meetsLvl ? '1' : '0.6';
+        }
+      }
+    });
+  }
+
+  async claim3XMatchCoins() {
+    if (this.lastMatchDoubled || (this.lastMatchCoinsEarned || 0) <= 0) {
+      return;
+    }
+
+    const maxDoublers = window.ECONOMY_CONFIG?.ads?.maxDailyDoublers || 3;
+    if (this.adTracking.dailyDoublersUsed >= maxDoublers) {
+      this.showToast(`Daily 3X Doubler limit reached (${maxDoublers}/${maxDoublers}).`);
+      return;
+    }
+
+    this.showToast('Loading Rewarded Ad...');
+    const res = await window.AdService.showRewarded('match_3x_doubler');
+    if (res && res.rewarded) {
+      const bonus = this.lastMatchCoinsEarned * 2;
+      this.lastMatchDoubled = true;
+      this.adTracking.dailyDoublersUsed++;
+      this.saveAdTracking();
+      this.addCoins(bonus, 'match_3x_doubler');
+
+      const coinsMeta = document.getElementById('victory-meta-coins');
+      if (coinsMeta) {
+        coinsMeta.textContent = `+${this.lastMatchCoinsEarned * 3} 🪙 (3X Boosted!)`;
+      }
+
+      const doublerBtn = document.getElementById('victory-btn-doubler');
+      const doublerText = document.getElementById('victory-btn-doubler-text');
+      if (doublerBtn) {
+        doublerBtn.disabled = true;
+        doublerBtn.style.opacity = '0.7';
+      }
+      if (doublerText) {
+        doublerText.textContent = `🌟 3X Bonus Claimed (+${bonus} 🪙)!`;
+      }
+      this.showToast(`🎉 3X Match Bonus Claimed! +${bonus} Coins added!`);
     } else {
-      this.showToast('Error: No room code found.');
+      this.showToast('Ad was not completed.');
     }
   }
 
-  rejectInvite() {
-    if (this.inviteTimeout) clearTimeout(this.inviteTimeout);
-    const popup = document.getElementById('game-invite-popup');
-    if (popup) popup.classList.add('hidden');
-    
-    if (this.pendingIncomingInviteRoom && this.multiplayer) {
-      this.multiplayer.send({ type: 'invite_rejected', roomCode: this.pendingIncomingInviteRoom });
-      this.pendingIncomingInviteRoom = null;
+  // --- Lucky Tavern Wheel ---------------------------
+
+  updateLuckyWheelBadge() {
+    const badge = document.getElementById('home-lucky-wheel-badge');
+    if (!badge) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const hasFreeSpin = (this.adTracking.lastWheelDate !== today);
+    if (hasFreeSpin) {
+      badge.textContent = '1 Free Spin Ready!';
+      badge.style.color = '#FFD54F';
+    } else {
+      const adSpinsLeft = Math.max(0, 3 - (this.adTracking.wheelSpinsToday || 0));
+      if (adSpinsLeft > 0) {
+        badge.textContent = `🎬 ${adSpinsLeft} Extra Spins Available`;
+        badge.style.color = '#4ade80';
+      } else {
+        badge.textContent = 'Spins used today';
+        badge.style.color = '#94a3b8';
+      }
     }
-    
-    this.showToast('Invitation rejected or expired.');
   }
+
+  showLuckyWheelModal() {
+    const modal = document.getElementById('modal-lucky-wheel');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
+
+    this.drawLuckyWheel(0);
+    this.updateLuckyWheelButtonUI();
+  }
+
+  closeLuckyWheelModal() {
+    if (this.isSpinningWheel) return;
+    const modal = document.getElementById('modal-lucky-wheel');
+    if (!modal) return;
+    modal.style.display = 'none';
+    modal.classList.add('hidden');
+    this.updateLuckyWheelBadge();
+  }
+
+  updateLuckyWheelButtonUI() {
+    const btn = document.getElementById('btn-spin-wheel');
+    const text = document.getElementById('btn-spin-wheel-text');
+    if (!btn || !text) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const hasFreeSpin = (this.adTracking.lastWheelDate !== today);
+    if (hasFreeSpin) {
+      btn.disabled = false;
+      text.textContent = 'Spin for Free! 🎡';
+    } else {
+      const spinsLeft = Math.max(0, 3 - (this.adTracking.wheelSpinsToday || 0));
+      if (spinsLeft > 0) {
+        btn.disabled = false;
+        text.textContent = `🎬 Watch Ad to Spin (${spinsLeft}/3 left)`;
+      } else {
+        btn.disabled = true;
+        text.textContent = 'All spins used today. Come back tomorrow!';
+      }
+    }
+  }
+
+  drawLuckyWheel(angle = 0) {
+    const canvas = document.getElementById('lucky-wheel-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = centerX - 6;
+
+    const slices = [
+      { text: '50 🪙', color: '#3A2315' },
+      { text: '+2 Charges', color: '#1F1008' },
+      { text: '100 🪙', color: '#4A2E1B' },
+      { text: '+1 All', color: '#2B160B' },
+      { text: '200 🪙', color: '#5C381E' },
+      { text: '500 🪙 ⭐', color: '#C99700', textColor: '#20120B' }
+    ];
+
+    const numSlices = slices.length;
+    const sliceAngle = (2 * Math.PI) / numSlices;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (let i = 0; i < numSlices; i++) {
+      const start = angle + i * sliceAngle;
+      const end = start + sliceAngle;
+
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.arc(centerX, centerY, radius, start, end);
+      ctx.closePath();
+      ctx.fillStyle = slices[i].color;
+      ctx.fill();
+      ctx.strokeStyle = '#C99700';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Label text
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(start + sliceAngle / 2);
+      ctx.textAlign = 'right';
+      ctx.fillStyle = slices[i].textColor || '#FFD54F';
+      ctx.font = 'bold 12px Georgia, serif';
+      ctx.fillText(slices[i].text, radius - 16, 4);
+      ctx.restore();
+    }
+
+    // Outer rim & center hub
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = '#F5D36C';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 18, 0, 2 * Math.PI);
+    ctx.fillStyle = '#20120B';
+    ctx.fill();
+    ctx.strokeStyle = '#FFD54F';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  async spinLuckyWheel() {
+    if (this.isSpinningWheel) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const hasFreeSpin = (this.adTracking.lastWheelDate !== today);
+
+    if (!hasFreeSpin) {
+      const spinsLeft = Math.max(0, 3 - (this.adTracking.wheelSpinsToday || 0));
+      if (spinsLeft <= 0) {
+        this.showToast('All spins used today. Come back tomorrow!');
+        return;
+      }
+
+      this.showToast('Loading Rewarded Ad...');
+      const res = await window.AdService.showRewarded('lucky_wheel_spin');
+      if (!res || !res.rewarded) {
+        this.showToast('Ad was not completed.');
+        return;
+      }
+      this.adTracking.wheelSpinsToday = (this.adTracking.wheelSpinsToday || 0) + 1;
+    } else {
+      this.adTracking.lastWheelDate = today;
+      this.adTracking.wheelSpinsToday = 0;
+    }
+
+    this.saveAdTracking();
+    this.isSpinningWheel = true;
+    const btn = document.getElementById('btn-spin-wheel');
+    if (btn) btn.disabled = true;
+
+    const resEl = document.getElementById('lucky-wheel-result');
+    if (resEl) resEl.textContent = 'Spinning... 🍀';
+
+    // Slices config (at top pointer 3*PI/2)
+    const rewards = [
+      { type: 'coins', amount: 50, label: '50 Coins 🪙' },
+      { type: 'charges_random', amount: 2, label: '+2 Skill Charges ⚡' },
+      { type: 'coins', amount: 100, label: '100 Coins 🪙' },
+      { type: 'charges_all', amount: 1, label: '+1 Charge to All Skills ✨' },
+      { type: 'coins', amount: 200, label: '200 Coins 🪙' },
+      { type: 'coins', amount: 500, label: 'JACKPOT: 500 Coins 🪙⭐' }
+    ];
+
+    // Pick outcome with weighted probabilities (Jackpot is 8%, others balanced)
+    const weights = [0.30, 0.20, 0.22, 0.12, 0.08, 0.08];
+    const rand = Math.random();
+    let cumulative = 0;
+    let targetSlice = 0;
+    for (let i = 0; i < weights.length; i++) {
+      cumulative += weights[i];
+      if (rand <= cumulative) {
+        targetSlice = i;
+        break;
+      }
+    }
+
+    const sliceAngle = (2 * Math.PI) / rewards.length;
+    // Pointer is at Top = 3*PI/2 (270 deg)
+    // When rotation angle = A, slice i center is at A + (i + 0.5) * sliceAngle
+    // To align slice i center with 3*PI/2:
+    // A = 3*PI/2 - (i + 0.5) * sliceAngle
+    const targetBaseAngle = (1.5 * Math.PI) - (targetSlice + 0.5) * sliceAngle;
+    const totalSpins = 5 + Math.floor(Math.random() * 3);
+    const finalAngle = targetBaseAngle + (totalSpins * 2 * Math.PI);
+
+    const startTime = performance.now();
+    const duration = 3500; // 3.5s
+
+    const animateWheel = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      // Ease out cubic
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const currentAngle = ease * finalAngle;
+      this.drawLuckyWheel(currentAngle);
+
+      if (progress < 1) {
+        requestAnimationFrame(animateWheel);
+      } else {
+        this.isSpinningWheel = false;
+        const reward = rewards[targetSlice];
+        if (resEl) resEl.textContent = `Won: ${reward.label}! 🎉`;
+
+        if (reward.type === 'coins') {
+          this.addCoins(reward.amount, 'lucky_wheel');
+        } else if (reward.type === 'charges_random') {
+          const unlocked = this.unlockedSkills || ['jump'];
+          const randSkill = unlocked[Math.floor(Math.random() * unlocked.length)];
+          const cur = this.getSkillCharges(randSkill);
+          this.skillCharges[randSkill] = Math.min(5, cur + 2);
+          localStorage.setItem('owl_skill_charges', JSON.stringify(this.skillCharges));
+          this.syncAbilitiesUI();
+        } else if (reward.type === 'charges_all') {
+          (this.unlockedSkills || ['jump', 'second']).forEach(s => {
+            const cur = this.getSkillCharges(s);
+            this.skillCharges[s] = Math.min(5, cur + 1);
+          });
+          localStorage.setItem('owl_skill_charges', JSON.stringify(this.skillCharges));
+          this.syncAbilitiesUI();
+        }
+
+        this.showToast(`🎉 Lucky Wheel: Won ${reward.label}!`);
+        this.updateLuckyWheelButtonUI();
+        this.updateLuckyWheelBadge();
+      }
+    };
+
+    requestAnimationFrame(animateWheel);
+  }
+
 }
+
 
 // Initialize app
 const app = new App();
+// Other modules (multiplayer, ads, host integrations) use window.app.
+window.app = app;
