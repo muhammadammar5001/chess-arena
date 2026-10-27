@@ -151,6 +151,36 @@ const PORT = process.env.PORT || 3000;
 app.use(express.static(path.join(__dirname, 'public'), { setHeaders: (res) => { res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate'); } }));
 app.use(express.json({ limit: '16kb' }));
 
+// ─── CORS & Cloud Health Endpoints (YouTube Playables / Render) ─────
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: 'Chess Arena Realtime Multiplayer',
+    uptime: Math.floor(process.uptime()),
+    activeRooms: rooms.size,
+    matchmakingQueue: matchmakingQueue.length,
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/api/status', (req, res) => {
+  res.status(200).json({
+    name: 'Chess Arena Multiplayer Server',
+    version: '1.0.0',
+    platform: 'YouTube Playables / Playgama',
+    connections: wss.clients.size,
+    activeRooms: rooms.size
+  });
+});
+
 // ─── Room Management ────────────────────────────────────────────────
 
 const rooms = new Map();
