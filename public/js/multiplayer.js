@@ -1,5 +1,5 @@
 /**
- * Owl's Gambit — Multiplayer Client
+ * Chess Arena — Multiplayer Client
  * WebSocket-based real-time multiplayer with room codes.
  */
 
@@ -26,6 +26,7 @@ class MultiplayerClient {
     this.onGameOver = null;
     this.onGameReconnect = null;
     this.onDrawOffered = null;
+    this.onStatsUpdate = null;
     this.onError = null;
     this.onConnectionChange = null;
     this.onOpponentResigned = null;
@@ -33,50 +34,101 @@ class MultiplayerClient {
     this.onRematchAccepted = null;
     this.onTimerSync = null;
     this.onSpectatorJoined = null;
-    this.onFriendsList = null;
-    this.onFriendRequestsList = null;
-    this.onFriendRequestReceived = null;
-    this.onFriendRequestSuccess = null;
-    this.onFriendRequestError = null;
     this.onChatMessage = null;
     this.onCheckRoomResult = null;
   }
 
+  getWebSocketUrl() {
+    // 1. Explicit override via window.CHESS_WS_URL or meta tag
+    if (typeof window !== 'undefined' && window.CHESS_WS_URL) {
+      return window.CHESS_WS_URL;
+    }
+
+    // 2. Local development check
+    const isLocal = typeof window !== 'undefined' && (
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname.startsWith('192.168.') ||
+      window.location.hostname.startsWith('10.') ||
+      window.location.hostname.endsWith('.local')
+    );
+
+    if (isLocal) {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${protocol}//${window.location.host}`;
+    }
+
+    // 3. YouTube Playables / Playgama CDN production environment
+    // Fallback to our Free Cloud WebSocket Server (Render.com free tier)
+    return 'wss://chess-arena-multiplayer.onrender.com';
+  }
+
   connect() {
     return new Promise((resolve, reject) => {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}`;
+      const wsUrl = this.getWebSocketUrl();
+      console.log(`[Multiplayer] Connecting to: ${wsUrl}`);
+      let settled = false;
+      let authTimer = null;
+
+      const finish = (error) => {
+        if (settled) return;
+        settled = true;
+        if (authTimer) clearTimeout(authTimer);
+        authTimer = null;
+        if (error) reject(error);
+        else resolve();
+      };
+      this._authComplete = () => finish();
 
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
-        if (window.app && window.app.walletAddress) { this.send({ type: 'authenticate', walletAddress: window.app.walletAddress }); }
+        if (window.app && window.app.playerId) {
+          const displayName = typeof window.app.getPreferredDisplayName === 'function'
+            ? window.app.getPreferredDisplayName()
+            : null;
+          this.send({
+            type: 'authenticate',
+            playerId: window.app.playerId,
+            displayName: displayName || undefined,
+            playerLevel: Math.max(1, Number(window.app.playerLevel) || 1),
+            rating: window.app.cloudProfile && Number.isFinite(Number(window.app.cloudProfile.rating))
+              ? Number(window.app.cloudProfile.rating)
+              : undefined
+          });
+        }
         this.isConnected = true;
         this.reconnectAttempts = 0;
         this.intentionalClose = false;
         if (this.onConnectionChange) this.onConnectionChange('connected');
-        
+
         // Start client-side keepalive — sends ping every 25s to survive proxies/tunnels
         this.startKeepAlive();
-        resolve();
+
+        // Don't let a missing auth reply block room creation forever.
+        authTimer = setTimeout(() => finish(), 2500);
       };
 
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         this.handleMessage(data);
+        if (data.type === 'auth_success' || data.type === 'auth_offline' || data.type === 'auth_require_username') {
+          finish();
+        }
       };
 
       this.ws.onclose = () => {
         this.isConnected = false;
         this.stopKeepAlive();
         if (this.onConnectionChange) this.onConnectionChange('disconnected');
+        if (!settled) finish(new Error('Connection closed'));
         // Only auto-reconnect if we didn't close on purpose
         if (this.roomCode && !this.intentionalClose) this.attemptReconnect();
       };
 
       this.ws.onerror = (error) => {
         if (this.onError) this.onError('Connection error');
-        reject(error);
+        finish(error);
       };
     });
   }
@@ -113,40 +165,21 @@ class MultiplayerClient {
     switch (data.type) {
       
       case 'auth_require_username':
-        if (app && app.handleAuthRequireUsername) app.handleAuthRequireUsername(data.walletAddress);
+        if (app && app.handleAuthRequireUsername) app.handleAuthRequireUsername(data.playerId);
         break;
       case 'auth_success':
-        if (app && app.handleAuthSuccess) app.handleAuthSuccess(data.user);
+        if (app && app.handleAuthSuccess) app.handleAuthSuccess(data.user, data.created);
         break;
-      case 'game_invite':
-        if (this.onGameInvite) this.onGameInvite(data);
+      case 'auth_offline':
+        if (app && app.showToast) app.showToast('Playing as guest — online stats stay on this device.');
         break;
-      case 'invite_rejected_by_target':
-        if (this.onInviteRejected) this.onInviteRejected();
-        break;
-      case 'friends_list':
-        if (this.onFriendsList) this.onFriendsList(data.friends);
-        break;
-      case 'friend_requests_list':
-        if (this.onFriendRequestsList) this.onFriendRequestsList(data.requests);
-        break;
-      case 'friend_request_received':
-        if (this.onFriendRequestReceived) this.onFriendRequestReceived(data.request);
-        break;
-      case 'friend_request_success':
-        if (this.onFriendRequestSuccess) this.onFriendRequestSuccess(data.message);
-        break;
-      case 'friend_request_error':
-        if (this.onFriendRequestError) this.onFriendRequestError(data.message);
-        break;
-
       case 'room_created':
         this.roomCode = data.roomCode;
         this.playerColor = data.color;
         this.gameId = data.gameId;
         this.abilities = data.abilities || { self: [], opponent: [] };
-          localStorage.setItem('owl_active_match', JSON.stringify({ roomCode: data.roomCode, gameId: data.gameId, color: data.color }));
-          if (this.onRoomCreated) this.onRoomCreated(data.roomCode, data.color, data.stake);
+          localStorage.setItem('chessarena_active_match', JSON.stringify({ roomCode: data.roomCode, gameId: data.gameId, color: data.color }));
+          if (this.onRoomCreated) this.onRoomCreated(data.roomCode, data.color);
         break;
 
       case 'check_room_result':
@@ -162,8 +195,8 @@ class MultiplayerClient {
         this.playerColor = data.color;
         this.gameId = data.gameId;
         this.abilities = data.abilities || { self: [], opponent: [] };
-        localStorage.setItem('owl_active_match', JSON.stringify({ roomCode: this.roomCode, gameId: data.gameId, color: data.color }));
-          if (this.onGameStart) this.onGameStart(data.color, data.opponent, data.timerMinutes, data.stake, data.mode);
+        localStorage.setItem('chessarena_active_match', JSON.stringify({ roomCode: this.roomCode, gameId: data.gameId, color: data.color }));
+          if (this.onGameStart) this.onGameStart(data.color, data.opponent, data.timerMinutes, data);
         break;
 
       case 'ability_used':
@@ -185,8 +218,12 @@ class MultiplayerClient {
         break;
 
       case 'game_over':
-          localStorage.removeItem('owl_active_match');
+          localStorage.removeItem('chessarena_active_match');
           if (this.onGameOver) this.onGameOver(data.reason, data.winner, data.settlement);
+        break;
+
+      case 'stats_update':
+        if (this.onStatsUpdate) this.onStatsUpdate(data.stats, data.gameId);
         break;
 
       case 'draw_offered':
@@ -239,8 +276,8 @@ class MultiplayerClient {
     }
   }
 
-  createRoom(timerMinutes = null, stake = 50, mode = 'standard', abilities = []) {
-    this.send({ type: 'create_room', timer: timerMinutes, stake: stake, mode: mode, abilities: abilities });
+  createRoom(timerMinutes = null, mode = 'standard', abilities = []) {
+    this.send({ type: 'create_room', timer: timerMinutes, mode: mode, abilities: abilities });
   }
 
   checkRoom(roomCode) {
@@ -261,8 +298,8 @@ class MultiplayerClient {
     this.send({ type: 'chat_message', text: text });
   }
 
-  findMatch(timerMinutes = null, stakeAmount = 50, mode = 'standard', abilities = []) {
-    this.send({ type: 'find_match', timer: timerMinutes, stake: stakeAmount, mode: mode, abilities: abilities });
+  findMatch(timerMinutes = null, mode = 'standard', abilities = []) {
+    this.send({ type: 'find_match', timer: timerMinutes, mode: mode, abilities: abilities });
   }
 
   cancelMatch() {
@@ -317,7 +354,7 @@ class MultiplayerClient {
     this.stopKeepAlive();
     this.keepAliveInterval = setInterval(() => {
       this.send({ type: 'ping' });
-    }, 25000);
+    }, 20000);
   }
 
   stopKeepAlive() {

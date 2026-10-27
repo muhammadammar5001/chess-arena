@@ -1,189 +1,162 @@
-async function finishGame(room, reason, winnerColor) {
-    if (!room || room.engine.gameOver) return;
-    
-    room.engine.gameOver = true;
-    room.engine.gameResult = { winner: winnerColor, reason: reason };
-    
-    let signature = null;
-    let settlementData = null;
-    
-    if (winnerColor !== 'draw' && winnerColor !== null && room.players[winnerColor] && room.players[winnerColor].walletAddress) {
-        try {
-            const matchId = room.gameId || 'match-' + Date.now();
-            const rulesVersion = 1;
-            const winnerAddress = room.players[winnerColor].walletAddress;
-            const loserColor = winnerColor === 'white' ? 'black' : 'white';
-            const loserAddress = (room.players[loserColor] && room.players[loserColor].walletAddress) ? room.players[loserColor].walletAddress : winnerAddress;
-            
-            const stakeAmount = ethers.parseEther((room.stake || 50).toString());
-            const payoutAmount = ethers.parseEther((room.stake ? room.stake * 1.8 : 90).toString());
-            const feeAmount = ethers.parseEther((room.stake ? room.stake * 0.1 : 5).toString());
-            const referralAmount = ethers.parseEther((room.stake ? room.stake * 0.1 : 5).toString());
-            const nonce = Math.floor(Math.random() * 1000000);
-            const deadline = Math.floor(Date.now() / 1000) + 86400; // 24 hours
-            
-            const domain = {
-                name: "OwlsGambit",
-                version: "1",
-                chainId: CHAIN_ID,
-                verifyingContract: ESCROW_CONTRACT_ADDRESS
-            };
-            
-            const types = {
-                Settlement: [
-                    { name: "matchId", type: "string" },
-                    { name: "rulesVersion", type: "uint256" },
-                    { name: "winner", type: "address" },
-                    { name: "loser", type: "address" },
-                    { name: "stakeAmount", type: "uint256" },
-                    { name: "payoutAmount", type: "uint256" },
-                    { name: "feeAmount", type: "uint256" },
-                    { name: "referralAmount", type: "uint256" },
-                    { name: "chainId", type: "uint256" },
-                    { name: "escrowContract", type: "address" },
-                    { name: "nonce", type: "uint256" },
-                    { name: "deadline", type: "uint256" }
-                ]
-            };
-            
-            const value = {
-                matchId, rulesVersion, winner: winnerAddress, loser: loserAddress,
-                stakeAmount, payoutAmount, feeAmount, referralAmount,
-                chainId: CHAIN_ID, escrowContract: ESCROW_CONTRACT_ADDRESS, nonce, deadline
-            };
-            
-                        signature = await operatorWallet.signTypedData(domain, types, value);
-            
-            // Record match in Database
-            db.recordMatch({
-                matchId, winnerAddress, loserAddress, reason,
-                stake: stakeAmount.toString() / 1e18, 
-                moves: room.engine.history ? room.engine.history.length : 0,
-                duration: room.gameStartTime ? Math.floor((Date.now() - room.gameStartTime) / 60000) + ' min ' + Math.floor(((Date.now() - room.gameStartTime) % 60000) / 1000) + ' sec' : 'Unknown'
-            });
-            settlementData = {
-                matchId, rulesVersion, winner: winnerAddress, loser: loserAddress,
-                stakeAmount: stakeAmount.toString(), payoutAmount: payoutAmount.toString(), 
-                feeAmount: feeAmount.toString(), referralAmount: referralAmount.toString(),
-                nonce, deadline, signature, escrowContract: ESCROW_CONTRACT_ADDRESS
-            };
-            
-            // AUTOMATIC PAYOUT LOGIC
-            const provider = new ethers.JsonRpcProvider('http://127.0.0.1:8545');
-            const operatorWithProvider = operatorWallet.connect(provider);
-            const abi = [
-                "function settleMatch(string matchId, uint256 rulesVersion, address winner, address loser, uint256 stakeAmount, uint256 payoutAmount, uint256 feeAmount, uint256 referralAmount, uint256 nonce, uint256 deadline, bytes signature) external"
-            ];
-            const escrow = new ethers.Contract(ESCROW_CONTRACT_ADDRESS, abi, operatorWithProvider);
-            
-            console.log("Automatically executing settleMatch on-chain for winner:", winnerAddress);
-            const tx = await escrow.settleMatch(
-                matchId, rulesVersion, winnerAddress, loserAddress,
-                stakeAmount, payoutAmount, feeAmount, referralAmount,
-                nonce, deadline, signature
-            );
-            await tx.wait();
-            console.log("Payout successful! TX:", tx.hash);
-            
-        } catch (err) {
-            console.error("Failed to execute automatic payout:", err);
-        }
-    }
-    
-
-    // --- MongoDB Stat Tracking ---
-    try {
-        const p1Wallet = room.players.white ? room.players.white.walletAddress : null;
-        const p2Wallet = room.players.black ? room.players.black.walletAddress : null;
-        if (p1Wallet && p2Wallet && typeof User !== 'undefined') {
-            const u1 = await User.findOne({ walletAddress: p1Wallet.toLowerCase() });
-            const u2 = await User.findOne({ walletAddress: p2Wallet.toLowerCase() });
-            
-            if (u1 && u2) {
-                const k = 32;
-                const expected1 = 1 / (1 + Math.pow(10, (u2.elo - u1.elo) / 400));
-                const expected2 = 1 / (1 + Math.pow(10, (u1.elo - u2.elo) / 400));
-                
-                let s1 = 0.5, s2 = 0.5;
-                if (winnerColor === 'white') {
-                    s1 = 1; s2 = 0;
-                    u1.wins = (u1.wins || 0) + 1;
-                    u2.losses = (u2.losses || 0) + 1;
-                } else if (winnerColor === 'black') {
-                    s1 = 0; s2 = 1;
-                    u1.losses = (u1.losses || 0) + 1;
-                    u2.wins = (u2.wins || 0) + 1;
-                } else {
-                    u1.draws = (u1.draws || 0) + 1;
-                    u2.draws = (u2.draws || 0) + 1;
-                }
-                
-                u1.elo = Math.round(u1.elo + k * (s1 - expected1));
-                u2.elo = Math.round(u2.elo + k * (s2 - expected2));
-                
-                await u1.save();
-                await u2.save();
-                console.log(`[Stats] White (${u1.username}) ELO: ${u1.elo}, Black (${u2.username}) ELO: ${u2.elo}`);
-            }
-        }
-    } catch (err) {
-        console.error("Failed to update MongoDB stats:", err);
-    }
-    // -----------------------------
-
-    broadcastToRoom(room, { type: 'game_over', reason: reason, winner: winnerColor, settlement: settlementData, autoPaid: true });
-}
-
 /**
- * Owl's Gambit — Server
+ * Chess Arena — Server
  * Express static server + WebSocket for real-time multiplayer chess.
  */
 
+async function finishGame(room, reason, winnerColor) {
+  if (!room || !room.engine || room.engine.gameOver) return;
+
+  room.engine.gameOver = true;
+  room.engine.gameResult = { winner: winnerColor, reason: reason };
+
+  // --- MongoDB stat tracking (online only) ---
+  let updatedStats = null;
+  try {
+    const p1 = room.players.white ? room.players.white.playerId : null;
+    const p2 = room.players.black ? room.players.black.playerId : null;
+    if (p1 && p2 && mongoose.connection.readyState === 1) {
+      const u1 = await User.findOne({ playerId: p1.toLowerCase() });
+      const u2 = await User.findOne({ playerId: p2.toLowerCase() });
+
+      if (u1 && u2) {
+        const k = 32;
+        const expected1 = 1 / (1 + Math.pow(10, (u2.elo - u1.elo) / 400));
+        const expected2 = 1 / (1 + Math.pow(10, (u1.elo - u2.elo) / 400));
+
+        let s1 = 0.5;
+        let s2 = 0.5;
+        if (winnerColor === 'white') {
+          s1 = 1; s2 = 0;
+          u1.wins = (u1.wins || 0) + 1;
+          u2.losses = (u2.losses || 0) + 1;
+          u1.winStreak = (u1.winStreak || 0) + 1;
+          u2.winStreak = 0;
+        } else if (winnerColor === 'black') {
+          s1 = 0; s2 = 1;
+          u1.losses = (u1.losses || 0) + 1;
+          u2.wins = (u2.wins || 0) + 1;
+          u1.winStreak = 0;
+          u2.winStreak = (u2.winStreak || 0) + 1;
+        } else {
+          u1.draws = (u1.draws || 0) + 1;
+          u2.draws = (u2.draws || 0) + 1;
+          u1.winStreak = 0;
+          u2.winStreak = 0;
+        }
+
+        u1.elo = Math.round(u1.elo + k * (s1 - expected1));
+        u2.elo = Math.round(u2.elo + k * (s2 - expected2));
+        u1.totalMatches = (u1.wins || 0) + (u1.losses || 0) + (u1.draws || 0);
+        u2.totalMatches = (u2.wins || 0) + (u2.losses || 0) + (u2.draws || 0);
+        u1.bestStreak = Math.max(u1.bestStreak || 0, u1.winStreak || 0);
+        u2.bestStreak = Math.max(u2.bestStreak || 0, u2.winStreak || 0);
+        u1.lastUpdated = new Date();
+        u2.lastUpdated = new Date();
+
+        await u1.save();
+        await u2.save();
+        updatedStats = {
+          white: {
+            elo: u1.elo,
+            wins: u1.wins || 0,
+            losses: u1.losses || 0,
+            draws: u1.draws || 0,
+            totalMatches: u1.totalMatches || 0,
+            winStreak: u1.winStreak || 0,
+            bestStreak: u1.bestStreak || 0
+          },
+          black: {
+            elo: u2.elo,
+            wins: u2.wins || 0,
+            losses: u2.losses || 0,
+            draws: u2.draws || 0,
+            totalMatches: u2.totalMatches || 0,
+            winStreak: u2.winStreak || 0,
+            bestStreak: u2.bestStreak || 0
+          }
+        };
+        console.log(`[Stats] White (${u1.username}) ELO: ${u1.elo}, Black (${u2.username}) ELO: ${u2.elo}`);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to update MongoDB stats:', err);
+  }
+
+  broadcastToRoom(room, { type: 'game_over', reason: reason, winner: winnerColor });
+
+  if (updatedStats) {
+    if (room.players.white) sendJSON(room.players.white, { type: 'stats_update', gameId: room.gameId, stats: updatedStats.white });
+    if (room.players.black) sendJSON(room.players.black, { type: 'stats_update', gameId: room.gameId, stats: updatedStats.black });
+  }
+}
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
+const path = require('path');
 const { WebSocketServer } = require('ws');
 const { v4: uuidv4 } = require('uuid');
-const db = require('./db');
-const { ethers } = require('ethers');
-const OPERATOR_PRIVATE_KEY = process.env.OPERATOR_PRIVATE_KEY || '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'; // Mock key for testing
-const operatorWallet = new ethers.Wallet(OPERATOR_PRIVATE_KEY);
-const ESCROW_CONTRACT_ADDRESS = process.env.ESCROW_CONTRACT_ADDRESS || '0x5FbDB2315678afecb367f032d93F642f64180aa3';
-const CHAIN_ID = parseInt(process.env.CHAIN_ID || '31337');
-
-const path = require('path');
-const ChessEngine = require('./public/js/chess-engine.js');
-
-
-require('dotenv').config();
 const mongoose = require('mongoose');
+const ChessEngine = require('./public/js/chess-engine.js');
 const User = require('./models/User');
-const Friendship = require('./models/Friendship');
 
-// Connect to MongoDB
+// Connect to MongoDB (optional: the game runs without it, stats stay local)
 const dbUri = process.env.MONGO_URI || process.env.MONGODB_URI;
 if (dbUri) {
   mongoose.connect(dbUri)
-    .then(() => console.log('✅ Connected to MongoDB Atlas'))
-    .catch(err => console.error('❌ MongoDB Connection Error:', err));
+    .then(async () => {
+      console.log('Connected to MongoDB');
+      try {
+        await migrateUserIndexes();
+      } catch (err) {
+        console.error('User index migration warning:', err.message);
+      }
+    })
+    .catch(err => console.error('MongoDB connection error:', err.message));
 } else {
-  console.warn('⚠️ No MONGO_URI found in .env. Running without persistent database.');
+  console.warn('No MONGO_URI set. Running without persistent profiles.');
+}
+
+/**
+ * Remove the pre-rebrand wallet index, which was unique and non-sparse and
+ * therefore rejected every second profile created without a walletAddress.
+ * Also create the playerId index expected by automatic identities.
+ */
+async function migrateUserIndexes() {
+  const collection = User.collection;
+  const indexes = await collection.indexes();
+  if (indexes.some((index) => index.name === 'walletAddress_1')) {
+    await collection.dropIndex('walletAddress_1');
+    console.log('[Migration] Dropped legacy walletAddress index');
+  }
+
+  const walletCleanup = await collection.updateMany(
+    { walletAddress: { $exists: true } },
+    { $unset: { walletAddress: '' } }
+  );
+  if (walletCleanup.modifiedCount) {
+    console.log(`[Migration] Removed walletAddress from ${walletCleanup.modifiedCount} profile(s)`);
+  }
+
+  await collection.createIndex({ playerId: 1 }, { unique: true, sparse: true });
+  await collection.createIndex({ username: 1 }, { unique: true, sparse: true });
 }
 
 const app = express();
-db.connectDB(process.env.MONGODB_URI);
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 const PORT = process.env.PORT || 3000;
 
 // Serve static files
-app.use(express.static(path.join(__dirname, 'public'), { setHeaders: (res, path) => { res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate'); } }));
+app.use(express.static(path.join(__dirname, 'public'), { setHeaders: (res) => { res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate'); } }));
+app.use(express.json({ limit: '16kb' }));
 
 // ─── Room Management ────────────────────────────────────────────────
 
 const rooms = new Map();
 const matchmakingQueue = [];
+// Fallback standings when MongoDB is unavailable or briefly disconnected.
+const memoryProfiles = new Map();
 
 function generateRoomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No I, O, 0, 1 to avoid confusion
@@ -220,12 +193,8 @@ setInterval(() => {
 
     if (remaining <= 0) {
       room.timers[currentTurn] = 0;
-      room.engine.gameOver = true;
       const winner = currentTurn === 'white' ? 'black' : 'white';
-      room.engine.gameResult = { winner, reason: 'timeout' };
-
-      sendJSON(room.players.white, { type: 'game_over', reason: 'timeout', winner });
-      sendJSON(room.players.black, { type: 'game_over', reason: 'timeout', winner });
+      finishGame(room, 'timeout', winner);
     }
   }
 }, 1000);
@@ -265,7 +234,7 @@ const heartbeat = setInterval(() => {
     ws.isAlive = false;
     ws.ping();
   });
-}, 45000);
+}, 25000);
 
 wss.on('close', () => clearInterval(heartbeat));
 
@@ -273,6 +242,17 @@ function sendJSON(ws, data) {
   if (ws.readyState === 1) { // WebSocket.OPEN
     ws.send(JSON.stringify(data));
   }
+}
+
+function getSocketProfile(ws) {
+  const user = ws && ws.user;
+  const rawName = (user && user.username) || (ws && ws.displayName);
+  let username = sanitizeDisplayName(rawName);
+  if (!username) username = ws && ws.playerId ? fallbackUsername(ws.playerId) : 'Player';
+  const rawRating = user && user.elo != null ? user.elo : (ws && ws.playerRating);
+  const rating = Math.min(4000, Math.max(100, safeInt(rawRating, 1200)));
+  const level = Math.min(999, Math.max(1, safeInt(ws && ws.playerLevel, 1)));
+  return { username, rating, level };
 }
 
 function broadcastToRoom(room, data) {
@@ -292,40 +272,20 @@ function handleMessage(ws, data) {
     case 'set_username':
       handleSetUsername(ws, data);
       break;
-    case 'invite_friend':
-      handleInviteFriend(ws, data);
-      break;
-    case 'get_friends':
-      console.log('--- GET FRIENDS FIRED ---');
-      handleGetFriends(ws, data);
-      break;
-    case 'get_friend_requests':
-      handleGetFriendRequests(ws, data);
-      break;
-    case 'send_friend_request':
-      handleSendFriendRequest(ws, data);
-      break;
-    case 'respond_friend_request':
-      handleRespondFriendRequest(ws, data);
-      break;
-
     case 'check_room':
       handleCheckRoom(ws, data.roomCode);
-      break;
-    case 'invite_rejected':
-      handleInviteRejected(ws, data);
       break;
     case 'leave_private_room':
       handleLeavePrivateRoom(ws, data);
       break;
     case 'create_room':
-        createRoom(ws, data.timer, data.stake, data.mode, data.abilities);
+        createRoom(ws, data.timer, data.mode, data.abilities);
       break;
     case 'join_room':
         joinRoom(ws, data.roomCode, data.abilities);
       break;
     case 'find_match':
-        handleFindMatch(ws, data.stake, data.mode, data.abilities);
+        handleFindMatch(ws, data.mode, data.abilities);
       break;
     case 'cancel_match':
       handleCancelMatch(ws);
@@ -386,34 +346,23 @@ function handleLeavePrivateRoom(ws, data) {
   }
 }
 
-function handleInviteRejected(ws, data) {
-  const code = data.roomCode;
-  if (!code) return;
-  const room = rooms.get(code);
-  if (room && room.players && room.players.white) {
-    sendJSON(room.players.white, { type: 'invite_rejected_by_target' });
-    rooms.delete(code);
-
-    console.log("Room " + code + " deleted because invite was rejected.");
-  }
-}
-
-function createRoom(ws, timerMinutes, stakeAmount = 50, mode = 'standard', abilities = []) {
+function createRoom(ws, timerMinutes, mode = 'standard', abilities = []) {
   const roomCode = generateRoomCode();
   const gameId = uuidv4();
-  const validStake = parseInt(stakeAmount) || 50;
+  // Private rooms always use the standard 10-minute clock.
+  const roomTimerMinutes = 10;
 
   const room = {
     code: roomCode,
     gameId: gameId,
-    players: { white: ws, black: null }, abilities: { white: (mode === 'robin' ? abilities : []), black: [] },
+    players: { white: ws, black: null },
+    abilities: { white: mode === 'tactical' ? abilities : [], black: [] },
     engine: new ChessEngine(),
-    timer: timerMinutes ? timerMinutes * 60 * 1000 : null, // Convert to ms
-    timers: timerMinutes ? {
-      white: timerMinutes * 60 * 1000,
-      black: timerMinutes * 60 * 1000
-    } : null,
-    stake: validStake,
+    timer: roomTimerMinutes * 60 * 1000,
+    timers: {
+      white: roomTimerMinutes * 60 * 1000,
+      black: roomTimerMinutes * 60 * 1000
+    },
     spectators: new Set(),
     lastMoveTime: null,
     lastActivity: Date.now(),
@@ -430,11 +379,10 @@ function createRoom(ws, timerMinutes, stakeAmount = 50, mode = 'standard', abili
     roomCode: roomCode,
     color: 'white',
     gameId: gameId,
-    stake: validStake,
     mode: mode
   });
 
-  console.log(`Room ${roomCode} created by ${ws.id} with stake ${validStake} | Mode: ${mode} | Abilities: ${JSON.stringify(abilities)}`);
+  console.log(`Room ${roomCode} created by ${ws.id} | Mode: ${mode} | Abilities: ${JSON.stringify(abilities)}`);
 }
 
 function handleCheckRoom(ws, roomCode) {
@@ -465,7 +413,6 @@ function handleCheckRoom(ws, roomCode) {
     type: 'check_room_result',
     success: true,
     roomCode: code,
-    stake: room.stake || 50,
     timerMinutes: room.timer ? room.timer / 60000 : null
   });
 }
@@ -489,76 +436,75 @@ function joinRoom(ws, roomCode, abilities = []) {
   room.lastMoveTime = Date.now();
   ws.roomCode = code;
   ws.playerColor = 'black';
-  room.abilities.black = (room.mode === 'robin') ? abilities : [];
+  room.abilities.black = room.mode === 'tactical' ? abilities : [];
 
-  const roomStake = room.stake || 50;
+  const whiteProfile = getSocketProfile(room.players.white);
+  const blackProfile = getSocketProfile(ws);
 
-  // Notify joiner
   sendJSON(ws, {
     type: 'game_start',
-      roomCode: code,
-      abilities: { self: room.abilities.black, opponent: room.abilities.white },
-      color: 'black',
-      gameId: room.gameId,
-    opponent: (room.players.white && room.players.white.user) ? room.players.white.user.username : 'Player 1',
+    roomCode: code,
+    abilities: { self: room.abilities.black, opponent: room.abilities.white },
+    color: 'black',
+    gameId: room.gameId,
+    opponent: whiteProfile.username,
+    opponentProfile: whiteProfile,
+    selfProfile: blackProfile,
     timer: room.timer,
     timerMinutes: room.timer ? room.timer / 60000 : null,
-    stake: roomStake,
     mode: room.mode
   });
 
-  // Notify creator
   sendJSON(room.players.white, {
     type: 'game_start',
-      roomCode: code,
-      abilities: { self: room.abilities.white, opponent: room.abilities.black },
-      color: 'white',
-      gameId: room.gameId,
-    opponent: (ws && ws.user) ? ws.user.username : 'Player 2',
+    roomCode: code,
+    abilities: { self: room.abilities.white, opponent: room.abilities.black },
+    color: 'white',
+    gameId: room.gameId,
+    opponent: blackProfile.username,
+    opponentProfile: blackProfile,
+    selfProfile: whiteProfile,
     timer: room.timer,
     timerMinutes: room.timer ? room.timer / 60000 : null,
-    stake: roomStake,
     mode: room.mode
   });
 
-  console.log(`Player joined room ${code} (stake: ${roomStake})`);
+  console.log(`Player joined room ${code}`);
 }
 
-function handleFindMatch(ws, stakeAmount = 50, mode = 'standard', abilities = []) {
-  // Check if player is already in queue
+function handleFindMatch(ws, mode = 'standard', abilities = []) {
   const existingIdx = matchmakingQueue.findIndex(p => p.ws === ws);
   if (existingIdx !== -1) return;
 
-  // Find a player with the same stake amount
-  const opponentIdx = matchmakingQueue.findIndex(p => p.stake === stakeAmount && p.mode === mode && p.ws.readyState === 1);
+  const opponentIdx = matchmakingQueue.findIndex(p => p.mode === mode && p.ws.readyState === 1);
 
-  // If no opponent found, add to queue
   if (opponentIdx === -1) {
-    matchmakingQueue.push({ ws, stake: stakeAmount, mode: mode, abilities: abilities });
+    matchmakingQueue.push({ ws, mode: mode, abilities: abilities });
     sendJSON(ws, { type: 'waiting_for_match' });
-    console.log(`Player ${ws.id} entered matchmaking queue for ${stakeAmount} $OWL`);
+    console.log(`Player ${ws.id} entered matchmaking queue`);
     return;
   }
 
-  // Found opponent, pop them
   const opponentEntry = matchmakingQueue.splice(opponentIdx, 1)[0];
-    const opponentWs = opponentEntry.ws;
+  const opponentWs = opponentEntry.ws;
 
-  // Make sure the opponent hasn't disconnected
   if (opponentWs.readyState !== 1) {
-    // Try again with this player
-    handleFindMatch(ws, stakeAmount, mode, abilities);
+    handleFindMatch(ws, mode, abilities);
     return;
   }
 
   const roomCode = generateRoomCode();
   const gameId = uuidv4();
-  const timerMinutes = 10; // Default 10 min for matchmaking
+  const timerMinutes = 10;
 
   const room = {
     code: roomCode,
     gameId: gameId,
-    players: { white: opponentWs, black: ws }, abilities: { white: (mode === 'robin' ? (opponentEntry.abilities || []) : []), black: (mode === 'robin' ? abilities : []) },
+    players: { white: opponentWs, black: ws },
+    abilities: {
+      white: mode === 'tactical' ? (opponentEntry.abilities || []) : [],
+      black: mode === 'tactical' ? abilities : []
+    },
     engine: new ChessEngine(),
     timer: timerMinutes * 60 * 1000,
     timers: {
@@ -569,7 +515,6 @@ function handleFindMatch(ws, stakeAmount = 50, mode = 'standard', abilities = []
     lastMoveTime: null,
     lastActivity: Date.now(),
     rematchRequested: null,
-    stake: stakeAmount,
     mode: mode
   };
 
@@ -580,24 +525,19 @@ function handleFindMatch(ws, stakeAmount = 50, mode = 'standard', abilities = []
   ws.roomCode = roomCode;
   ws.playerColor = 'black';
 
-  // Notify white
+  const whiteProfile = getSocketProfile(opponentWs);
+  const blackProfile = getSocketProfile(ws);
+
   sendJSON(opponentWs, {
     type: 'game_start', roomCode: roomCode, abilities: { self: room.abilities.white, opponent: room.abilities.black }, color: 'white', gameId: gameId,
-    opponent: 'Random Player',
-    timer: room.timer,
-    timerMinutes: timerMinutes,
-    stake: stakeAmount,
-    mode: mode
+    opponent: blackProfile.username, opponentProfile: blackProfile, selfProfile: whiteProfile,
+    timer: room.timer, timerMinutes: timerMinutes, mode: mode
   });
 
-  // Notify black
   sendJSON(ws, {
     type: 'game_start', roomCode: roomCode, abilities: { self: room.abilities.black, opponent: room.abilities.white }, color: 'black', gameId: gameId,
-    opponent: 'Random Player',
-    timer: room.timer,
-    timerMinutes: timerMinutes,
-    stake: stakeAmount,
-    mode: mode
+    opponent: whiteProfile.username, opponentProfile: whiteProfile, selfProfile: blackProfile,
+    timer: room.timer, timerMinutes: timerMinutes, mode: mode
   });
 
   console.log(`Random match created: Room ${roomCode} | Mode: ${mode} | Abilities: ${JSON.stringify(abilities)}`);
@@ -783,6 +723,10 @@ function handleReconnect(ws, data) {
         color: 'spectator',
       gameId: room.gameId,
       opponent: 'Watching',
+      players: {
+        white: getSocketProfile(room.players.white),
+        black: getSocketProfile(room.players.black)
+      },
       timer: room.timer,
       timerMinutes: room.timer ? room.timer / 60000 : null,
       moves: moveList,
@@ -813,13 +757,20 @@ function handleReconnect(ws, data) {
 
   const moveList = room.engine.moveHistory.map(m => { if (m.ability) return m; return { from: ChessEngine.toAlgebraic(m.from.row, m.from.col), to: ChessEngine.toAlgebraic(m.to.row, m.to.col), promotion: m.promotion || null }; });
 
+  const selfProfile = getSocketProfile(ws);
+  const opponentProfile = opponent
+    ? getSocketProfile(opponent)
+    : { username: 'Waiting...', rating: 1200, level: 1 };
+
   sendJSON(ws, {
     type: 'game_reconnect',
     mode: room.mode,
     color: color,
     abilities: { self: room.abilities[color], opponent: room.abilities[color === 'white' ? 'black' : 'white'] },
     gameId: room.gameId,
-    opponent: opponent ? (opponent.id || 'Player') : 'Waiting...',
+    opponent: opponentProfile.username,
+    opponentProfile,
+    selfProfile,
     timer: room.timer,
     timerMinutes: room.timer ? room.timer / 60000 : null,
     moves: moveList,
@@ -854,6 +805,10 @@ function handleSpectateRoom(ws, roomCode, spectatorName) {
     type: 'spectator_joined',
     roomCode: code,
     gameId: room.gameId,
+    players: {
+      white: getSocketProfile(room.players.white),
+      black: getSocketProfile(room.players.black)
+    },
     timer: room.timer,
     timerMinutes: room.timer ? room.timer / 60000 : null,
     moves: moveList,
@@ -920,8 +875,329 @@ function handleDisconnect(ws) {
 
 // ─── Start Server ───────────────────────────────────────────────────
 
+// ─── Leaderboard sync and standings ─────────────────────────────────
+
+function safeInt(value, fallback = 0) {
+  if (value === null || value === undefined || value === '') return fallback;
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.trunc(n) : fallback;
+}
+
+function sanitizeLeaderboardUsername(value) {
+  return String(value || '').replace(/[^a-z0-9]/gi, '').slice(0, 16);
+}
+
+const MAX_STAT_COUNT = 10000000;
+function cappedCount(value) {
+  return Math.min(MAX_STAT_COUNT, Math.max(0, safeInt(value, 0)));
+}
+
+function profileTotal(profile) {
+  return cappedCount(profile && profile.wins) +
+    cappedCount(profile && profile.losses) +
+    cappedCount(profile && profile.draws);
+}
+
+function profileStatsPayload(profile) {
+  const wins = cappedCount(profile && profile.wins);
+  const losses = cappedCount(profile && profile.losses);
+  const draws = cappedCount(profile && profile.draws);
+  const winStreak = cappedCount(profile && profile.winStreak);
+  return {
+    wins,
+    losses,
+    draws,
+    totalMatches: wins + losses + draws,
+    winStreak,
+    bestStreak: Math.max(winStreak, cappedCount(profile && profile.bestStreak))
+  };
+}
+
+function normalizeLeaderboardPayload(body) {
+  const playerId = String(body && body.playerId ? body.playerId : '').trim().toLowerCase().slice(0, 64);
+  if (!/^[a-z0-9_:-]{6,64}$/.test(playerId)) {
+    return { error: 'Invalid playerId' };
+  }
+
+  const username = sanitizeLeaderboardUsername(body.username);
+  if (username.length < 3) {
+    return { error: 'Username must be 3-16 alphanumeric characters' };
+  }
+
+  const rawStats = body.stats && typeof body.stats === 'object' ? body.stats : {};
+  const wins = cappedCount(rawStats.wins);
+  const losses = cappedCount(rawStats.losses);
+  const draws = cappedCount(rawStats.draws);
+  const winStreak = cappedCount(rawStats.winStreak);
+  const bestStreak = Math.max(winStreak, cappedCount(rawStats.bestStreak));
+  const rating = Math.min(4000, Math.max(100, safeInt(
+    body.rating != null ? body.rating : body.elo,
+    1200
+  )));
+
+  return {
+    playerId,
+    username,
+    rating,
+    wins,
+    losses,
+    draws,
+    totalMatches: wins + losses + draws,
+    winStreak,
+    bestStreak
+  };
+}
+
+function leaderboardRow(profile, rank) {
+  const wins = cappedCount(profile.wins);
+  const losses = cappedCount(profile.losses);
+  const draws = cappedCount(profile.draws);
+  const rating = Math.min(4000, Math.max(100, safeInt(profile.elo != null ? profile.elo : profile.rating, 1200)));
+  return {
+    rank,
+    playerId: profile.playerId || null,
+    username: profile.username,
+    rating,
+    elo: rating,
+    wins,
+    losses,
+    draws,
+    totalMatches: wins + losses + draws,
+    winStreak: Math.max(0, safeInt(profile.winStreak, 0)),
+    bestStreak: Math.max(0, safeInt(profile.bestStreak, 0))
+  };
+}
+
+function sortedMemoryRows() {
+  return Array.from(memoryProfiles.values())
+    .filter((profile) => profile.username)
+    .sort((a, b) => {
+      if (b.elo !== a.elo) return b.elo - a.elo;
+      if ((b.wins || 0) !== (a.wins || 0)) return (b.wins || 0) - (a.wins || 0);
+      return String(a.username).localeCompare(String(b.username));
+    });
+}
+
+function memoryLeaderboardData(limit, playerId) {
+  const rows = sortedMemoryRows();
+  const topPlayers = rows.slice(0, limit).map((profile, index) => leaderboardRow(profile, index + 1));
+  const currentIndex = playerId ? rows.findIndex((profile) => profile.playerId === playerId) : -1;
+  return {
+    topPlayers,
+    totalPlayers: rows.length,
+    currentRank: currentIndex >= 0 ? currentIndex + 1 : null
+  };
+}
+
+async function uniqueMongoUsername(base, playerId) {
+  let candidate = base;
+  let counter = 2;
+  while (await User.exists({ username: candidate, playerId: { $ne: playerId } })) {
+    const suffix = String(counter++);
+    candidate = base.slice(0, 16 - suffix.length) + suffix;
+    if (counter > 999) {
+      candidate = base.slice(0, 10) + Math.random().toString(36).slice(2, 6);
+      break;
+    }
+  }
+  return candidate;
+}
+
+async function upsertMongoLeaderboardProfile(profile) {
+  let username = profile.username;
+  const existing = await User.findOne({ playerId: profile.playerId });
+  if (!existing || existing.username !== username) {
+    username = await uniqueMongoUsername(username, profile.playerId);
+  }
+
+  const update = {
+    username,
+    lastUpdated: new Date()
+  };
+
+  // The server is authoritative after an online result. A client reconnecting
+  // with an older cloud profile must never erase a newer PvP result from the
+  // database. Only a strictly larger total (offline progress) advances the
+  // server stats; equal totals keep the server's authoritative Elo/streak.
+  const incomingTotal = profileTotal(profile);
+  const existingTotal = existing ? profileTotal(existing) : 0;
+  if (!existing || incomingTotal > existingTotal) {
+    update.elo = profile.rating;
+    update.wins = profile.wins;
+    update.losses = profile.losses;
+    update.draws = profile.draws;
+    update.totalMatches = profile.totalMatches;
+    update.winStreak = profile.winStreak;
+    update.bestStreak = profile.bestStreak;
+  }
+
+  try {
+    return await User.findOneAndUpdate(
+      { playerId: profile.playerId },
+      { $set: update, $setOnInsert: { createdAt: new Date() } },
+      { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true }
+    );
+  } catch (err) {
+    // A concurrent sync may have claimed the requested username.
+    if (err && err.code === 11000) {
+      update.username = await uniqueMongoUsername(profile.username, profile.playerId);
+      return await User.findOneAndUpdate(
+        { playerId: profile.playerId },
+        { $set: update, $setOnInsert: { createdAt: new Date() } },
+        { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true }
+      );
+    }
+    throw err;
+  }
+}
+
+async function mongoLeaderboardData(limit, playerId, currentProfile) {
+  const query = { username: { $exists: true, $ne: null } };
+  const [users, totalPlayers] = await Promise.all([
+    User.find(query).sort({ elo: -1, wins: -1, username: 1 }).limit(limit).lean(),
+    User.countDocuments(query)
+  ]);
+
+  let currentRank = null;
+  if (playerId) {
+    const user = currentProfile || await User.findOne({ playerId }).lean();
+    if (user && user.username) {
+      const elo = safeInt(user.elo, 1200);
+      const wins = Math.max(0, safeInt(user.wins, 0));
+      const better = await User.countDocuments({
+        username: { $exists: true, $ne: null },
+        $or: [
+          { elo: { $gt: elo } },
+          { elo, wins: { $gt: wins } },
+          { elo, wins, username: { $lt: user.username } }
+        ]
+      });
+      currentRank = better + 1;
+    }
+  }
+
+  return {
+    topPlayers: users.map((user, index) => leaderboardRow(user, index + 1)),
+    totalPlayers,
+    currentRank
+  };
+}
+
+function syncMemoryProfile(profile) {
+  let username = profile.username;
+  let counter = 2;
+  while (Array.from(memoryProfiles.values()).some((entry) =>
+    entry.playerId !== profile.playerId && entry.username === username)) {
+    const suffix = String(counter++);
+    username = profile.username.slice(0, 16 - suffix.length) + suffix;
+    if (counter > 999) break;
+  }
+
+  const existing = memoryProfiles.get(profile.playerId);
+  const incomingTotal = profileTotal(profile);
+  const existingTotal = existing ? profileTotal(existing) : 0;
+  const keepExisting = existing && existingTotal >= incomingTotal;
+  const source = keepExisting ? existing : profile;
+  const sourceElo = safeInt(source.elo != null ? source.elo : source.rating, 1200);
+  const stored = {
+    playerId: profile.playerId,
+    username,
+    elo: Math.min(4000, Math.max(100, sourceElo)),
+    wins: cappedCount(source.wins),
+    losses: cappedCount(source.losses),
+    draws: cappedCount(source.draws),
+    totalMatches: profileTotal(source),
+    winStreak: cappedCount(source.winStreak),
+    bestStreak: Math.max(cappedCount(source.winStreak), cappedCount(source.bestStreak)),
+    lastUpdated: new Date()
+  };
+  memoryProfiles.set(profile.playerId, stored);
+  return stored;
+}
+
+app.post('/api/leaderboard/sync', async (req, res) => {
+  const profile = normalizeLeaderboardPayload(req.body || {});
+  if (profile.error) {
+    return res.status(400).json({ success: false, error: profile.error });
+  }
+
+  try {
+    let data;
+    let responseProfile;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const user = await upsertMongoLeaderboardProfile(profile);
+        responseProfile = {
+          playerId: user.playerId,
+          username: user.username,
+          elo: user.elo,
+          wins: user.wins,
+          losses: user.losses,
+          draws: user.draws,
+          winStreak: user.winStreak,
+          bestStreak: user.bestStreak
+        };
+        syncMemoryProfile(responseProfile);
+        data = await mongoLeaderboardData(10, profile.playerId, user);
+      } catch (err) {
+        console.error('Leaderboard sync DB error:', err.message);
+        responseProfile = syncMemoryProfile(profile);
+        data = memoryLeaderboardData(10, responseProfile.playerId);
+      }
+      return res.json({
+        success: true,
+        username: responseProfile.username,
+        rating: responseProfile.elo,
+        stats: profileStatsPayload(responseProfile),
+        currentRank: data.currentRank,
+        totalPlayers: data.totalPlayers,
+        topPlayers: data.topPlayers
+      });
+    }
+
+    responseProfile = syncMemoryProfile(profile);
+    data = memoryLeaderboardData(10, responseProfile.playerId);
+    res.json({
+      success: true,
+      username: responseProfile.username,
+      rating: responseProfile.elo,
+      stats: profileStatsPayload(responseProfile),
+      currentRank: data.currentRank,
+      totalPlayers: data.totalPlayers,
+      topPlayers: data.topPlayers
+    });
+  } catch (err) {
+    console.error('Leaderboard sync error:', err.message);
+    res.status(500).json({ success: false, error: 'Leaderboard sync failed' });
+  }
+});
+
+// Public leaderboard (Mongo when available, in-process memory otherwise)
+app.get('/api/leaderboard', async (req, res) => {
+  try {
+    let data;
+    if (mongoose.connection.readyState === 1) {
+      data = await mongoLeaderboardData(100, null, null);
+    } else {
+      data = memoryLeaderboardData(100, null);
+    }
+    res.json({
+      players: data.topPlayers,
+      totalPlayers: data.totalPlayers
+    });
+  } catch (err) {
+    console.error('Leaderboard error:', err.message);
+    try {
+      const data = memoryLeaderboardData(100, null);
+      res.json({ players: data.topPlayers, totalPlayers: data.totalPlayers });
+    } catch (fallbackErr) {
+      res.status(500).json({ players: [], totalPlayers: 0 });
+    }
+  }
+});
+
 server.listen(PORT, () => {
-  console.log(`\n  🦉 Owl's Gambit is running!`);
+  console.log('\n  Chess Arena is running!');
   console.log(`  ➜ Local:   http://localhost:${PORT}`);
   console.log(`  ➜ Network: http://0.0.0.0:${PORT}\n`);
 });
@@ -976,24 +1252,90 @@ function handleUseAbility(ws, data) {
 
 
 
-async function handleAuthenticate(ws, data) {
-  console.log('Received authenticate request for wallet:', data.walletAddress);
-  if (!mongoose.connection.readyState) {
-    return sendJSON(ws, { type: 'error', message: 'Database not connected' });
+function sanitizeDisplayName(value) {
+  return String(value || '')
+    .replace(/[\u0000-\u001f\u007f<>]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 24);
+}
+
+function fallbackUsername(playerId) {
+  const suffix = String(playerId || '').replace(/[^a-z0-9]/gi, '').slice(-6).toUpperCase() || 'GUEST';
+  return 'Player ' + suffix;
+}
+
+async function uniqueUsername(base, playerId) {
+  const clean = sanitizeDisplayName(base);
+  let root = clean.length >= 3 ? clean : fallbackUsername(playerId);
+  if (root.length < 3) root = fallbackUsername(playerId);
+
+  let candidate = root;
+  let counter = 2;
+  while (await User.exists({ username: candidate, playerId: { $ne: playerId } })) {
+    const suffix = ' ' + counter;
+    candidate = root.slice(0, 24 - suffix.length).trimEnd() + suffix;
+    counter++;
+    if (counter > 999) {
+      candidate = root.slice(0, 17) + ' ' + Math.random().toString(36).slice(2, 6);
+      break;
+    }
   }
-  
-  const wallet = data.walletAddress;
-  if (!wallet) return;
+  return candidate;
+}
+
+async function handleAuthenticate(ws, data) {
+  const rawId = data && data.playerId ? String(data.playerId).trim() : '';
+  if (!rawId || rawId.length > 96) return;
+  const playerId = rawId.toLowerCase();
+  ws.playerId = playerId;
+  ws.displayName = sanitizeDisplayName(data && data.displayName) || fallbackUsername(playerId);
+  ws.playerRating = Math.min(4000, Math.max(100, safeInt(data && data.rating, 1200)));
+  ws.playerLevel = Math.min(999, Math.max(1, safeInt(data && data.playerLevel, 1)));
+
+  // The database is optional. Without it the player still gets a full game and
+  // local/Bridge-backed stats; only cross-device profile sync is unavailable.
+  if (mongoose.connection.readyState !== 1) {
+    return sendJSON(ws, { type: 'auth_offline' });
+  }
 
   try {
-    let user = await User.findOne({ walletAddress: wallet.toLowerCase() });
-    
-    if (user && user.username) {
-      ws.user = user;
-      sendJSON(ws, { type: 'auth_success', user: { username: user.username, elo: user.elo, wins: user.wins, losses: user.losses } });
-    } else {
-      sendJSON(ws, { type: 'auth_require_username', walletAddress: wallet });
+    let user = await User.findOne({ playerId });
+    let created = false;
+
+    if (!user) {
+      for (let attempt = 0; attempt < 4 && !user; attempt++) {
+        const username = await uniqueUsername(data.displayName, playerId);
+        try {
+          user = await User.create({ playerId, username });
+          created = true;
+        } catch (err) {
+          if (!err || err.code !== 11000) throw err;
+          // Another socket may have created this player or claimed the same
+          // username between the lookup and insert. Reuse the player if it now
+          // exists; otherwise retry with the newly updated uniqueness state.
+          user = await User.findOne({ playerId });
+        }
+      }
+      if (!user) throw new Error('Could not create player profile');
+    } else if (!user.username) {
+      user.username = await uniqueUsername(data.displayName, playerId);
+      await user.save();
+      created = true;
     }
+
+    ws.user = user;
+    sendJSON(ws, {
+      type: 'auth_success',
+      created,
+      user: {
+        username: user.username,
+        elo: user.elo,
+        wins: user.wins,
+        losses: user.losses,
+        draws: user.draws
+      }
+    });
   } catch (err) {
     console.error('Auth error:', err);
     sendJSON(ws, { type: 'error', message: 'Authentication failed' });
@@ -1001,183 +1343,47 @@ async function handleAuthenticate(ws, data) {
 }
 
 async function handleSetUsername(ws, data) {
-  console.log('Received set_username for wallet:', data.walletAddress);
-  if (!mongoose.connection.readyState) return;
-  
-  const wallet = data.walletAddress;
-  const username = data.username;
-  
-  if (!wallet || !username || username.trim().length < 3) {
-    return sendJSON(ws, { type: 'error', message: 'Invalid username' });
+  const playerId = data && data.playerId ? String(data.playerId).trim().toLowerCase() : '';
+  const name = sanitizeLeaderboardUsername(data && data.username);
+
+  if (mongoose.connection.readyState !== 1) {
+    return sendJSON(ws, { type: 'error', message: 'Profiles are unavailable right now.' });
+  }
+  if (!playerId || name.length < 3 || name.length > 16) {
+    return sendJSON(ws, { type: 'error', message: 'Username must be 3-16 alphanumeric characters' });
   }
 
+  ws.playerId = playerId;
+
   try {
-    const existing = await User.findOne({ username: username.trim() });
-    if (existing) {
+    const existing = await User.findOne({ username: name });
+    if (existing && existing.playerId !== playerId.toLowerCase()) {
       return sendJSON(ws, { type: 'error', message: 'Username already taken' });
     }
 
-    let user = await User.findOne({ walletAddress: wallet.toLowerCase() });
+    let user = await User.findOne({ playerId: playerId.toLowerCase() });
     if (!user) {
-      user = new User({ walletAddress: wallet.toLowerCase(), username: username.trim() });
+      user = new User({ playerId: playerId.toLowerCase(), username: name });
     } else {
-      user.username = username.trim();
+      user.username = name;
     }
     await user.save();
-    
+
     ws.user = user;
-    sendJSON(ws, { type: 'auth_success', user: { username: user.username, elo: user.elo, wins: user.wins, losses: user.losses } });
+    ws.displayName = user.username;
+    ws.playerRating = user.elo;
+    sendJSON(ws, {
+      type: 'auth_success',
+      user: {
+        username: user.username,
+        elo: user.elo,
+        wins: user.wins,
+        losses: user.losses,
+        draws: user.draws
+      }
+    });
   } catch (err) {
     console.error('Set username error:', err);
     sendJSON(ws, { type: 'error', message: 'Failed to set username' });
-  }
-}
-
-
-
-async function handleGetFriends(ws, data) {
-  let user = ws.user;
-  if (!user && data && data.walletAddress) {
-    user = await User.findOne({ walletAddress: data.walletAddress.toLowerCase() });
-    if (user) ws.user = user;
-  }
-  if (!user) return sendJSON(ws, { type: 'friends_list', friends: [] });
-  try {
-    const friendships = await Friendship.find({
-      $or: [{ requester: user._id }, { recipient: user._id }],
-      status: 'accepted'
-    }).populate('requester', 'username elo').populate('recipient', 'username elo');
-
-    const friends = [];
-    friendships.forEach(f => {
-      try {
-        if (!f.requester || !f.recipient) return;
-        const reqId = f.requester._id ? f.requester._id.toString() : f.requester.toString();
-        const userId = user._id.toString();
-        const isRequester = reqId === userId;
-        const friend = isRequester ? f.recipient : f.requester;
-        friends.push({ username: friend.username || 'Unknown', elo: friend.elo || 1200 });
-      } catch (e) { console.error("Map error", e); }
-    });
-
-    console.log('[GetFriends] returning friends:', friends);
-    sendJSON(ws, { type: 'friends_list', friends });
-  } catch (err) {
-    console.error('[GetFriends]', err);
-    sendJSON(ws, { type: 'friends_list', friends: [] });
-  }
-}
-
-async function handleGetFriendRequests(ws) {
-  if (!ws.user) return;
-  try {
-    const requests = await Friendship.find({ recipient: ws.user._id, status: 'pending' }).populate('requester', 'username');
-    const formatted = requests.map(r => ({ id: r._id, username: r.requester.username }));
-    sendJSON(ws, { type: 'friend_requests_list', requests: formatted });
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-async function handleSendFriendRequest(ws, data) {
-  let user = ws.user;
-  if (!user && data && data.walletAddress) {
-    user = await User.findOne({ walletAddress: data.walletAddress.toLowerCase() });
-    if (user) ws.user = user;
-  }
-  if (!user) return sendJSON(ws, { type: 'friend_request_error', message: 'Please connect your wallet first' });
-  // Swap ws.user reference to resolved user
-  ws.user = user;
-  try {
-    const target = await User.findOne({ username: { $regex: new RegExp("^" + data.targetUsername + "$", "i") } });
-    if (!target) return sendJSON(ws, { type: 'friend_request_error', message: 'User not found' });
-    if (target._id.equals(ws.user._id)) return sendJSON(ws, { type: 'friend_request_error', message: 'Cannot add yourself' });
-    
-    const existing = await Friendship.findOne({
-      $or: [
-        { requester: ws.user._id, recipient: target._id },
-        { requester: target._id, recipient: ws.user._id }
-      ]
-    });
-    
-    if (existing) return sendJSON(ws, { type: 'friend_request_error', message: 'Request already exists or already friends' });
-
-    const newReq = await Friendship.create({ requester: ws.user._id, recipient: target._id });
-    sendJSON(ws, { type: 'friend_request_success', message: 'Request sent to ' + target.username });
-
-    // Notify target if online
-    wss.clients.forEach(client => {
-      if (client.user && client.user._id.equals(target._id) && client.readyState === 1 /* OPEN */) {
-        sendJSON(client, { type: 'friend_request_received', request: { id: newReq._id, username: ws.user.username } });
-      }
-    });
-  } catch (err) {
-    console.error(err);
-    sendJSON(ws, { type: 'friend_request_error', message: 'Failed to send request' });
-  }
-}
-
-async function handleRespondFriendRequest(ws, data) {
-  let user = ws.user;
-  if (!user && data && data.walletAddress) {
-    user = await User.findOne({ walletAddress: data.walletAddress.toLowerCase() });
-    if (user) ws.user = user;
-  }
-  if (!user) return;
-  try {
-    const req = await Friendship.findOne({ _id: data.requestId, recipient: ws.user._id, status: 'pending' });
-    if (!req) return;
-    
-    req.status = data.action; // 'accepted' or 'declined'
-    await req.save();
-    
-    // In a real app we'd notify the requester they were accepted, but for now just acknowledge
-    if (data.action === 'accepted') {
-      sendJSON(ws, { type: 'friend_request_success', message: 'Friend request accepted!' });
-      // Refresh friends list for the recipient
-      handleGetFriends(ws, data);
-      // Also notify the requester (original sender) if online
-      const populatedReq = await Friendship.findById(req._id).populate('requester', 'username elo');
-      wss.clients.forEach(client => {
-        if (client.user && client.user._id.equals(populatedReq.requester._id) && client.readyState === 1) {
-          handleGetFriends(client, { walletAddress: client.user.walletAddress });
-        }
-      });
-    }
-    
-    // Refresh pending requests list for this user
-    handleGetFriendRequests(ws, data);
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-async function handleInviteFriend(ws, data) {
-  try {
-    console.log('[DEBUG] Received invite_friend request for target:', data.targetUsername);
-    const User = require('./models/User');
-    const targetUser = await User.findOne({ username: data.targetUsername });
-    if (!targetUser) {
-      console.log('[DEBUG] Target user not found in DB:', data.targetUsername);
-      return;
-    }
-    
-    let inviteSent = false;
-    wss.clients.forEach(c => {
-      if (c.user && c.user._id && targetUser._id && c.user._id.toString() === targetUser._id.toString() && c.readyState === 1) {
-        console.log('[DEBUG] Sending game_invite to connected client:', c.user.username);
-        sendJSON(c, { 
-          type: 'game_invite', 
-          sender: ws.user ? ws.user.username : 'Unknown', 
-          roomCode: data.roomCode,
-          stake: data.stake,
-          mode: data.mode
-        });
-        inviteSent = true;
-      }
-    });
-    if (!inviteSent) console.log('[DEBUG] Target user is not connected or readyState is not 1');
-  } catch(err) {
-    console.error("Invite friend error:", err);
   }
 }

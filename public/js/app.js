@@ -61,27 +61,30 @@ class App {
     this._profileRevision = 0;
     
     try {
-      let saved = JSON.parse(localStorage.getItem('chessarena_abilities'));
+      let saved = JSON.parse(localStorage.getItem('owl_selected_abilities') || 'null');
+      if (!Array.isArray(saved) || saved.length === 0) {
+        saved = JSON.parse(localStorage.getItem('chessarena_abilities') || 'null');
+      }
       if (Array.isArray(saved)) {
         saved = saved.filter(s => ['swap', 'freeze', 'second', 'shield', 'jump'].includes(s));
         if (saved.length > 2) saved = saved.slice(0, 2);
-        this.selectedAbilities = (saved.length === 2) ? saved : ['swap', 'freeze'];
+        this.selectedAbilities = (saved.length === 2) ? saved : (saved.length === 1 ? saved : ['second']);
       } else {
-        this.selectedAbilities = ['swap', 'freeze'];
+        this.selectedAbilities = ['second'];
       }
     } catch(e) {
-      this.selectedAbilities = ['swap', 'freeze'];
+      this.selectedAbilities = ['second'];
     }
     
     this.setupDraggableChat();
     
     // Economy & Monetization state
-    this.coins = 300;
+    this.coins = 1000;
     this.playerLevel = 1;
     this.playerXP = 0;
     this.slot2Unlocked = false;
     this.slot2AdsWatched = 0;
-    this.unlockedSkills = ['jump', 'second'];
+    this.unlockedSkills = ['second', 'jump'];
     this.skillCharges = { jump: 3, second: 3, freeze: 3, swap: 3, shield: 3 };
     this.unlockedBoards = ['classic-oak'];
     this.adTracking = {
@@ -95,6 +98,7 @@ class App {
     };
     this.lastMatchCoinsEarned = 0;
     this.lastMatchDoubled = false;
+    this.abilitiesActivatedThisMatch = new Set();
     this.isSpinningWheel = false;
     this.pieceSymbols = {
       white: { king: '♔', queen: '♕', rook: '♖', bishop: '♗', knight: '♘', pawn: '♙' },
@@ -105,7 +109,7 @@ class App {
   }
 
   applySavedCosmetics() {
-    const savedBoardTheme = localStorage.getItem('chessarena_board_theme') || 'classic-oak';
+    const savedBoardTheme = this.getEquippedBoard();
     document.body.dataset.boardTheme = savedBoardTheme;
   }
 
@@ -132,6 +136,17 @@ class App {
 
     if (profile && storage.isValidUsername(profile.username)) {
       this.applyCloudProfile(profile);
+      this.initEconomy();
+
+    // Pre-warm cloud multiplayer server if running on YouTube Playables / CDN
+    try {
+      if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        const wsUrl = (window.CHESS_WS_URL || 'wss://chess-arena-multiplayer.onrender.com');
+        const httpUrl = wsUrl.replace('wss://', 'https://').replace('ws://', 'http://');
+        fetch(`${httpUrl}/health`, { mode: 'no-cors' }).catch(() => {});
+      }
+    } catch (e) {}
+
       this.syncLeaderboardProfile(profile, { silent: true, reason: 'startup' });
       return profile;
     }
@@ -206,6 +221,7 @@ class App {
         this.onboardingPending = false;
         this.hideModal('username-modal');
         this.applyCloudProfile(profile);
+        this.initEconomy();
         this.showToast(`Welcome, ${profile.username}!`);
         this.syncLeaderboardProfile(profile, { reason: 'onboarding' });
       } catch (e) {
@@ -215,15 +231,6 @@ class App {
         btn.textContent = 'Start Playing';
       }
     };
-  }
-
-  getStorageBadgeLabel() {
-    const storage = window.ChessArenaStorage;
-    if (!storage) return null;
-    const mode = (typeof storage.getStatus === 'function' ? storage.getStatus().mode : storage.mode) || 'local';
-    if (mode === 'youtube') return 'YouTube Cloud';
-    if (mode === 'platform') return 'Cloud Save';
-    return 'Local Save';
   }
 
   applyCloudProfile(profile) {
@@ -265,8 +272,16 @@ class App {
 
     this.updateUserCoins(clean.coins, { persist: false });
     if (clean.equipped && clean.equipped.board) {
-      document.body.dataset.boardTheme = clean.equipped.board;
-      try { localStorage.setItem('chessarena_board_theme', clean.equipped.board); } catch (e) { /* ignore */ }
+      const cloudBoard = clean.equipped.board;
+      document.body.dataset.boardTheme = cloudBoard;
+      try {
+        localStorage.setItem('chessarena_board_theme', cloudBoard);
+        localStorage.setItem('owl_board_theme', cloudBoard);
+        if (Array.isArray(this.unlockedBoards) && !this.unlockedBoards.includes(cloudBoard)) {
+          this.unlockedBoards.push(cloudBoard);
+          localStorage.setItem('owl_unlocked_boards', JSON.stringify(this.unlockedBoards));
+        }
+      } catch (e) { /* ignore */ }
     }
 
     this.savePlayerStats();
@@ -286,6 +301,46 @@ class App {
     const rank = profile && Number(profile.rank) > 0 ? Math.floor(Number(profile.rank)) : null;
     badge.textContent = rank ? `#${rank}` : 'Unranked';
     badge.title = rank ? 'Global leaderboard rank' : 'Play a rated match to enter the standings';
+  }
+
+  getEloTitle(rating) {
+    const value = Math.floor(Number(rating) || 0);
+    const tiers = [
+      { min: 2600, name: 'Mythic', icon: '✧', color: '#FF7AE0', bg: 'rgba(255, 122, 224, 0.20)', border: 'rgba(255, 122, 224, 0.78)', glow: 'rgba(255, 122, 224, 0.42)' },
+      { min: 2400, name: 'Legend', icon: '★', color: '#FFE066', bg: 'rgba(255, 224, 102, 0.20)', border: 'rgba(255, 224, 102, 0.8)', glow: 'rgba(255, 224, 102, 0.42)' },
+      { min: 2200, name: 'Grandmaster', icon: '✦', color: '#C9A7FF', bg: 'rgba(201, 167, 255, 0.20)', border: 'rgba(201, 167, 255, 0.76)', glow: 'rgba(201, 167, 255, 0.38)' },
+      { min: 2000, name: 'Royal King', icon: '♚', color: '#FF6B5E', bg: 'rgba(255, 107, 94, 0.19)', border: 'rgba(255, 107, 94, 0.76)', glow: 'rgba(255, 107, 94, 0.38)' },
+      { min: 1800, name: 'Crimson Queen', icon: '♛', color: '#FF6B9D', bg: 'rgba(255, 107, 157, 0.19)', border: 'rgba(255, 107, 157, 0.76)', glow: 'rgba(255, 107, 157, 0.38)' },
+      { min: 1600, name: 'Golden Rook', icon: '♜', color: '#FFD24A', bg: 'rgba(255, 210, 74, 0.20)', border: 'rgba(255, 210, 74, 0.78)', glow: 'rgba(255, 210, 74, 0.4)' },
+      { min: 1400, name: 'Azure Bishop', icon: '♝', color: '#5CC8FF', bg: 'rgba(92, 200, 255, 0.18)', border: 'rgba(92, 200, 255, 0.76)', glow: 'rgba(92, 200, 255, 0.36)' },
+      { min: 1200, name: 'Silver Knight', icon: '♞', color: '#DCE6F2', bg: 'rgba(220, 230, 242, 0.17)', border: 'rgba(220, 230, 242, 0.74)', glow: 'rgba(220, 230, 242, 0.32)' },
+      { min: 1000, name: 'Bronze Pawn', icon: '♟', color: '#E8A25E', bg: 'rgba(232, 162, 94, 0.18)', border: 'rgba(232, 162, 94, 0.74)', glow: 'rgba(232, 162, 94, 0.34)' }
+    ];
+    return tiers.find(tier => value >= tier.min) || null;
+  }
+
+  getEloTitleBadgeHtml(rating) {
+    const title = this.getEloTitle(rating);
+    if (!title) return '';
+    return `<span class="elo-title-badge" style="--title-color:${title.color};--title-bg:${title.bg};--title-border:${title.border};--title-glow:${title.glow};" title="${title.name} · ${title.min}+ Elo"><span class="elo-title-icon">${title.icon}</span>${title.name}</span>`;
+  }
+
+  renderProfileTitle(rating) {
+    const badge = document.getElementById('profile-title-badge');
+    if (!badge) return;
+    const title = this.getEloTitle(rating);
+    if (!title) {
+      badge.style.display = 'none';
+      badge.textContent = '';
+      return;
+    }
+    badge.style.display = 'inline-flex';
+    badge.style.setProperty('--title-color', title.color);
+    badge.style.setProperty('--title-bg', title.bg);
+    badge.style.setProperty('--title-border', title.border);
+    badge.style.setProperty('--title-glow', title.glow);
+    badge.innerHTML = `<span class="elo-title-icon">${title.icon}</span>${title.name}`;
+    badge.title = `${title.name} · ${title.min}+ Elo (your rating: ${Math.floor(Number(rating) || 0)})`;
   }
 
   renderLeaderboardMyRank() {
@@ -501,9 +556,9 @@ class App {
     this.loadPlayerStats();
     this.renderProfileStats();
     this.applyPlatformProfile();
-    this.updateUserCoins(this.getUserCoins());
-    // Ensure abilities loaded from localStorage are displayed and synced on UI immediately
-    this.syncAbilitiesUI();
+    // Load the local economy immediately so the UI is correct even before the
+    // cloud profile resolves. The cloud profile then reconciles the coin balance.
+    this.initEconomy();
 
     // Load the account-linked profile after the local UI is usable. The prompt
     // is shown only when the cloud profile has no valid player name.
@@ -809,12 +864,26 @@ class App {
     this.gameStartTime = Date.now();
     this.timers = { white: null, black: null };
     this.statsRecordedForGame = null;
+    this.lastMatchCoinsEarned = 0;
+    this.lastMatchDoubled = false;
+    this.abilitiesActivatedThisMatch = new Set();
+    this.hintCountInMatch = 0;
+    this.undoCountInMatch = 0;
+    this.hasUndoneCurrentMove = false;
     this.ratingAtGameStart = this.cloudProfile ? this.cloudProfile.rating : this.getTotalStats().rating;
     this.lastServerStats = null;
     this.lastServerStatsGameId = null;
     this.lastServerStatsAt = 0;
 
-    this.setupGameUI('You', `AI (${difficulty})`, false);
+    const aiRating = { easy: 800, medium: 1200, hard: 1600 }[difficulty] || 1200;
+    const aiLevel = { easy: 1, medium: 4, hard: 8 }[difficulty] || 4;
+    this.setupGameUI(
+      this.getPreferredDisplayName() || 'You',
+      `AI (${difficulty})`,
+      false,
+      this.getGameHeaderSelfMeta(),
+      { username: `AI (${difficulty})`, rating: aiRating, level: aiLevel }
+    );
     this.startBgMusic();
     this.showScreen('screen-game');
         setTimeout(() => this.startBgMusic(), 500);
@@ -891,9 +960,66 @@ class App {
   }
 
   onCreateRoomClick() {
-    const timerSelect = document.getElementById('timer-select');
-    this.timerMinutes = timerSelect && timerSelect.value ? parseInt(timerSelect.value) : null;
+    this.timerMinutes = 10;
     this.createRoom();
+  }
+
+  buildUserAvatar(seed) {
+    let hash = 2166136261;
+    const source = String(seed || 'player');
+    for (let i = 0; i < source.length; i++) {
+      hash ^= source.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    hash >>>= 0;
+
+    const backgrounds = [
+      ['#D98E5C', '#8C4A2F'], ['#6F9C8C', '#2E5C55'], ['#7D85B5', '#3E466F'],
+      ['#C47C9E', '#7A3D5E'], ['#8C9A5B', '#4E5E2A'], ['#B58A5A', '#6B4528']
+    ];
+    const skins = ['#F6D5B8', '#E8B98F', '#C98B62', '#9B6544', '#6E452E'];
+    const hairs = ['#2B1A12', '#4A2E1B', '#1B1B1B', '#6B3E1F', '#B07B3F', '#8C8C8C'];
+    const shirts = ['#2E6B5E', '#3E5C8C', '#8C3E4B', '#6B4E8C', '#4A6B2E', '#8C6B2E'];
+
+    const bg = backgrounds[hash % backgrounds.length];
+    const skin = skins[(hash >>> 3) % skins.length];
+    const hair = hairs[(hash >>> 6) % hairs.length];
+    const shirt = shirts[(hash >>> 9) % shirts.length];
+    const hairStyle = (hash >>> 12) % 4;
+    const hasGlasses = ((hash >>> 15) % 5) === 0;
+
+    const hairShapes = [
+      `<path d="M27 43c0-17 10-28 23-28s23 11 23 28c-4-8-11-12-23-12s-19 4-23 12z" fill="${hair}"/>`,
+      `<path d="M27 44c-1-18 9-29 23-29 15 0 24 12 23 29-5-9-12-12-22-12-8 0-16 4-24 12z" fill="${hair}"/><path d="M28 42c3-10 9-16 18-20-3 8-5 15-4 22z" fill="${hair}" opacity=".85"/>`,
+      `<path d="M27 43c0-17 10-28 23-28s23 11 23 28c-4-8-11-12-23-12s-19 4-23 12z" fill="${hair}"/><circle cx="29" cy="30" r="9" fill="${hair}"/><circle cx="71" cy="30" r="9" fill="${hair}"/><circle cx="38" cy="20" r="10" fill="${hair}"/><circle cx="62" cy="20" r="10" fill="${hair}"/><circle cx="50" cy="15" r="10" fill="${hair}"/>`,
+      `<path d="M27 43c0-17 10-28 23-28s23 11 23 28c-4-8-11-12-23-12s-19 4-23 12z" fill="${hair}"/><circle cx="50" cy="12" r="10" fill="${hair}"/>`
+    ];
+    const glasses = hasGlasses
+      ? `<g stroke="#2B1A12" stroke-width="1.6" fill="none"><circle cx="42" cy="43" r="6"/><circle cx="58" cy="43" r="6"/><path d="M48 43h4"/></g>`
+      : '';
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+      <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${bg[0]}"/><stop offset="1" stop-color="${bg[1]}"/></linearGradient></defs>
+      <rect width="100" height="100" fill="url(#bg)"/>
+      <circle cx="50" cy="48" r="38" fill="#FFFFFF" opacity=".08"/>
+      <path d="M10 100c2-21 17-32 40-32s38 11 40 32z" fill="${shirt}"/>
+      <path d="M38 69l12 10 12-10" fill="none" stroke="#FFFFFF" stroke-opacity=".22" stroke-width="2"/>
+      <circle cx="50" cy="43" r="23" fill="${skin}"/>
+      ${hairShapes[hairStyle]}
+      <circle cx="42" cy="43" r="2" fill="#2B1A12"/>
+      <circle cx="58" cy="43" r="2" fill="#2B1A12"/>
+      <path d="M45 53c3 3 7 3 10 0" fill="none" stroke="#7A3B2E" stroke-width="2" stroke-linecap="round"/>
+      ${glasses}
+    </svg>`;
+    return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+  }
+
+  updateRoulettePlayerAvatar() {
+    const avatar = document.getElementById('roulette-you-avatar');
+    if (avatar) {
+      const identity = this.playerId || this.userProfile?.username || 'you';
+      avatar.src = this.buildUserAvatar('player-' + identity);
+    }
   }
 
   startSlotMachine() {
@@ -916,24 +1042,25 @@ class App {
 
     if (!machine) return;
 
-    // Build avatar strip (40 avatars using DiceBear)
-    const customBots = ['bot1.png.jpg', 'bot2.png.jpg', 'bot3.png.jpg', 'bot4.png.jpg', 'bot5.png.jpg', 'bot6.png.jpg'];
-    const seeds = [];
-    for (let i = 0; i < 40; i++) {
-        seeds.push(customBots[i % customBots.length]);
-    }
+    this.updateRoulettePlayerAvatar();
+
+    // Build a fresh strip of random generated player avatars (no image files).
+    const avatars = Array.from({ length: 40 }, (_, i) =>
+      this.buildUserAvatar(`opponent-${Date.now()}-${i}-${Math.random()}`)
+    );
+    this.slotAvatarPool = avatars;
 
     machine.innerHTML = '';
-    seeds.forEach((seed, index) => {
+    avatars.forEach((src, index) => {
       const item = document.createElement('div');
       item.className = 'slot-avatar-item';
-      item.innerHTML = `<img src="/assets/${seed}" alt="Bot ${index}" loading="lazy" style="object-fit:cover; border-radius:50%; width:100%; height:100%;">`;
+      item.innerHTML = `<img src="${src}" alt="Opponent ${index}" style="object-fit:cover; border-radius:50%; width:100%; height:100%;">`;
       machine.appendChild(item);
     });
 
     // Rapid CSS-transition spinning: pick random index every 100ms
     const itemH = 88; // height of each slot item in px
-    const total = seeds.length;
+    const total = avatars.length;
     let idx = 0;
     machine.style.transition = 'none';
     machine.style.transform = 'translateY(0px)';
@@ -977,23 +1104,16 @@ class App {
       machine.classList.remove('spinning');
       machine.style.transition = 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
       machine.style.transform = 'translateY(0px)';
-      // Replace with opponent avatar
+      // Replace with a generated opponent avatar
       setTimeout(() => {
-        let botNum = Math.floor(Math.random() * 6) + 1;
-        if (this.multiplayer && this.multiplayer.gameId) {
-          let hash = 0;
-          let seed = this.multiplayer.gameId;
-          for (let i = 0; i < seed.length; i++) {
-            hash = ((hash << 5) - hash) + seed.charCodeAt(i);
-            hash = hash & hash;
-          }
-          botNum = (Math.abs(hash) % 6) + 1;
-        }
-        const finalBot = 'bot' + botNum + '.png.jpg';
-        machine.innerHTML = `<div class="slot-avatar-item matched"><img src="/assets/${finalBot}" alt="${opponentName || 'Opponent'}" style="object-fit:cover; border-radius:50%; width:100%; height:100%;"></div>`;
-        
-        // Save the chosen bot avatar so we can use it in the game UI
-        this.opponentAvatarSrc = '/assets/' + finalBot;
+        const pool = Array.isArray(this.slotAvatarPool) ? this.slotAvatarPool : [];
+        const finalAvatar = pool.length
+          ? pool[Math.floor(Math.random() * pool.length)]
+          : this.buildUserAvatar(`opponent-${Date.now()}-${Math.random()}`);
+        machine.innerHTML = `<div class="slot-avatar-item matched"><img src="${finalAvatar}" alt="${opponentName || 'Opponent'}" style="object-fit:cover; border-radius:50%; width:100%; height:100%;"></div>`;
+
+        // Save the generated avatar so the game and victory screens can reuse it.
+        this.opponentAvatarSrc = finalAvatar;
       }, 400);
     }
 
@@ -1028,8 +1148,7 @@ class App {
     
     }
 
-    const timerSelect = document.getElementById('timer-select');
-    const timerValue = timerSelect && timerSelect.value ? parseInt(timerSelect.value) : null;
+    const timerValue = 10;
     this.timerMinutes = timerValue;
 
     // Show searching screen immediately for instant feedback
@@ -1058,8 +1177,7 @@ class App {
 
     try {
       await this.multiplayer.connect();
-      const timerSelect = document.getElementById('timer-select');
-      const timerValue = timerSelect && timerSelect.value ? parseInt(timerSelect.value) : null;
+      const timerValue = 10;
       this.timerMinutes = timerValue;
       this.multiplayer.createRoom(timerValue, this.matchType, this.matchType === 'tactical' ? (this.selectedAbilities || ['swap', 'freeze']) : []);
     } catch {
@@ -1197,7 +1315,7 @@ class App {
       this.showJoinRoomConfirm(data);
     };
 
-    mp.onGameStart = (color, opponent, timerMinutes) => {
+    mp.onGameStart = (color, opponent, timerMinutes, gameData = {}) => {
       try {
         console.log("onGameStart triggered with", color, opponent, timerMinutes);
         this.gameMode = 'online';
@@ -1207,6 +1325,12 @@ class App {
         this.lastMove = null;
         if (!this.gameStartTime) this.gameStartTime = Date.now();
         this.statsRecordedForGame = null;
+        this.lastMatchCoinsEarned = 0;
+        this.lastMatchDoubled = false;
+        this.abilitiesActivatedThisMatch = new Set();
+        this.hintCountInMatch = 0;
+        this.undoCountInMatch = 0;
+        this.hasUndoneCurrentMove = false;
         this.ratingAtGameStart = this.cloudProfile ? this.cloudProfile.rating : this.getTotalStats().rating;
         this.lastServerStats = null;
         this.lastServerStatsGameId = null;
@@ -1219,14 +1343,20 @@ class App {
         const drawBtn = document.getElementById('btn-ingame-draw');
         if (drawBtn) drawBtn.classList.remove('hidden');
         const undoBtn = document.getElementById('btn-ingame-undo');
-        if (undoBtn) undoBtn.classList.remove('hidden');
+        if (undoBtn) {
+          undoBtn.classList.add('hidden');
+          undoBtn.style.display = 'none';
+        }
         const hintBtn = document.getElementById('btn-ingame-hint');
-        if (hintBtn) hintBtn.classList.remove('hidden');
+        if (hintBtn) {
+          hintBtn.classList.add('hidden');
+          hintBtn.style.display = 'none';
+        }
         const spectateBtn = document.getElementById('btn-leave-spectate');
         if (spectateBtn) spectateBtn.classList.add('hidden');
 
-        const youName = `You (${color === 'white' ? 'White' : 'Black'})`;
-        const oppName = `${opponent || 'Opponent'} (${color === 'white' ? 'Black' : 'White'})`;
+        const youName = this.getPreferredDisplayName() || 'Player';
+        const oppName = opponent || 'Opponent';
 
         if (timerMinutes) {
           this.timerMinutes = timerMinutes;
@@ -1239,23 +1369,20 @@ class App {
           this.timers.black = null;
         }
 
-        this.setupGameUI(youName, oppName, true);
+        this.setupGameUI(
+          youName,
+          oppName,
+          true,
+          gameData.selfProfile || null,
+          gameData.opponentProfile || null
+        );
         
         const startGame = () => {
           try {
             const topAvatar = document.getElementById('top-player-avatar');
             if (topAvatar) {
-               let botNum = 4;
-               if (this.multiplayer && this.multiplayer.gameId) {
-                 let hash = 0;
-                 let seed = this.multiplayer.gameId;
-                 for (let i = 0; i < seed.length; i++) {
-                   hash = ((hash << 5) - hash) + seed.charCodeAt(i);
-                   hash = hash & hash;
-                 }
-                 botNum = (Math.abs(hash) % 6) + 1;
-               }
-               topAvatar.src = this.opponentAvatarSrc || ('/assets/bot' + botNum + '.png.jpg');
+               const opponentSeed = this.multiplayer?.gameId || opponent || 'opponent';
+               topAvatar.src = this.opponentAvatarSrc || this.buildUserAvatar('opponent-' + opponentSeed);
             }
             this.showScreen('screen-game');
             setTimeout(() => this.startBgMusic(), 500);
@@ -1272,7 +1399,7 @@ class App {
             this.stopSlotMachine(); 
             setTimeout(() => {
                 if (typeof this.showMatchmakingFound === 'function') {
-                  this.showMatchmakingFound(opponent, '/assets/bot4.png.jpg');
+                  this.showMatchmakingFound(opponent, this.opponentAvatarSrc || this.buildUserAvatar('opponent-' + (opponent || 'match')));
                 }
                 setTimeout(startGame, 3000); 
             }, 1000);
@@ -1313,6 +1440,7 @@ class App {
             this.hintCountInMatch = 0;
     this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI(); // Re-render ability buttons (to gray them out if used)
             this.renderBoard();
+            this.updateCapturedPieces();
             this.updatePlayerBars();
         }
       };
@@ -1366,12 +1494,20 @@ class App {
       this.engine = new ChessEngine();
         this.lastMove = null;
         if (!this.gameStartTime) this.gameStartTime = Date.now();
-      
+      this.lastMatchCoinsEarned = 0;
+      this.lastMatchDoubled = false;
+      this.abilitiesActivatedThisMatch = new Set();
+      this.hintCountInMatch = 0;
+      this.undoCountInMatch = 0;
+      this.hasUndoneCurrentMove = false;
+
       // UI setup for players
       document.getElementById('btn-ingame-resign').classList.remove('hidden');
       document.getElementById('btn-ingame-draw').classList.remove('hidden');
-      document.getElementById('btn-ingame-undo').classList.remove('hidden');
-      document.getElementById('btn-ingame-hint').classList.remove('hidden');
+      document.getElementById('btn-ingame-undo').classList.add('hidden');
+      document.getElementById('btn-ingame-undo').style.display = 'none';
+      document.getElementById('btn-ingame-hint').classList.add('hidden');
+      document.getElementById('btn-ingame-hint').style.display = 'none';
       document.getElementById('btn-leave-spectate').classList.add('hidden');
 
       // Read timer from server
@@ -1379,10 +1515,16 @@ class App {
         this.timerMinutes = data.timerMinutes;
       }
 
-      const youName = `You (${data.color === 'white' ? 'White' : 'Black'})`;
-      const oppName = `${data.opponent} (${data.color === 'white' ? 'Black' : 'White'})`;
+      const youName = this.getPreferredDisplayName() || 'Player';
+      const oppName = (data.opponentProfile && data.opponentProfile.username) || data.opponent || 'Opponent';
 
-      this.setupGameUI(youName, oppName, true);
+      this.setupGameUI(
+        youName,
+        oppName,
+        true,
+        data.selfProfile || null,
+        data.opponentProfile || null
+      );
       this.showScreen('screen-game');
         setTimeout(() => this.startBgMusic(), 500);
       this.clearMoveHistory();
@@ -1425,11 +1567,22 @@ class App {
       this.engine = new ChessEngine();
         this.lastMove = null;
         if (!this.gameStartTime) this.gameStartTime = Date.now();
+      this.lastMatchCoinsEarned = 0;
+      this.lastMatchDoubled = false;
+      this.abilitiesActivatedThisMatch = new Set();
       document.getElementById('chat-messages').innerHTML = ''; // clear chat
 
       if (data.timerMinutes) this.timerMinutes = data.timerMinutes;
 
-      this.setupGameUI("White (Player)", "Black (Player)", true);
+      const whiteProfile = (data.players && data.players.white) || { username: 'White', rating: 1200, level: 1 };
+      const blackProfile = (data.players && data.players.black) || { username: 'Black', rating: 1200, level: 1 };
+      this.setupGameUI(
+        whiteProfile.username,
+        blackProfile.username,
+        true,
+        whiteProfile,
+        blackProfile
+      );
       this.showScreen('screen-game');
         setTimeout(() => this.startBgMusic(), 500);
       this.clearMoveHistory();
@@ -1635,13 +1788,98 @@ class App {
 
   // --- Game UI Setup ---------------------------------
 
-    setupGameUI(playerName, opponentName, isOnline) {
-    document.getElementById('bottom-player-name').textContent = playerName;
-    document.getElementById('top-player-name').textContent = opponentName;
+    getGameHeaderSelfMeta(fallbackName) {
+    let username = this.getPreferredDisplayName();
+    if (!username) {
+      username = String(fallbackName || '')
+        .replace(/\s*\((?:White|Black|Player|You)\)\s*$/i, '')
+        .trim();
+    }
+    if (!username || /^you$/i.test(username)) username = 'Player';
+    const stats = typeof this.getTotalStats === 'function' ? this.getTotalStats() : null;
+    const rating = Math.max(100, Math.floor(Number(
+      (this.cloudProfile && this.cloudProfile.rating) ||
+      (stats && stats.rating) ||
+      1200
+    ) || 1200));
+    const level = Math.max(1, Math.floor(Number(this.playerLevel) || 1));
+    return { username, rating, level };
+  }
+
+  normalizeGameHeaderMeta(meta, fallbackName, fallbackRating, fallbackLevel) {
+    const source = meta || {};
+    let username = source.username || source.name || fallbackName || 'Player';
+    username = String(username)
+      .replace(/\s*\((?:White|Black|Player|You)\)\s*$/i, '')
+      .trim() || 'Player';
+    const rawRating = source.rating != null
+      ? source.rating
+      : (source.elo != null ? source.elo : fallbackRating);
+    const rating = Math.max(100, Math.floor(Number(rawRating) || Number(fallbackRating) || 1200));
+    const rawLevel = source.level != null
+      ? source.level
+      : (source.playerLevel != null ? source.playerLevel : fallbackLevel);
+    const level = Math.max(1, Math.floor(Number(rawLevel) || Number(fallbackLevel) || 1));
+    return { username, rating, level };
+  }
+
+  renderGameHeader(selfMeta, opponentMeta) {
+    const apply = (prefix, meta) => {
+      const nameEl = document.getElementById(`${prefix}-player-name`);
+      const ratingEl = document.getElementById(`${prefix}-player-rating`);
+      const titleEl = document.getElementById(`${prefix}-player-title`);
+      const levelEl = document.getElementById(`${prefix}-player-level-badge`);
+
+      if (nameEl) {
+        nameEl.textContent = meta.username;
+        nameEl.title = meta.username;
+      }
+      if (ratingEl) ratingEl.textContent = `${meta.rating} Elo`;
+      if (titleEl) {
+        titleEl.innerHTML = this.getEloTitleBadgeHtml(meta.rating);
+        titleEl.style.display = titleEl.innerHTML ? 'inline-flex' : 'none';
+      }
+      if (levelEl) {
+        levelEl.textContent = `Lv ${meta.level}`;
+        levelEl.title = `Player Level ${meta.level}`;
+      }
+    };
+
+    apply('bottom', selfMeta);
+    apply('top', opponentMeta);
+  }
+
+    setupGameUI(playerName, opponentName, isOnline, playerMeta = null, opponentMeta = null) {
+    const localSelf = this.getGameHeaderSelfMeta(playerName);
+    const selfMeta = this.normalizeGameHeaderMeta(
+      playerMeta,
+      localSelf.username,
+      localSelf.rating,
+      localSelf.level
+    );
+
+    let opponentFallbackRating = 1200;
+    let opponentFallbackLevel = 1;
+    if (this.gameMode === 'ai') {
+      const difficulty = (this.ai && this.ai.difficulty) || 'medium';
+      opponentFallbackRating = { easy: 800, medium: 1200, hard: 1600 }[difficulty] || 1200;
+      opponentFallbackLevel = { easy: 1, medium: 4, hard: 8 }[difficulty] || 4;
+    }
+    const normalizedOpponent = this.normalizeGameHeaderMeta(
+      opponentMeta,
+      opponentName,
+      opponentFallbackRating,
+      opponentFallbackLevel
+    );
+
+    this.renderGameHeader(selfMeta, normalizedOpponent);
     
     const topAvatar = document.getElementById('top-player-avatar');
     if (topAvatar) {
-       topAvatar.src = this.opponentAvatarSrc || '/assets/avatar-default.svg';
+       const opponentSeed = this.gameMode === 'ai'
+         ? `ai-${this.ai?.difficulty || 'opponent'}`
+         : (this.multiplayer?.gameId || opponentName || 'opponent');
+       topAvatar.src = this.opponentAvatarSrc || this.buildUserAvatar('opponent-' + opponentSeed);
     }
 
     // Show/hide online-only controls
@@ -1650,6 +1888,7 @@ class App {
 
     this.clearMoveHistory();
     this.clearCapturedPieces();
+    this.setupMoveTickerScroll();
     
     this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
   }
@@ -1658,13 +1897,14 @@ class App {
     const ab1Btn = document.getElementById('btn-ability-1');
     const ab2Btn = document.getElementById('btn-ability-2');
     const undoBtn = document.getElementById('btn-ingame-undo');
+    const hintBtn = document.getElementById('btn-ingame-hint');
     const drawBtn = document.getElementById('btn-ingame-draw');
     const resignBtn = document.getElementById('btn-ingame-resign');
 
     if (this.gameMode === 'online') {
       const abs = (this.multiplayer && this.multiplayer.abilities && this.multiplayer.abilities.self && this.multiplayer.abilities.self.length > 0)
           ? this.multiplayer.abilities.self
-          : (this.selectedAbilities || ['swap', 'freeze']);
+          : (this.selectedAbilities && this.selectedAbilities.length ? this.selectedAbilities : ['second']);
 
       if (abs && abs.length > 0) {
         if (abs[0] && ab1Btn) {
@@ -1681,17 +1921,23 @@ class App {
           ab2Btn.classList.add('hidden');
         }
       }
-      // In online PvP: Show Draw, Hide Undo
+      // In online PvP: Show Draw, Hide Undo/Hint. Hints and undos are strictly
+      // disabled in competitive play because they are paid advantages.
       if (undoBtn) {
         undoBtn.style.display = 'none';
         undoBtn.classList.add('hidden');
+      }
+      if (hintBtn) {
+        hintBtn.style.display = 'none';
+        hintBtn.classList.add('hidden');
       }
       if (drawBtn) {
         drawBtn.style.display = '';
         drawBtn.classList.remove('hidden');
       }
     } else {
-      // In AI / Practice Mode: Standard Chess - Hide Abilities, Hide Draw, Show Undo
+      // AI / Practice Mode: standard chess with hints and undos only.
+      // Tactical abilities are exclusive to online PvP.
       if (ab1Btn) {
         ab1Btn.style.display = 'none';
         ab1Btn.classList.add('hidden');
@@ -1708,6 +1954,12 @@ class App {
         undoBtn.style.display = '';
         undoBtn.classList.remove('hidden');
         undoBtn.onclick = () => this.undoMove();
+      }
+      if (hintBtn) {
+        hintBtn.style.display = '';
+        hintBtn.classList.remove('hidden');
+        hintBtn.onclick = () => this.getHint();
+        this.updateHintButtonUI();
       }
     }
 
@@ -1738,21 +1990,33 @@ class App {
       btn.querySelector('.btn-label').textContent = 'Jump';
     }
     
-    // Check if ability was used
-    if (this.engine.abilitiesUsed && this.engine.abilitiesUsed.white && this.engine.abilitiesUsed.black) {
-      const used = this.engine.abilitiesUsed[this.playerColor].includes(abilityId);
-      if (used) {
-        btn.classList.add('disabled');
-        btn.style.opacity = '0.5';
-        btn.onclick = null;
-      } else {
-        btn.classList.remove('disabled');
-        btn.style.opacity = '1';
-      }
+    const id = abilityId === 'undo' ? 'second' : abilityId;
+    const charges = this.getSkillCharges(id);
+    const label = btn.querySelector('.btn-label');
+    if (label) {
+      const base = label.textContent.replace(/\s*\(\d+\)$/, '');
+      label.textContent = `${base} (${charges})`;
+    }
+
+    // Check if ability was used (or has no charges left)
+    const used = this.isAbilityUsedThisMatch(id);
+    if (used || charges <= 0) {
+      btn.classList.add('disabled');
+      btn.style.opacity = '0.5';
+      btn.onclick = null;
+    } else {
+      btn.classList.remove('disabled');
+      btn.style.opacity = '1';
+      btn.onclick = () => this.activateAbility(id);
     }
   }
 
   activateAbility(abilityId) {
+      if (this.gameMode === 'ai') {
+        this.showToast('Tactical abilities are only available in online PvP.');
+        return;
+      }
+
       if (this.engine.gameOver || (this.engine.currentTurn !== this.playerColor && abilityId !== 'second')) {
         this.showToast('Not your turn!');
         return;
@@ -1772,17 +2036,25 @@ class App {
       this.selectedSquare = null;
       this.legalMoves = [];
       this.renderBoard();
-    
+
+    if (!this.canUseAbility(abilityId)) return;
+
     if (abilityId === 'second') {
       if (this.gameMode === 'online') {
+        this.markAbilityUsed('second');
         this.multiplayer.send({ type: 'use_ability', ability: 'second' });
+        this.showToast('Second Chance used!');
+        this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
       } else {
         const ok = this.engine.validateAbility('second', null, this.playerColor);
         if (ok) {
-          this.consumeSkillCharge('second');
+          this.markAbilityUsed('second');
           this.showToast('Second Chance used!');
           this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
           this.renderBoard();
+          this.updateMoveHistoryUI();
+          this.updateCapturedPieces();
+          this.updatePlayerBars();
         } else {
           this.showToast('Cannot undo');
         }
@@ -1968,13 +2240,17 @@ class App {
                 return;
             }
             if (this.gameMode === 'online') {
+                this.markAbilityUsed('shield');
                 this.multiplayer.send({ type: 'use_ability', ability: 'shield', args: { row, col } });
+                this.showToast('🛡️ Divine Shield sent!');
             } else {
                 const ok = this.engine.validateAbility('shield', { row, col }, this.playerColor);
                 if (ok) {
-                    this.consumeSkillCharge('shield');
+                    this.markAbilityUsed('shield');
                     this.showToast('🛡️ Divine Shield active on ' + piece.type + '!');
                     this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
+                } else {
+                    this.showToast('Cannot shield that piece');
                 }
             }
             this.activeAbility = null;
@@ -2003,16 +2279,20 @@ class App {
                 if (target) {
                     const jumpArgs = { fromRow: this.jumpPiece.fromRow, fromCol: this.jumpPiece.fromCol, toRow: row, toCol: col };
                     if (this.gameMode === 'online') {
+                        this.markAbilityUsed('jump');
                         this.multiplayer.send({ type: 'use_ability', ability: 'jump', args: jumpArgs });
+                        this.showToast('🪽 Pegasus Jump sent!');
                     } else {
                         const ok = this.engine.validateAbility('jump', jumpArgs, this.playerColor);
                         if (ok) {
-                            this.consumeSkillCharge('jump');
+                            this.markAbilityUsed('jump');
                             this.showToast('🪽 Pegasus Jump executed!');
                             this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
                             if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
                                 setTimeout(() => this.makeAIMove(), 500);
                             }
+                        } else {
+                            this.showToast('Cannot jump to that square');
                         }
                     }
                     this.activeAbility = null;
@@ -2054,8 +2334,19 @@ class App {
                 this.showToast('Cannot freeze a King');
                 return;
             }
-            this.consumeSkillCharge('freeze');
-            if (this.gameMode === 'online') { this.multiplayer.send({ type: 'use_ability', ability: 'freeze', args: { row, col } }); } else { this.engine.validateAbility('freeze', { row, col }, this.playerColor); this.showToast('❄️ Piece Frozen for 3 turns!'); }
+            if (this.gameMode === 'online') {
+                this.markAbilityUsed('freeze');
+                this.multiplayer.send({ type: 'use_ability', ability: 'freeze', args: { row, col } });
+                this.showToast('❄️ Freeze sent!');
+            } else {
+                const ok = this.engine.validateAbility('freeze', { row, col }, this.playerColor);
+                if (ok) {
+                    this.markAbilityUsed('freeze');
+                    this.showToast('❄️ Piece Frozen for 3 turns!');
+                } else {
+                    this.showToast('Cannot freeze that piece');
+                }
+            }
             this.activeAbility = null;
             this.renderBoard(); // Clear selection UI
             return;
@@ -2103,11 +2394,27 @@ class App {
                     return;
                 }
                 
-                this.multiplayer.send({ 
-                    type: 'use_ability', 
-                    ability: 'swap', 
-                    args: { row1, col1, row2, col2 } 
-                });
+                const swapArgs = { row1, col1, row2, col2 };
+                if (this.gameMode === 'online') {
+                    this.markAbilityUsed('swap');
+                    this.multiplayer.send({
+                        type: 'use_ability',
+                        ability: 'swap',
+                        args: swapArgs
+                    });
+                    this.showToast('🔄 Tactical Swap sent!');
+                } else {
+                    const ok = this.engine.validateAbility('swap', swapArgs, this.playerColor);
+                    if (ok) {
+                        this.markAbilityUsed('swap');
+                        this.showToast('🔄 Tactical Swap executed!');
+                        if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
+                            setTimeout(() => this.makeAIMove(), 500);
+                        }
+                    } else {
+                        this.showToast('Cannot swap those pieces');
+                    }
+                }
                 this.activeAbility = null;
                 this.swapSelection = [];
             }
@@ -2423,11 +2730,24 @@ class App {
     } else if (this.pendingSwapPromotion) {
       const { row1, col1, row2, col2 } = this.pendingSwapPromotion;
       this.pendingSwapPromotion = null;
-      this.multiplayer.send({ 
-        type: 'use_ability', 
-        ability: 'swap', 
-        args: { row1, col1, row2, col2, promotion: type } 
-      });
+      const swapArgs = { row1, col1, row2, col2, promotion: type };
+      if (this.gameMode === 'online') {
+        this.markAbilityUsed('swap');
+        this.multiplayer.send({
+          type: 'use_ability',
+          ability: 'swap',
+          args: swapArgs
+        });
+      } else {
+        const ok = this.engine.validateAbility('swap', swapArgs, this.playerColor);
+        if (ok) {
+          this.markAbilityUsed('swap');
+          this.showToast('🔄 Tactical Swap executed!');
+          if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
+            setTimeout(() => this.makeAIMove(), 500);
+          }
+        }
+      }
     }
   }
 
@@ -2560,6 +2880,26 @@ class App {
       });
       list.scrollLeft = list.scrollWidth;
     }
+  }
+
+  setupMoveTickerScroll() {
+    const container = document.getElementById('move-history-ticker');
+    const list = document.getElementById('ticker-content');
+    if (!container || !list || container.dataset.scrollReady === 'true') return;
+    container.dataset.scrollReady = 'true';
+
+    // Translate a mouse-wheel / trackpad gesture into horizontal movement so the
+    // move history can be browsed with a normal mouse on desktop as well.
+    container.addEventListener('wheel', (event) => {
+      const maxScroll = list.scrollWidth - list.clientWidth;
+      if (maxScroll <= 0) return;
+      const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY)
+        ? event.deltaX
+        : event.deltaY;
+      if (!delta) return;
+      event.preventDefault();
+      list.scrollLeft = Math.max(0, Math.min(maxScroll, list.scrollLeft + delta));
+    }, { passive: false });
   }
 
   clearMoveHistory() {
@@ -2814,14 +3154,12 @@ class App {
 
   toggleMusic() {
     this.musicEnabled = !this.musicEnabled;
-    const btn = document.getElementById('btn-toggle-music');
     if (this.musicEnabled) {
-      if (btn) btn.innerHTML = '🎵 Music: On';
       this.startBgMusic();
     } else {
-      if (btn) btn.innerHTML = '🎵 Music: Off';
       this.stopBgMusic();
     }
+    this.syncSettingsUI();
     this.showToast(this.musicEnabled ? 'Music enabled' : 'Music muted');
   }
 
@@ -2836,6 +3174,27 @@ class App {
   showVictoryScreen(result) {
     // Persist the finished game (once per session) before rendering the recap
     this.recordGameResult(result);
+
+    const earnedCoins = Math.max(0, Number(this.lastMatchCoinsEarned) || 0);
+    const coinsMeta = document.getElementById('victory-meta-coins');
+    if (coinsMeta) {
+      coinsMeta.textContent = `+${earnedCoins.toLocaleString()} 🪙`;
+    }
+    const doublerBtn = document.getElementById('victory-btn-doubler');
+    const doublerText = document.getElementById('victory-btn-doubler-text');
+    if (doublerBtn) {
+      doublerBtn.disabled = this.lastMatchDoubled || earnedCoins <= 0;
+      doublerBtn.style.opacity = doublerBtn.disabled ? '0.7' : '1';
+    }
+    if (doublerText) {
+      if (this.lastMatchDoubled) {
+        doublerText.textContent = '🌟 3X Bonus Claimed!';
+      } else if (earnedCoins > 0) {
+        doublerText.textContent = `🎬 Watch Ad for 3X Coins (+${(earnedCoins * 2).toLocaleString()} 🪙)`;
+      } else {
+        doublerText.textContent = 'No match reward to boost';
+      }
+    }
 
     const isPlayerWin = result.winner ? (result.winner === this.playerColor) : false;
     const isDraw = !result.winner;
@@ -2993,6 +3352,10 @@ class App {
   // --- In-Game 3-Action Controls (Undo, Hint, Resign) --
 
   getHint() {
+    if (this.gameMode === 'online') {
+      this.showToast('Hints are disabled in competitive PvP');
+      return;
+    }
     if (!this.engine || this.engine.gameOver) {
       this.showToast('No active game for hints');
       return;
@@ -3002,17 +3365,13 @@ class App {
       return;
     }
 
-    this.hintCountInMatch = (this.hintCountInMatch || 0) + 1;
     const hintCosts = (window.ECONOMY_CONFIG && window.ECONOMY_CONFIG.hintsAndUndos && window.ECONOMY_CONFIG.hintsAndUndos.hintCosts) || [25, 50, 100, 200];
-    const hintIdx = Math.max(0, this.hintCountInMatch - 1);
-    const hintCost = hintCosts[hintIdx] !== undefined ? hintCosts[hintIdx] : hintCosts[hintCosts.length - 1] * Math.pow(2, hintIdx - (hintCosts.length - 1));
-    if ((this.coins || 0) < hintCost) {
-      this.showToast(`Need ${hintCost} coins for hint! (You have ${this.coins || 0})`);
-      this.hintCountInMatch--;
+    const hintIdx = this.hintCountInMatch || 0;
+    if (hintIdx >= hintCosts.length) {
+      this.showToast('Hint limit reached for this match');
       return;
     }
-    this.coins -= hintCost;
-    this.updateUserCoins(this.coins);
+    const hintCost = hintCosts[hintIdx];
 
     const hintAI = new AIEngine('hard');
     const bestMove = hintAI.getBestMove(this.engine);
@@ -3020,6 +3379,13 @@ class App {
       this.showToast('No hints available right now');
       return;
     }
+
+    if (!this.spendCoins(hintCost, 'hint')) {
+      this.showToast(`Need ${hintCost} coins for hint! (You have ${this.coins || 0})`);
+      return;
+    }
+    this.hintCountInMatch = hintIdx + 1;
+    this.updateHintButtonUI();
 
     // Clear previous hint highlights
     document.querySelectorAll('.square.hint-move').forEach(sq => {
@@ -3043,21 +3409,33 @@ class App {
     }, 3500);
   }
 
+  updateHintButtonUI() {
+    const label = document.getElementById('btn-ingame-hint-label');
+    if (!label) return;
+    const costs = (window.ECONOMY_CONFIG && window.ECONOMY_CONFIG.hintsAndUndos && window.ECONOMY_CONFIG.hintsAndUndos.hintCosts) || [25, 50, 100, 200];
+    const idx = this.hintCountInMatch || 0;
+    if (idx >= costs.length) {
+      label.textContent = 'Hint limit';
+    } else {
+      label.innerHTML = `Hint <span style="color:#FFD54F;font-size:11px;font-weight:700;">🪙${costs[idx]}</span>`;
+    }
+  }
+
   getUserCoins() {
     if (this.coins !== undefined && this.coins !== null) return this.coins;
-    let saved = localStorage.getItem('owl_coins');
+    let saved = localStorage.getItem('chessarena_coins');
     if (saved !== null) {
       const parsed = parseInt(saved, 10);
       if (!isNaN(parsed)) return parsed;
     }
-    return 300;
+    return window.ECONOMY_CONFIG?.currency?.startingCoins || 1000;
   }
 
   updateUserCoins(newAmount, options = {}) {
     const amount = Math.max(0, Math.floor(Number(newAmount) || 0));
     this.coins = amount;
     try {
-      localStorage.setItem('chessarena_coins', amount);
+      localStorage.setItem('chessarena_coins', String(amount));
     } catch(e) {}
 
     if (this.cloudProfile && options.persist !== false) {
@@ -3068,11 +3446,8 @@ class App {
       }
     }
 
-    const homeEl = document.getElementById('home-coin-balance');
-    if (homeEl) homeEl.textContent = amount.toLocaleString() + ' Coins';
-
-    const shopEl = document.getElementById('shop-coin-balance');
-    if (shopEl) shopEl.textContent = '🪙 ' + amount.toLocaleString() + ' Coins';
+    this.updateCoinsDisplay();
+    return this.coins;
   }
 
   getUndoCost() {
@@ -3118,16 +3493,17 @@ class App {
       return;
     }
 
-    // Progressive double-down cost: 50 -> 100 -> 200 -> 400 ...
-    const cost = this.getUndoCost();
-    const currentCoins = this.getUserCoins();
-    if (currentCoins < cost) {
-      this.showToast(`Need ${cost} coins to Undo! (You have ${currentCoins})`);
+    // Progressive double-down cost, capped by the configured number of undos.
+    const undoCosts = (window.ECONOMY_CONFIG && window.ECONOMY_CONFIG.hintsAndUndos && window.ECONOMY_CONFIG.hintsAndUndos.undoCosts) || [50, 100, 200];
+    if ((this.undoCountInMatch || 0) >= undoCosts.length) {
+      this.showToast('Undo limit reached for this match');
       return;
     }
-
-    // Deduct coins
-    this.updateUserCoins(currentCoins - cost);
+    const cost = this.getUndoCost();
+    if (!this.spendCoins(cost, 'undo')) {
+      this.showToast(`Need ${cost} coins to Undo! (You have ${this.coins || 0})`);
+      return;
+    }
 
     // Rollback moves (AI move + Player move if both moved, else 1)
     let movesToPop = 1;
@@ -3298,6 +3674,8 @@ class App {
     setText('stat-wins', totals.wins);
     setText('stat-losses', totals.losses);
     setText('stat-winrate', totals.winRate + '%');
+    this.renderProfileTitle(totals.rating);
+    this.updateProfileXP();
     document.querySelectorAll('.fantasy-rating').forEach(el => { el.textContent = 'Rating ' + totals.rating; });
   }
 
@@ -3391,6 +3769,53 @@ class App {
     this.refreshRecapRating();
   }
 
+  /**
+   * Match payout: coins + XP + first-win-of-the-day bonus.
+   * Called once from recordGameResult, after its idempotency guard.
+   */
+  awardMatchEconomy(outcome, mode) {
+    this.ensureDailyTracking();
+    const difficulty = (this.ai && this.ai.difficulty) ? this.ai.difficulty : 'medium';
+    const config = window.ECONOMY_CONFIG;
+    let reward = { coins: 0, xp: 0 };
+
+    if (config && typeof config.calculateMatchReward === 'function') {
+      reward = config.calculateMatchReward(mode, difficulty, outcome);
+    } else if (config) {
+      const isPvp = mode === 'online' || mode === 'pvp';
+      if (isPvp) {
+        reward.coins = Number(config.currency?.pvp?.[outcome] || 0);
+        reward.xp = Number(config.progression?.pvpXp?.[outcome] || 0);
+      } else {
+        const ai = config.currency?.ai?.[difficulty] || config.currency?.ai?.medium || {};
+        reward.coins = Number(ai[outcome] || 0);
+        reward.xp = Number(ai.xp?.[outcome] || ai.xp || 0);
+      }
+    }
+
+    let firstWinBonus = 0;
+    if (outcome === 'win' && !this.adTracking.firstWinClaimedToday) {
+      firstWinBonus = Number(config?.currency?.firstWinOfDayBonus || 0);
+      this.adTracking.firstWinClaimedToday = true;
+      this.saveAdTracking();
+    }
+
+    const coins = Math.max(0, Number(reward.coins) || 0) + firstWinBonus;
+    const xp = Math.max(0, Number(reward.xp) || 0);
+
+    this.lastMatchCoinsEarned = coins;
+    this.lastMatchDoubled = false;
+
+    if (coins > 0) {
+      this.addCoins(coins, `match_${mode}_${outcome}`);
+    }
+    if (xp > 0) {
+      this.addXP(xp);
+    }
+
+    return { coins, xp, firstWinBonus, outcome, mode, difficulty };
+  }
+
   // Records a finished game exactly once per game session.
   recordGameResult(result) {
     if (!result) return;
@@ -3403,6 +3828,10 @@ class App {
 
     let outcome = 'draw';
     if (result.winner) outcome = result.winner === this.playerColor ? 'win' : 'loss';
+
+    // Award the match economy exactly once (the session guard above prevents
+    // duplicate awards when the recap screen is re-rendered/reconnected).
+    this.awardMatchEconomy(outcome, mode);
 
     const fallbackRating = this.loadPlayerStats().rating;
     const hasRatingStart = this.ratingAtGameStart !== null &&
@@ -3601,27 +4030,14 @@ class App {
       document.querySelectorAll('.nav-profile-avatar-img').forEach(img => { img.src = displayAvatar; });
     }
 
-    const badge = document.getElementById('profile-platform-source');
-    if (badge) {
-      const storageLabel = this.getStorageBadgeLabel();
-      if (storageLabel) {
-        badge.textContent = storageLabel;
-        badge.style.display = 'inline-block';
-      } else if (platformLabel && platformName) {
-        badge.textContent = platformLabel;
-        badge.style.display = 'inline-block';
-      } else {
-        badge.style.display = 'none';
-      }
-    }
   }
 
   syncAbilitiesUI() {
     const valid = ['jump', 'second', 'freeze', 'swap', 'shield'];
     if (!Array.isArray(this.selectedAbilities)) {
-      this.selectedAbilities = ['jump'];
+      this.selectedAbilities = ['second'];
     }
-    const unlocked = this.unlockedSkills || ['jump', 'second'];
+    const unlocked = this.unlockedSkills || ['second', 'jump'];
     this.selectedAbilities = this.selectedAbilities
       .map(s => s === 'undo' ? 'second' : s)
       .filter(a => valid.includes(a) && unlocked.includes(a));
@@ -3630,9 +4046,6 @@ class App {
       this.selectedAbilities = [this.selectedAbilities[0]];
     } else if (this.selectedAbilities.length > 2) {
       this.selectedAbilities = this.selectedAbilities.slice(0, 2);
-    }
-    if (this.selectedAbilities.length === 0 && unlocked.length > 0) {
-      this.selectedAbilities = [unlocked[0]];
     }
 
     valid.forEach(id => {
@@ -3652,15 +4065,44 @@ class App {
         if (!badgeEl) {
           badgeEl = document.createElement('div');
           badgeEl.className = 'ability-economy-badge';
-          badgeEl.style.cssText = 'display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 11px;';
+          badgeEl.style.cssText = 'display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 6px; font-size: 11px;';
           const info = card.querySelector('.ability-info');
           if (info) info.appendChild(badgeEl);
         }
 
         if (isUnlocked) {
-          badgeEl.innerHTML = `<span style="color: #FFD54F; font-weight: 700;">Charges: ${charges}/5</span>
-            <button onclick="event.stopPropagation(); app.refillSkill('${id}', 1, 50)" style="background: #3A2315; border: 1px solid #C99700; color: #FFD54F; border-radius: 4px; padding: 2px 5px; font-size: 10px; cursor: pointer;" title="Refill 1 Charge for 50 Coins">+1 (50🪙)</button>
-            <button onclick="event.stopPropagation(); app.refillSkillViaAd('${id}')" style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; border: none; border-radius: 4px; padding: 2px 5px; font-size: 10px; font-weight: 800; cursor: pointer;" title="Watch Ad for +2 Charges">🎬 +2</button>`;
+          const maxCharges = window.ECONOMY_CONFIG?.skills?.maxCharges || 5;
+          const singleCost = window.ECONOMY_CONFIG?.skills?.refillSingleCost || 50;
+          const packCost = window.ECONOMY_CONFIG?.skills?.refillPackCost || 120;
+          const adCharges = window.ECONOMY_CONFIG?.skills?.adRefillCharges || 2;
+          const canAdd1 = charges + 1 <= maxCharges;
+          const canAdd3 = charges + 3 <= maxCharges;
+          const canAddAd = charges + adCharges <= maxCharges;
+          const note = charges >= maxCharges
+            ? 'Full — use it in online PvP to free a slot.'
+            : canAdd3
+              ? 'All refill options fit.'
+              : canAddAd
+                ? 'Only +1 or the ad refill fits.'
+                : `Only +1 fits before reaching ${maxCharges}/${maxCharges}.`;
+
+          badgeEl.innerHTML = `
+            <div class="ability-charge-summary">
+              <span class="ability-charge-label">⚡ Skill Charges</span>
+              <strong class="ability-charge-value">${charges}<span>/${maxCharges}</span></strong>
+            </div>
+            <div class="ability-charge-actions">
+              <button class="ability-recharge-btn ability-recharge-btn--coin" ${canAdd1 ? '' : 'disabled'}
+                onclick="event.stopPropagation(); app.refillSkill('${id}', 1, ${singleCost})"
+                title="${canAdd1 ? `Add 1 charge for ${singleCost} coins` : 'Not enough room for +1 charge'}">+1 <span>${singleCost}🪙</span></button>
+              <button class="ability-recharge-btn ability-recharge-btn--coin" ${canAdd3 ? '' : 'disabled'}
+                onclick="event.stopPropagation(); app.refillSkill('${id}', 3, ${packCost})"
+                title="${canAdd3 ? `Add 3 charges for ${packCost} coins` : 'Not enough room for +3 charges'}">+3 <span>${packCost}🪙</span></button>
+              <button class="ability-recharge-btn ability-recharge-btn--ad" ${canAddAd ? '' : 'disabled'}
+                onclick="event.stopPropagation(); app.refillSkillViaAd('${id}')"
+                title="${canAddAd ? `Watch an ad for +${adCharges} charges` : 'Not enough room for the ad refill'}">🎬 +${adCharges} <span>AD</span></button>
+            </div>
+            <div class="ability-charge-note">${note}</div>`;
         } else {
           const catalog = window.ECONOMY_CONFIG?.skills?.catalog || [];
           const skillItem = catalog.find(s => s.id === id);
@@ -3687,14 +4129,22 @@ class App {
       }
     });
 
+    try {
+      localStorage.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
+      localStorage.setItem('chessarena_abilities', JSON.stringify(this.selectedAbilities));
+    } catch (e) { /* ignore */ }
+
     this.syncSlotUI();
     this.updateHomeAbilitiesDisplay();
   }
 
   showAbilitiesScreen() {
     try {
-      let saved = JSON.parse(localStorage.getItem('chessarena_abilities'));
-      if (Array.isArray(saved) && saved.length === 2) {
+      let saved = JSON.parse(localStorage.getItem('owl_selected_abilities') || 'null');
+      if (!Array.isArray(saved) || saved.length === 0) {
+        saved = JSON.parse(localStorage.getItem('chessarena_abilities') || 'null');
+      }
+      if (Array.isArray(saved) && saved.length > 0) {
         this.selectedAbilities = [...saved];
       }
     } catch(e) {}
@@ -3707,7 +4157,7 @@ class App {
     const id = abilityId === 'undo' ? 'second' : abilityId;
     if (!valid.includes(id)) return;
 
-    const unlocked = this.unlockedSkills || ['jump', 'second'];
+    const unlocked = this.unlockedSkills || ['second', 'jump'];
     if (!unlocked.includes(id)) {
       this.promptUnlockSkill(id);
       return;
@@ -3725,19 +4175,21 @@ class App {
       const maxSlots = this.slot2Unlocked ? 2 : 1;
       if (this.selectedAbilities.length >= maxSlots) {
         if (!this.slot2Unlocked) {
-          this.showToast('Slot 2 is locked! Unlock Slot 2 (500🪙 or 3 Ads) to equip 2 abilities.');
-          this.promptUnlockSlot2();
-          return;
+          // Only Slot 1 is available: swap its skill instead of interrupting with an ad.
+          this.selectedAbilities = [id];
         } else {
-          // Replace oldest
+          // Replace the oldest equipped skill.
           this.selectedAbilities.shift();
         }
       }
-      this.selectedAbilities.push(id);
+      if (!this.selectedAbilities.includes(id)) {
+        this.selectedAbilities.push(id);
+      }
     }
 
     try {
       localStorage.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
+      localStorage.setItem('chessarena_abilities', JSON.stringify(this.selectedAbilities));
     } catch (e) {}
 
     this.syncAbilitiesUI();
@@ -3756,8 +4208,11 @@ class App {
       'jump': '/assets/Asset 46.png'
     };
 
+    const emojiMap = {
+      'swap': '🔄', 'freeze': '❄️', 'second': '⏪', 'shield': '🛡️', 'jump': '🪽'
+    };
     let html = '';
-    const abilities = this.selectedAbilities || ['swap', 'freeze'];
+    const abilities = this.selectedAbilities || ['second'];
     abilities.forEach(ab => {
       if (iconMap[ab]) {
         html += `<div style="width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #C99700; background: #2A170B; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.4);"><img src="${iconMap[ab]}" style="width: 17px; height: 17px; object-fit: contain;"></div>`;
@@ -3776,6 +4231,7 @@ class App {
     }
     try {
       localStorage.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
+      localStorage.setItem('chessarena_abilities', JSON.stringify(this.selectedAbilities));
     } catch(e) {}
     this.updateHomeAbilitiesDisplay();
     this.showToast('Loadout saved! Abilities equipped for battle ⚔️');
@@ -3785,6 +4241,7 @@ class App {
   showMatchmakingScreen(mode = 'matchmaking') {
     this.updateBottomNav('play');
     this.showScreen('screen-matchmaking');
+    this.updateRoulettePlayerAvatar();
     
 
     const estWait = document.getElementById('matchmaking-wait-time');
@@ -3898,19 +4355,7 @@ class App {
       console.warn('goHome cleanup error:', e);
     }
 
-    try {
-      let saved = JSON.parse(localStorage.getItem('chessarena_abilities'));
-      if (Array.isArray(saved) && saved.length === 2) {
-        this.selectedAbilities = saved;
-      } else if (!this.selectedAbilities || this.selectedAbilities.length < 2) {
-        this.selectedAbilities = ['swap', 'freeze'];
-      }
-    } catch(e) {
-      if (!this.selectedAbilities || this.selectedAbilities.length < 2) {
-        this.selectedAbilities = ['swap', 'freeze'];
-      }
-    }
-    this.updateHomeAbilitiesDisplay();
+    this.syncAbilitiesUI();
     this.isMyTurn = false;
     this.updateBottomNav('home');
     this.showScreen('screen-home');
@@ -3934,15 +4379,37 @@ class App {
 
   showModal(id) {
     const modal = document.getElementById(id);
-    if (modal) modal.classList.remove('hidden');
+    if (modal) {
+      modal.classList.remove('hidden');
+      if (id === 'modal-settings') this.syncSettingsUI();
+    }
   }
 
+  syncSettingsUI() {
+    const soundOn = !this.soundMuted;
+    const soundBtn = document.getElementById('btn-toggle-sound');
+    if (soundBtn) {
+      soundBtn.classList.toggle('is-on', soundOn);
+      soundBtn.setAttribute('aria-checked', String(soundOn));
+      soundBtn.setAttribute('aria-label', `Sound effects ${soundOn ? 'on' : 'off'}`);
+      const soundLabel = soundBtn.querySelector('.setting-switch-label');
+      if (soundLabel) soundLabel.textContent = soundOn ? 'On' : 'Off';
+    }
 
+    const musicOn = Boolean(this.musicEnabled);
+    const musicBtn = document.getElementById('btn-toggle-music');
+    if (musicBtn) {
+      musicBtn.classList.toggle('is-on', musicOn);
+      musicBtn.setAttribute('aria-checked', String(musicOn));
+      musicBtn.setAttribute('aria-label', `Background music ${musicOn ? 'on' : 'off'}`);
+      const musicLabel = musicBtn.querySelector('.setting-switch-label');
+      if (musicLabel) musicLabel.textContent = musicOn ? 'On' : 'Off';
+    }
+  }
 
   toggleSound() {
     this.soundMuted = !this.soundMuted;
-    const btn = document.getElementById('btn-toggle-sound');
-    if (btn) btn.innerHTML = this.soundMuted ? 'SFX: Off' : 'SFX: On';
+    this.syncSettingsUI();
     this.showToast(this.soundMuted ? 'Sound effects muted' : 'Sound effects enabled');
   }
 
@@ -4145,7 +4612,10 @@ class App {
   equipCosmetic(type, id) {
     if (type !== 'board') return;
     document.body.dataset.boardTheme = id;
-    try { localStorage.setItem('chessarena_board_theme', id); } catch (e) { /* ignore */ }
+    try {
+      localStorage.setItem('chessarena_board_theme', id);
+      localStorage.setItem('owl_board_theme', id);
+    } catch (e) { /* ignore */ }
     if (this.cloudProfile) {
       this.cloudProfile.equipped = Object.assign({}, this.cloudProfile.equipped || {}, { board: id });
       this.cloudProfile.lastUpdated = Date.now();
@@ -4174,23 +4644,7 @@ class App {
   showShopScreen() {
     this.updateBottomNav('shop');
     this.showScreen('screen-shop');
-    const savedBoard = localStorage.getItem('chessarena_board_theme') || 'classic-oak';
-    const boardPane = document.getElementById('shop-pane-boards');
-    if (boardPane) {
-      boardPane.querySelectorAll('.shop-item-card').forEach(card => {
-        const btn = card.querySelector('.btn-shop-action');
-        if (card.dataset.id === savedBoard) {
-          card.classList.add('equipped');
-          if (btn) { btn.classList.add('equipped'); btn.textContent = 'Equipped'; }
-        } else {
-          card.classList.remove('equipped');
-          if (btn && btn.classList.contains('equipped')) {
-            btn.classList.remove('equipped');
-            btn.textContent = 'Equip';
-          }
-        }
-      });
-    }
+    this.syncShopUI();
   }
   async showLeaderboardScreen() {
     this.updateBottomNav('rankings');
@@ -4250,16 +4704,17 @@ class App {
       const rating = Number(player.rating != null ? player.rating : player.elo) || 1200;
       const wins = Number(player.wins) || 0;
       const losses = Number(player.losses) || 0;
+      const titleBadge = this.getEloTitleBadgeHtml(rating);
       const isMe = myId && player.playerId === myId;
       const border = isMe ? '2px solid #F5D36C' : '1.5px solid #8C6538';
       const youTag = isMe
-        ? ' <span style="font-size:10px; color:#20120B; background:#F5D36C; border-radius:9999px; padding:1px 6px; margin-left:4px;">YOU</span>'
+        ? '<span style="font-size:10px; color:#20120B; background:#F5D36C; border-radius:9999px; padding:1px 6px;">YOU</span>'
         : '';
       return `<div class="ranking-card" style="background: linear-gradient(180deg, #4A2E1B 0%, #2A170C 100%); border: ${border}; border-radius: 12px; padding: 12px 18px; margin-bottom: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: space-between;">
         <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
           <div style="font-family: 'Georgia', serif; font-size: 20px; font-weight: 800; width: 32px; text-align: center; color: ${rankColor};">${rank}</div>
           <div style="display: flex; flex-direction: column;">
-            <div class="ranking-name" style="font-family: 'Georgia', serif; font-weight: 700; color: #FDF7EC; font-size: 16px; letter-spacing: 0.5px;">${name}${youTag}</div>
+            <div class="ranking-name" style="font-family: 'Georgia', serif; font-weight: 700; color: #FDF7EC; font-size: 16px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">${name}${titleBadge}${youTag}</div>
             <div style="font-size: 13px; color: #D6BD9B; font-weight: 600; margin-top: 2px;">Rating: <span style="color: #FFD54F; font-weight: 800;">${rating}</span> · ${wins}W / ${losses}L</div>
           </div>
         </div>
@@ -4271,83 +4726,181 @@ class App {
 
 
   // --- Economy & Monetization Engine ---
+  getEconomyDateKey() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  createDefaultAdTracking(lastWheelDate = null, lastChargeRefillDate = null) {
+    return {
+      date: this.getEconomyDateKey(),
+      dailyAdsWatched: 0,
+      dailyDoublersUsed: 0,
+      firstAdClaimed: false,
+      firstWinClaimedToday: false,
+      lastWheelDate: lastWheelDate || null,
+      wheelSpinsToday: 0,
+      lastChargeRefillDate: lastChargeRefillDate || null
+    };
+  }
+
+  /**
+   * Roll the ad/wheel counters over at midnight. This is also called before
+   * every reward so an app left open overnight cannot keep yesterday's caps.
+   */
+  ensureDailyTracking() {
+    const today = this.getEconomyDateKey();
+    if (!this.adTracking || typeof this.adTracking !== 'object') {
+      this.adTracking = this.createDefaultAdTracking();
+      this.saveAdTracking();
+      return true;
+    }
+
+    if (this.adTracking.date !== today) {
+      this.adTracking = this.createDefaultAdTracking(
+        this.adTracking.lastWheelDate || null,
+        this.adTracking.lastChargeRefillDate || null
+      );
+      this.saveAdTracking();
+      return true;
+    }
+
+    // Repair old/partial tracking objects without changing today's counters.
+    this.adTracking.dailyAdsWatched = Math.max(0, parseInt(this.adTracking.dailyAdsWatched, 10) || 0);
+    this.adTracking.dailyDoublersUsed = Math.max(0, parseInt(this.adTracking.dailyDoublersUsed, 10) || 0);
+    this.adTracking.wheelSpinsToday = Math.max(0, parseInt(this.adTracking.wheelSpinsToday, 10) || 0);
+    this.adTracking.firstAdClaimed = this.adTracking.firstAdClaimed === true;
+    this.adTracking.firstWinClaimedToday = this.adTracking.firstWinClaimedToday === true;
+    if (this.adTracking.lastWheelDate === undefined) this.adTracking.lastWheelDate = null;
+    if (this.adTracking.lastChargeRefillDate === undefined) this.adTracking.lastChargeRefillDate = null;
+    return false;
+  }
+
+  saveEconomyState() {
+    try {
+      localStorage.setItem('chessarena_coins', String(this.coins));
+      localStorage.setItem('owl_player_level', String(this.playerLevel));
+      localStorage.setItem('owl_player_xp', String(this.playerXP));
+      localStorage.setItem('owl_slot2_unlocked', this.slot2Unlocked ? 'true' : 'false');
+      localStorage.setItem('owl_slot2_ads', String(this.slot2AdsWatched));
+      localStorage.setItem('owl_unlocked_skills', JSON.stringify(this.unlockedSkills));
+      localStorage.setItem('owl_skill_charges', JSON.stringify(this.skillCharges));
+      localStorage.setItem('owl_unlocked_boards', JSON.stringify(this.unlockedBoards));
+      localStorage.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
+      localStorage.setItem('chessarena_abilities', JSON.stringify(this.selectedAbilities));
+    } catch (e) { /* localStorage may be unavailable; in-memory state still works */ }
+  }
+
   initEconomy() {
     try {
-      const savedCoins = localStorage.getItem('owl_coins');
-      if (savedCoins !== null) {
-        this.coins = parseInt(savedCoins, 10) || 300;
-      } else {
-        this.coins = (window.ECONOMY_CONFIG?.currency?.startingCoins) || 300;
-        localStorage.setItem('owl_coins', this.coins);
-      }
+      const startingCoins = window.ECONOMY_CONFIG?.currency?.startingCoins || 1000;
+      const cloudCoins = this.cloudProfile && Number.isFinite(Number(this.cloudProfile.coins))
+        ? Math.max(0, Math.floor(Number(this.cloudProfile.coins)))
+        : null;
+      let localCoins = NaN;
+      try {
+        const raw = localStorage.getItem('chessarena_coins');
+        const oldKeyRaw = localStorage.getItem('owl_coins');
+        if (raw !== null) {
+          localCoins = parseInt(raw, 10);
+        } else if (oldKeyRaw !== null) {
+          // One-time migration from the removed legacy key, then delete it.
+          localCoins = parseInt(oldKeyRaw, 10);
+          if (Number.isFinite(localCoins)) {
+            localStorage.setItem('chessarena_coins', String(localCoins));
+          }
+        }
+        if (oldKeyRaw !== null) localStorage.removeItem('owl_coins');
+      } catch (e) { /* ignore */ }
+      if (!Number.isFinite(localCoins) || localCoins < 0) localCoins = startingCoins;
+      this.coins = cloudCoins !== null ? cloudCoins : localCoins;
 
-      this.playerLevel = parseInt(localStorage.getItem('owl_player_level'), 10) || 1;
-      this.playerXP = parseInt(localStorage.getItem('owl_player_xp'), 10) || 0;
+      const parsedLevel = parseInt(localStorage.getItem('owl_player_level'), 10);
+      this.playerLevel = Number.isFinite(parsedLevel) && parsedLevel > 0 ? parsedLevel : 1;
+      const parsedXp = parseInt(localStorage.getItem('owl_player_xp'), 10);
+      this.playerXP = Number.isFinite(parsedXp) && parsedXp > 0 ? parsedXp : 0;
       this.slot2Unlocked = localStorage.getItem('owl_slot2_unlocked') === 'true';
-      this.slot2AdsWatched = parseInt(localStorage.getItem('owl_slot2_ads'), 10) || 0;
+      this.slot2AdsWatched = Math.max(0, Math.min(3, parseInt(localStorage.getItem('owl_slot2_ads'), 10) || 0));
+      if (this.slot2AdsWatched >= 3) this.slot2Unlocked = true;
 
-      let savedSkills = JSON.parse(localStorage.getItem('owl_unlocked_skills') || 'null');
+      const validSkills = ['jump', 'second', 'freeze', 'swap', 'shield'];
+      let savedSkills = null;
+      try { savedSkills = JSON.parse(localStorage.getItem('owl_unlocked_skills') || 'null'); } catch (e) {}
       if (Array.isArray(savedSkills) && savedSkills.length > 0) {
-        this.unlockedSkills = savedSkills.map(s => s === 'undo' ? 'second' : s);
-      } else {
-        this.unlockedSkills = ['jump', 'second'];
-        localStorage.setItem('owl_unlocked_skills', JSON.stringify(this.unlockedSkills));
+        this.unlockedSkills = [...new Set(savedSkills.map(s => s === 'undo' ? 'second' : s))]
+          .filter(s => validSkills.includes(s));
+      }
+      if (!Array.isArray(this.unlockedSkills) || this.unlockedSkills.length === 0) {
+        this.unlockedSkills = ['second', 'jump'];
       }
 
-      let savedCharges = JSON.parse(localStorage.getItem('owl_skill_charges') || 'null');
-      if (savedCharges && typeof savedCharges === 'object') {
-        this.skillCharges = savedCharges;
-      } else {
-        this.skillCharges = { jump: 3, second: 3, freeze: 3, swap: 3, shield: 3 };
-        localStorage.setItem('owl_skill_charges', JSON.stringify(this.skillCharges));
-      }
+      let savedCharges = null;
+      try { savedCharges = JSON.parse(localStorage.getItem('owl_skill_charges') || 'null'); } catch (e) {}
+      const maxCharges = window.ECONOMY_CONFIG?.skills?.maxCharges || 5;
+      const nextCharges = {};
+      validSkills.forEach(id => {
+        const raw = savedCharges && typeof savedCharges === 'object' ? parseInt(savedCharges[id], 10) : NaN;
+        nextCharges[id] = Number.isFinite(raw) ? Math.max(0, Math.min(maxCharges, raw)) : 3;
+      });
+      this.skillCharges = nextCharges;
 
-      let savedBoards = JSON.parse(localStorage.getItem('owl_unlocked_boards') || 'null');
-      if (Array.isArray(savedBoards) && savedBoards.length > 0) {
-        this.unlockedBoards = savedBoards;
-      } else {
-        this.unlockedBoards = ['classic-oak'];
-        localStorage.setItem('owl_unlocked_boards', JSON.stringify(this.unlockedBoards));
-      }
+      const validBoards = (window.ECONOMY_CONFIG?.boards || []).map(b => b.id);
+      let savedBoards = null;
+      try { savedBoards = JSON.parse(localStorage.getItem('owl_unlocked_boards') || 'null'); } catch (e) {}
+      this.unlockedBoards = Array.isArray(savedBoards)
+        ? [...new Set(savedBoards)].filter(id => validBoards.includes(id))
+        : [];
+      if (!this.unlockedBoards.includes('classic-oak')) this.unlockedBoards.unshift('classic-oak');
 
-      const today = new Date().toISOString().slice(0, 10);
-      let tracking = JSON.parse(localStorage.getItem('owl_ad_tracking') || 'null');
-      if (tracking && tracking.date === today) {
-        this.adTracking = tracking;
-      } else {
-        this.adTracking = {
-          date: today,
-          dailyAdsWatched: 0,
-          dailyDoublersUsed: 0,
-          firstAdClaimed: false,
-          firstWinClaimedToday: false,
-          lastWheelDate: tracking ? tracking.lastWheelDate : null,
-          wheelSpinsToday: 0
-        };
+      let tracking = null;
+      try { tracking = JSON.parse(localStorage.getItem('owl_ad_tracking') || 'null'); } catch (e) {}
+      this.adTracking = tracking && typeof tracking === 'object'
+        ? tracking
+        : this.createDefaultAdTracking();
+      this.ensureDailyTracking();
+
+      // Daily free charge: +1 to every unlocked ability, at most once per day.
+      const today = this.getEconomyDateKey();
+      if (this.adTracking.lastChargeRefillDate !== today) {
+        this.unlockedSkills.forEach(id => {
+          this.skillCharges[id] = Math.min(maxCharges, (this.skillCharges[id] || 0) + 1);
+        });
+        this.adTracking.lastChargeRefillDate = today;
         this.saveAdTracking();
       }
 
-      // Slot 1 & 2 validation on selected abilities
-      const valid = ['jump', 'second', 'freeze', 'swap', 'shield'];
-      if (!Array.isArray(this.selectedAbilities)) {
-        this.selectedAbilities = ['jump'];
+      // Selected loadout: prefer the current key, fall back to the legacy key.
+      let selected = null;
+      try { selected = JSON.parse(localStorage.getItem('owl_selected_abilities') || 'null'); } catch (e) {}
+      if (!Array.isArray(selected) || selected.length === 0) {
+        try { selected = JSON.parse(localStorage.getItem('chessarena_abilities') || 'null'); } catch (e) {}
       }
-      this.selectedAbilities = this.selectedAbilities
+      if (!Array.isArray(selected)) selected = this.selectedAbilities;
+      if (!Array.isArray(selected)) selected = [];
+      this.selectedAbilities = selected
         .map(s => s === 'undo' ? 'second' : s)
-        .filter(s => valid.includes(s) && this.unlockedSkills.includes(s));
-
+        .filter(s => validSkills.includes(s) && this.unlockedSkills.includes(s));
       if (!this.slot2Unlocked && this.selectedAbilities.length > 1) {
         this.selectedAbilities = [this.selectedAbilities[0]];
       } else if (this.selectedAbilities.length > 2) {
         this.selectedAbilities = this.selectedAbilities.slice(0, 2);
       }
       if (this.selectedAbilities.length === 0) {
-        this.selectedAbilities = [this.unlockedSkills[0] || 'jump'];
+        this.selectedAbilities = [this.unlockedSkills[0] || 'second'];
       }
-      localStorage.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
 
+      // One-time migration: Second Chance is now the default Slot 1 skill.
+      try {
+        if (!localStorage.getItem('owl_default_second_v1')) {
+          if (this.selectedAbilities.length === 1 && this.selectedAbilities[0] === 'jump') {
+            this.selectedAbilities = ['second'];
+          }
+          localStorage.setItem('owl_default_second_v1', 'true');
+        }
+      } catch (e) { /* ignore */ }
+
+      this.saveEconomyState();
       this.updateCoinsDisplay();
-      this.syncSlotUI();
+      this.syncAbilitiesUI();
       this.syncShopUI();
       this.updateLuckyWheelBadge();
     } catch (e) {
@@ -4361,13 +4914,46 @@ class App {
     } catch (e) {}
   }
 
+  updateProfileXP() {
+    const level = Math.max(1, Math.floor(Number(this.playerLevel) || 1));
+    const baseXp = Math.max(1, Math.floor(Number(window.ECONOMY_CONFIG?.progression?.baseXpPerLevel) || 100));
+    const required = level * baseXp;
+    const rawXp = Number(this.playerXP);
+    const xp = Number.isFinite(rawXp) ? Math.max(0, Math.min(required, Math.floor(rawXp))) : 0;
+    const percent = Math.max(0, Math.min(100, (xp / required) * 100));
+
+    const levelEl = document.getElementById('profile-hero-level');
+    if (levelEl) levelEl.textContent = level;
+
+    const fill = document.getElementById('profile-xp-fill');
+    if (fill) fill.style.width = `${percent.toFixed(2)}%`;
+
+    const text = document.getElementById('profile-xp-text');
+    if (text) text.textContent = `${xp.toLocaleString()} / ${required.toLocaleString()} XP`;
+
+    const track = document.getElementById('profile-xp-track');
+    if (track) {
+      track.setAttribute('aria-valuemax', String(required));
+      track.setAttribute('aria-valuenow', String(xp));
+      track.setAttribute('aria-valuetext', `${xp} of ${required} XP toward level ${level + 1}`);
+    }
+  }
+
   updateCoinsDisplay() {
-    const val = (this.coins || 0).toLocaleString();
-    const vaultCoins = document.getElementById('shop-gold-vault-coins');
-    if (vaultCoins) vaultCoins.textContent = `🪙 ${val}`;
+    const amount = Math.max(0, Math.floor(Number(this.coins) || 0));
+    this.coins = amount;
+    const val = amount.toLocaleString();
+
+    const homeEl = document.getElementById('home-coin-balance');
+    if (homeEl) homeEl.textContent = `${val} Coins`;
+
+    const shopEl = document.getElementById('shop-coin-balance');
+    if (shopEl) shopEl.textContent = `🪙 ${val} Coins`;
 
     const shopLvl = document.getElementById('shop-player-level');
     if (shopLvl) shopLvl.textContent = this.playerLevel || 1;
+
+    this.updateProfileXP();
 
     const profileBal = document.getElementById('profile-wallet-balance');
     if (profileBal) profileBal.textContent = val;
@@ -4377,27 +4963,55 @@ class App {
 
     const joinBal = document.getElementById('join-user-balance-display');
     if (joinBal) joinBal.textContent = `${val} Coins`;
+
+    this.updateGoldVaultButtonUI();
+  }
+
+  updateGoldVaultButtonUI() {
+    const btn = document.getElementById('shop-gold-vault-btn');
+    if (!btn) return;
+    this.ensureDailyTracking();
+    const maxDaily = window.ECONOMY_CONFIG?.ads?.maxDailyRewarded || 6;
+    const used = this.adTracking?.dailyAdsWatched || 0;
+    const left = Math.max(0, maxDaily - used);
+    const progress = document.getElementById('shop-gold-vault-coins');
+    if (progress) {
+      progress.textContent = `Today: ${used}/${maxDaily} ads${left > 0 ? ` · ${left} left` : ' · limit reached'}`;
+    }
+    if (left <= 0) {
+      btn.disabled = true;
+      btn.textContent = 'Daily ad limit reached';
+      return;
+    }
+    btn.disabled = false;
+    const reward = this.adTracking?.firstAdClaimed
+      ? (window.ECONOMY_CONFIG?.ads?.rewardCoins || 100)
+      : (window.ECONOMY_CONFIG?.ads?.firstAdOfDayBonus || 150);
+    btn.textContent = `🎬 Watch Ad · +${reward} 🪙`;
+  }
+
+  getEquippedBoard() {
+    try {
+      return localStorage.getItem('chessarena_board_theme')
+        || localStorage.getItem('owl_board_theme')
+        || 'classic-oak';
+    } catch (e) {
+      return 'classic-oak';
+    }
   }
 
   addCoins(amount, reason = '') {
-    this.coins = Math.max(0, (this.coins || 0) + Number(amount));
-    try {
-      localStorage.setItem('owl_coins', this.coins);
-    } catch (e) {}
-    this.updateCoinsDisplay();
-    return this.coins;
+    const delta = Number(amount) || 0;
+    if (delta === 0) return this.coins;
+    return this.updateUserCoins(Math.max(0, (this.coins || 0) + delta), { reason });
   }
 
   spendCoins(amount, reason = '') {
-    const cost = Number(amount);
+    const cost = Math.max(0, Math.floor(Number(amount) || 0));
     if ((this.coins || 0) < cost) {
       return false;
     }
-    this.coins -= cost;
-    try {
-      localStorage.setItem('owl_coins', this.coins);
-    } catch (e) {}
-    this.updateCoinsDisplay();
+    this.updateUserCoins(this.coins - cost, { reason });
     return true;
   }
 
@@ -4412,10 +5026,8 @@ class App {
       leveledUp = true;
     }
 
-    try {
-      localStorage.setItem('owl_player_level', this.playerLevel);
-      localStorage.setItem('owl_player_xp', this.playerXP);
-    } catch (e) {}
+    this.saveEconomyState();
+    this.updateProfileXP();
 
     if (leveledUp) {
       this.showToast(`🎉 Level Up! You reached Level ${this.playerLevel}! Check Shop for new boards & skills.`);
@@ -4425,9 +5037,10 @@ class App {
   }
 
   async claimFreeAdCoins() {
+    this.ensureDailyTracking();
     const maxDaily = window.ECONOMY_CONFIG?.ads?.maxDailyRewarded || 6;
     if (this.adTracking.dailyAdsWatched >= maxDaily) {
-      this.showToast(`Daily gold vault limit reached (${maxDaily}/${maxDaily}). Come back tomorrow!`);
+      this.showToast(`Daily Free Coins limit reached (${maxDaily}/${maxDaily}). Come back tomorrow!`);
       return;
     }
 
@@ -4441,7 +5054,7 @@ class App {
       this.adTracking.dailyAdsWatched++;
       this.saveAdTracking();
       this.addCoins(reward, 'daily_gold_vault_ad');
-      this.showToast(`🪙 +${reward} Coins added to your vault! (${this.adTracking.dailyAdsWatched}/${maxDaily} today)`);
+      this.showToast(`🪙 +${reward} Coins added to your balance! (${this.adTracking.dailyAdsWatched}/${maxDaily} today)`);
     } else {
       this.showToast('Ad was not completed. No coins awarded.');
     }
@@ -4459,11 +5072,39 @@ class App {
     if (!this.skillCharges) this.skillCharges = {};
     const cur = this.skillCharges[id] || 0;
     this.skillCharges[id] = Math.max(0, cur - 1);
-    try {
-      localStorage.setItem('owl_skill_charges', JSON.stringify(this.skillCharges));
-    } catch (e) {}
+    this.saveEconomyState();
     this.syncAbilitiesUI();
     return this.skillCharges[id];
+  }
+
+  isAbilityUsedThisMatch(abilityId) {
+    const id = abilityId === 'undo' ? 'second' : abilityId;
+    if (this.abilitiesActivatedThisMatch && this.abilitiesActivatedThisMatch.has(id)) return true;
+    const color = this.playerColor;
+    return !!(this.engine && this.engine.abilitiesUsed && color &&
+      Array.isArray(this.engine.abilitiesUsed[color]) &&
+      this.engine.abilitiesUsed[color].includes(id));
+  }
+
+  canUseAbility(abilityId) {
+    const id = abilityId === 'undo' ? 'second' : abilityId;
+    if (this.isAbilityUsedThisMatch(id)) {
+      this.showToast('This ability has already been used in this match');
+      return false;
+    }
+    if (this.getSkillCharges(id) <= 0) {
+      this.showToast('No charges left. Refill this ability in the Abilities screen.');
+      return false;
+    }
+    return true;
+  }
+
+  markAbilityUsed(abilityId) {
+    const id = abilityId === 'undo' ? 'second' : abilityId;
+    if (!this.abilitiesActivatedThisMatch) this.abilitiesActivatedThisMatch = new Set();
+    this.abilitiesActivatedThisMatch.add(id);
+    this.consumeSkillCharge(id);
+    if (this.engine && !this.engine.gameOver) this.setupAbilitiesUI();
   }
 
   refillSkill(abilityId, count = 1, cost = 50) {
@@ -4474,6 +5115,10 @@ class App {
       this.showToast(`Charges already full (${max}/${max})!`);
       return;
     }
+    if (current + count > max) {
+      this.showToast(`Not enough room: ${current}/${max}. This refill would exceed the cap (${max}).`);
+      return;
+    }
 
     if (!this.spendCoins(cost, `refill_${id}`)) {
       this.showToast(`Need ${cost} Coins! (You have ${this.coins.toLocaleString()})`);
@@ -4481,9 +5126,7 @@ class App {
     }
 
     this.skillCharges[id] = Math.min(max, current + count);
-    try {
-      localStorage.setItem('owl_skill_charges', JSON.stringify(this.skillCharges));
-    } catch (e) {}
+    this.saveEconomyState();
     this.syncAbilitiesUI();
     this.showToast(`✨ Refilled ${count} charge(s)! Current: ${this.skillCharges[id]}/${max}`);
   }
@@ -4496,15 +5139,17 @@ class App {
       this.showToast(`Charges already full (${max}/${max})!`);
       return;
     }
+    const add = window.ECONOMY_CONFIG?.skills?.adRefillCharges || 2;
+    if (current + add > max) {
+      this.showToast(`Not enough room: ${current}/${max}. The ad refill would exceed the cap (${max}).`);
+      return;
+    }
 
     this.showToast('Loading Rewarded Ad...');
     const result = await window.AdService.showRewarded(`skill_refill_${id}`);
     if (result && result.rewarded) {
-      const add = window.ECONOMY_CONFIG?.skills?.adRefillCharges || 2;
       this.skillCharges[id] = Math.min(max, current + add);
-      try {
-        localStorage.setItem('owl_skill_charges', JSON.stringify(this.skillCharges));
-      } catch (e) {}
+      this.saveEconomyState();
       this.syncAbilitiesUI();
       this.showToast(`✨ Ad complete! +${add} Charges added! Current: ${this.skillCharges[id]}/${max}`);
     } else {
@@ -4532,10 +5177,9 @@ class App {
       if (this.spendCoins(skill.cost, `unlock_skill_${id}`)) {
         if (!this.unlockedSkills.includes(id)) {
           this.unlockedSkills.push(id);
-          localStorage.setItem('owl_unlocked_skills', JSON.stringify(this.unlockedSkills));
         }
         this.skillCharges[id] = 3;
-        localStorage.setItem('owl_skill_charges', JSON.stringify(this.skillCharges));
+        this.saveEconomyState();
         this.syncAbilitiesUI();
         this.showToast(`🎉 ${skill.name} unlocked with 3 free charges!`);
       }
@@ -4564,19 +5208,29 @@ class App {
 
     if (slot2Box && slot2Header && slot2Content) {
       if (this.slot2Unlocked) {
-        slot2Box.style.border = '2px solid #C99700';
+        slot2Box.style.border = '1.5px solid #C99700';
         slot2Box.style.background = 'linear-gradient(180deg, #3A2315 0%, #1F1008 100%)';
         slot2Header.style.color = '#F5D36C';
-        slot2Header.textContent = 'SLOT 2 (ACTIVE)';
+        slot2Header.textContent = 'SLOT 2 · ACTIVE';
         const s2 = this.selectedAbilities[1];
-        slot2Content.innerHTML = `<div style="font-size: 12px; color: #FFF; font-weight: 800;">${s2 ? (nameMap[s2] || s2) : 'Empty (Tap ability to equip)'}</div>`;
+        slot2Content.innerHTML = `<div style="font-size: 11.5px; color: #FFF; font-weight: 800; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s2 ? (nameMap[s2] || s2) : 'Empty · tap a skill'}</div>`;
       } else {
-        slot2Box.style.border = '2px dashed #8C6538';
+        const requiredAds = window.ECONOMY_CONFIG?.skillSlots?.slot2AdsRequired || 3;
+        const watched = Math.max(0, Math.min(requiredAds, this.slot2AdsWatched || 0));
+        const remaining = Math.max(0, requiredAds - watched);
+        const dots = Array.from({ length: requiredAds }, (_, i) =>
+          `<span style="width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: ${i < watched ? '#4ade80' : '#3A2315'}; border: 1px solid ${i < watched ? '#4ade80' : '#8C6538'}; box-shadow: ${i < watched ? '0 0 6px rgba(74,222,128,0.5)' : 'none'};"></span>`
+        ).join('');
+
+        slot2Box.style.border = '1.5px dashed #8C6538';
         slot2Box.style.background = 'linear-gradient(180deg, #2B160B 0%, #170904 100%)';
         slot2Header.style.color = '#A58463';
-        slot2Header.textContent = 'SLOT 2 (LOCKED)';
-        const adsText = this.slot2AdsWatched > 0 ? `(${this.slot2AdsWatched}/3 Ads)` : '500🪙 / 🎬 3 Ads';
-        slot2Content.innerHTML = `<button onclick="app.promptUnlockSlot2()" style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; border: none; border-radius: 6px; font-weight: 800; font-size: 10px; padding: 4px 8px; cursor: pointer;">Unlock (${adsText})</button>`;
+        slot2Header.textContent = `SLOT 2 · ${watched}/${requiredAds}`;
+        slot2Content.innerHTML = `
+          <button onclick="app.promptUnlockSlot2()" title="${remaining} more ad${remaining === 1 ? '' : 's'} to unlock Slot 2" style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; border: none; border-radius: 5px; font-weight: 900; font-size: 9px; padding: 4px 8px; cursor: pointer; box-shadow: 0 1px 0 #8A6500; white-space: nowrap;">
+            🎬 Unlock
+          </button>
+          <span style="display: flex; gap: 3px;">${dots}</span>`;
       }
     }
   }
@@ -4587,34 +5241,32 @@ class App {
       return;
     }
 
-    const choice = confirm(`Unlock Skill Slot 2?\n\nClick OK to spend 500 Coins.\nClick Cancel to watch a Rewarded Ad (${this.slot2AdsWatched}/3 watched).`);
-    if (choice) {
-      if (this.spendCoins(500, 'unlock_slot2')) {
-        this.slot2Unlocked = true;
-        localStorage.setItem('owl_slot2_unlocked', 'true');
-        this.syncSlotUI();
-        this.showToast('🎉 Slot 2 Unlocked! You can now equip 2 abilities!');
-      } else {
-        this.showToast(`Need 500 Coins! (You have ${this.coins.toLocaleString()})`);
-      }
+    const requiredAds = window.ECONOMY_CONFIG?.skillSlots?.slot2AdsRequired || 3;
+    const watched = Math.max(0, Math.min(requiredAds, this.slot2AdsWatched || 0));
+    if (watched >= requiredAds) {
+      this.slot2Unlocked = true;
+      this.saveEconomyState();
+      this.syncSlotUI();
+      return;
+    }
+
+    this.showToast(`Loading Rewarded Ad (${watched}/${requiredAds})...`);
+    const res = await window.AdService.showRewarded('unlock_slot_2');
+    if (!res || !res.rewarded) {
+      this.showToast('Ad was not completed. No progress was added.');
+      return;
+    }
+
+    this.slot2AdsWatched = watched + 1;
+    if (this.slot2AdsWatched >= requiredAds) {
+      this.slot2Unlocked = true;
+      this.saveEconomyState();
+      this.syncSlotUI();
+      this.showToast(`🎉 Slot 2 Unlocked! (${requiredAds}/${requiredAds} ads watched). You can now equip 2 abilities!`);
     } else {
-      this.showToast('Loading Rewarded Ad...');
-      const res = await window.AdService.showRewarded('unlock_slot_2');
-      if (res && res.rewarded) {
-        this.slot2AdsWatched = (this.slot2AdsWatched || 0) + 1;
-        localStorage.setItem('owl_slot2_ads', this.slot2AdsWatched);
-        if (this.slot2AdsWatched >= 3) {
-          this.slot2Unlocked = true;
-          localStorage.setItem('owl_slot2_unlocked', 'true');
-          this.syncSlotUI();
-          this.showToast('🎉 Slot 2 Unlocked! (3/3 Ads watched). You can now equip 2 abilities!');
-        } else {
-          this.syncSlotUI();
-          this.showToast(`🎬 Ad watched! Progress: ${this.slot2AdsWatched}/3. Watch ${3 - this.slot2AdsWatched} more to unlock Slot 2!`);
-        }
-      } else {
-        this.showToast('Ad was not completed.');
-      }
+      this.saveEconomyState();
+      this.syncSlotUI();
+      this.showToast(`🎬 Ad watched! Progress: ${this.slot2AdsWatched}/${requiredAds}. Watch ${requiredAds - this.slot2AdsWatched} more to unlock Slot 2.`);
     }
   }
 
@@ -4645,8 +5297,8 @@ class App {
       if (this.spendCoins(board.cost, `unlock_board_${boardId}`)) {
         if (!this.unlockedBoards.includes(boardId)) {
           this.unlockedBoards.push(boardId);
-          localStorage.setItem('owl_unlocked_boards', JSON.stringify(this.unlockedBoards));
         }
+        this.saveEconomyState();
         this.equipCosmetic('board', boardId);
         this.syncShopUI();
         this.showToast(`🎉 Unlocked and equipped ${board.name}!`);
@@ -4656,7 +5308,7 @@ class App {
 
   syncShopUI() {
     this.updateCoinsDisplay();
-    const savedBoard = localStorage.getItem('owl_board_theme') || 'classic-oak';
+    const savedBoard = this.getEquippedBoard();
     const boardPane = document.getElementById('shop-pane-boards');
     if (!boardPane) return;
 
@@ -4671,26 +5323,34 @@ class App {
 
       if (isEquipped) {
         card.classList.add('equipped');
+        card.classList.remove('locked');
         if (btn) {
           btn.classList.add('equipped');
           btn.textContent = 'Equipped';
           btn.style.background = '';
+          btn.style.opacity = '1';
+          btn.title = 'Currently equipped';
         }
       } else if (isUnlocked) {
-        card.classList.remove('equipped');
+        card.classList.remove('equipped', 'locked');
         if (btn) {
           btn.classList.remove('equipped');
           btn.textContent = 'Equip';
           btn.style.background = '';
+          btn.style.opacity = '1';
+          btn.title = 'Equip this board';
         }
       } else {
         card.classList.remove('equipped');
+        card.classList.add('locked');
         if (btn && bConfig) {
           btn.classList.remove('equipped');
-          const canAfford = this.coins >= bConfig.cost;
           const meetsLvl = this.playerLevel >= bConfig.reqLevel;
-          btn.textContent = `Unlock (${bConfig.cost.toLocaleString()} 🪙)`;
-          btn.style.opacity = meetsLvl ? '1' : '0.6';
+          btn.textContent = `Unlock · ${bConfig.cost.toLocaleString()} 🪙`;
+          btn.style.opacity = meetsLvl ? '1' : '0.55';
+          btn.title = meetsLvl
+            ? `Unlock for ${bConfig.cost.toLocaleString()} coins`
+            : `Reach player level ${bConfig.reqLevel} to unlock`;
         }
       }
     });
@@ -4700,6 +5360,7 @@ class App {
     if (this.lastMatchDoubled || (this.lastMatchCoinsEarned || 0) <= 0) {
       return;
     }
+    this.ensureDailyTracking();
 
     const maxDoublers = window.ECONOMY_CONFIG?.ads?.maxDailyDoublers || 3;
     if (this.adTracking.dailyDoublersUsed >= maxDoublers) {
@@ -4718,7 +5379,7 @@ class App {
 
       const coinsMeta = document.getElementById('victory-meta-coins');
       if (coinsMeta) {
-        coinsMeta.textContent = `+${this.lastMatchCoinsEarned * 3} 🪙 (3X Boosted!)`;
+        coinsMeta.textContent = `+${(this.lastMatchCoinsEarned * 3).toLocaleString()} 🪙 (3X Boosted!)`;
       }
 
       const doublerBtn = document.getElementById('victory-btn-doubler');
@@ -4741,7 +5402,8 @@ class App {
   updateLuckyWheelBadge() {
     const badge = document.getElementById('home-lucky-wheel-badge');
     if (!badge) return;
-    const today = new Date().toISOString().slice(0, 10);
+    this.ensureDailyTracking();
+    const today = this.getEconomyDateKey();
     const hasFreeSpin = (this.adTracking.lastWheelDate !== today);
     if (hasFreeSpin) {
       badge.textContent = '1 Free Spin Ready!';
@@ -4781,8 +5443,8 @@ class App {
     const btn = document.getElementById('btn-spin-wheel');
     const text = document.getElementById('btn-spin-wheel-text');
     if (!btn || !text) return;
-
-    const today = new Date().toISOString().slice(0, 10);
+    this.ensureDailyTracking();
+    const today = this.getEconomyDateKey();
     const hasFreeSpin = (this.adTracking.lastWheelDate !== today);
     if (hasFreeSpin) {
       btn.disabled = false;
@@ -4805,67 +5467,156 @@ class App {
     const ctx = canvas.getContext('2d');
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const radius = centerX - 6;
+    const radius = Math.min(centerX, centerY) - 10;
+    const sliceAngle = (2 * Math.PI) / 6;
 
     const slices = [
-      { text: '50 🪙', color: '#3A2315' },
-      { text: '+2 Charges', color: '#1F1008' },
-      { text: '100 🪙', color: '#4A2E1B' },
-      { text: '+1 All', color: '#2B160B' },
-      { text: '200 🪙', color: '#5C381E' },
-      { text: '500 🪙 ⭐', color: '#C99700', textColor: '#20120B' }
+      { top: '50', bottom: 'COINS', inner: '#5A3820', outer: '#2B160B', text: '#FFE7A3' },
+      { top: '+2', bottom: 'CHARGES', inner: '#275061', outer: '#101F28', text: '#A9EBFF' },
+      { top: '100', bottom: 'COINS', inner: '#6B4423', outer: '#2B160B', text: '#FFE7A3' },
+      { top: '+1', bottom: 'ALL SKILLS', inner: '#33552F', outer: '#152415', text: '#C8F3B8' },
+      { top: '200', bottom: 'COINS', inner: '#7A4C24', outer: '#2B160B', text: '#FFE7A3' },
+      { top: '500', bottom: 'JACKPOT', inner: '#FFE28A', outer: '#C99700', text: '#20120B' }
     ];
-
-    const numSlices = slices.length;
-    const sliceAngle = (2 * Math.PI) / numSlices;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    for (let i = 0; i < numSlices; i++) {
+    // Soft base plate + shadow behind the wheel.
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius + 4, 0, 2 * Math.PI);
+    ctx.fillStyle = '#160B05';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+    ctx.shadowBlur = 16;
+    ctx.shadowOffsetY = 5;
+    ctx.fill();
+    ctx.restore();
+
+    for (let i = 0; i < slices.length; i++) {
       const start = angle + i * sliceAngle;
       const end = start + sliceAngle;
+      const mid = start + sliceAngle / 2;
+      const slice = slices[i];
+
+      // Rich radial shading gives each wedge depth without flat banding.
+      const fill = ctx.createRadialGradient(centerX, centerY, radius * 0.12, centerX, centerY, radius);
+      fill.addColorStop(0, slice.inner);
+      fill.addColorStop(0.58, slice.inner);
+      fill.addColorStop(1, slice.outer);
 
       ctx.beginPath();
       ctx.moveTo(centerX, centerY);
       ctx.arc(centerX, centerY, radius, start, end);
       ctx.closePath();
-      ctx.fillStyle = slices[i].color;
+      ctx.fillStyle = fill;
       ctx.fill();
-      ctx.strokeStyle = '#C99700';
-      ctx.lineWidth = 2.5;
+
+      // Fine gold separators, plus a darker inner line for definition.
+      ctx.strokeStyle = 'rgba(245, 211, 108, 0.55)';
+      ctx.lineWidth = 1.2;
       ctx.stroke();
 
-      // Label text
       ctx.save();
       ctx.translate(centerX, centerY);
-      ctx.rotate(start + sliceAngle / 2);
-      ctx.textAlign = 'right';
-      ctx.fillStyle = slices[i].textColor || '#FFD54F';
-      ctx.font = 'bold 12px Georgia, serif';
-      ctx.fillText(slices[i].text, radius - 16, 4);
+      // Flip labels on the left half so they read left-to-right instead of upside down.
+      const flipLabel = Math.cos(mid) < 0;
+      ctx.rotate(mid + (flipLabel ? Math.PI : 0));
+      ctx.textAlign = flipLabel ? 'left' : 'right';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = slice.text === '#20120B' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.65)';
+      ctx.shadowBlur = 2;
+      ctx.shadowOffsetY = 1;
+      ctx.fillStyle = slice.text;
+
+      const labelX = flipLabel ? -(radius - 27) : (radius - 27);
+      ctx.font = '900 14px Georgia, serif';
+      ctx.fillText(slice.top, labelX, -5);
+      ctx.font = '800 7.5px Georgia, serif';
+      ctx.fillText(slice.bottom, labelX, 8);
       ctx.restore();
     }
 
-    // Outer rim & center hub
+    // Outer bevel and rim ticks.
     ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-    ctx.strokeStyle = '#F5D36C';
-    ctx.lineWidth = 4;
+    ctx.arc(centerX, centerY, radius + 3, 0, 2 * Math.PI);
+    ctx.strokeStyle = '#5A3A12';
+    ctx.lineWidth = 6;
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.arc(centerX, centerY, 18, 0, 2 * Math.PI);
-    ctx.fillStyle = '#20120B';
-    ctx.fill();
-    ctx.strokeStyle = '#FFD54F';
-    ctx.lineWidth = 3;
+    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = '#F5D36C';
+    ctx.lineWidth = 2.5;
     ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius - 4, 0, 2 * Math.PI);
+    ctx.strokeStyle = 'rgba(32, 18, 11, 0.8)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    for (let i = 0; i < 36; i++) {
+      const tickAngle = (i * Math.PI * 2) / 36;
+      const isMajor = i % 3 === 0;
+      const inner = radius - (isMajor ? 9 : 5);
+      ctx.beginPath();
+      ctx.moveTo(centerX + Math.cos(tickAngle) * inner, centerY + Math.sin(tickAngle) * inner);
+      ctx.lineTo(centerX + Math.cos(tickAngle) * (radius - 1), centerY + Math.sin(tickAngle) * (radius - 1));
+      ctx.strokeStyle = isMajor ? '#FFD54F' : 'rgba(255, 213, 79, 0.42)';
+      ctx.lineWidth = isMajor ? 1.8 : 1;
+      ctx.stroke();
+    }
+
+    // Glossy sheen across the top half.
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius - 10, Math.PI * 1.08, Math.PI * 1.58);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.13)';
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.restore();
+
+    // Gold hub with a dark inner cap and a star.
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 25, 0, 2 * Math.PI);
+    ctx.fillStyle = '#1A0D06';
+    ctx.shadowColor = 'rgba(0,0,0,0.7)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 3;
+    ctx.fill();
+    ctx.restore();
+
+    const hub = ctx.createRadialGradient(centerX - 7, centerY - 9, 2, centerX, centerY, 24);
+    hub.addColorStop(0, '#FFF5C8');
+    hub.addColorStop(0.45, '#F5D36C');
+    hub.addColorStop(1, '#8A6500');
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 22, 0, 2 * Math.PI);
+    ctx.fillStyle = hub;
+    ctx.fill();
+    ctx.strokeStyle = '#FFE7A3';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 14, 0, 2 * Math.PI);
+    ctx.fillStyle = 'rgba(74, 46, 27, 0.92)';
+    ctx.fill();
+
+    ctx.fillStyle = '#FFD54F';
+    ctx.font = '900 13px Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('★', centerX, centerY + 1);
   }
 
   async spinLuckyWheel() {
     if (this.isSpinningWheel) return;
+    this.ensureDailyTracking();
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = this.getEconomyDateKey();
     const hasFreeSpin = (this.adTracking.lastWheelDate !== today);
 
     if (!hasFreeSpin) {
@@ -4943,27 +5694,51 @@ class App {
       } else {
         this.isSpinningWheel = false;
         const reward = rewards[targetSlice];
-        if (resEl) resEl.textContent = `Won: ${reward.label}! 🎉`;
+        const maxCharges = window.ECONOMY_CONFIG?.skills?.maxCharges || 5;
+        const unlocked = this.unlockedSkills || ['second'];
+        const nameMap = {
+          second: 'Second Chance', jump: 'Pegasus Jump', freeze: 'Piece Freeze',
+          swap: 'Tactical Swap', shield: 'Divine Shield'
+        };
+        let awardedLabel = reward.label;
 
         if (reward.type === 'coins') {
           this.addCoins(reward.amount, 'lucky_wheel');
         } else if (reward.type === 'charges_random') {
-          const unlocked = this.unlockedSkills || ['jump'];
-          const randSkill = unlocked[Math.floor(Math.random() * unlocked.length)];
-          const cur = this.getSkillCharges(randSkill);
-          this.skillCharges[randSkill] = Math.min(5, cur + 2);
-          localStorage.setItem('owl_skill_charges', JSON.stringify(this.skillCharges));
-          this.syncAbilitiesUI();
+          const eligible = unlocked.filter(s => this.getSkillCharges(s) < maxCharges);
+          if (eligible.length > 0) {
+            const randSkill = eligible[Math.floor(Math.random() * eligible.length)];
+            const cur = this.getSkillCharges(randSkill);
+            const added = Math.min(2, maxCharges - cur);
+            this.skillCharges[randSkill] = cur + added;
+            awardedLabel = `+${added} ${nameMap[randSkill] || randSkill} Charge${added === 1 ? '' : 's'}`;
+            this.saveEconomyState();
+            this.syncAbilitiesUI();
+          } else {
+            this.addCoins(50, 'lucky_wheel_charges_full');
+            awardedLabel = '50 Coins (all skill charges full)';
+          }
         } else if (reward.type === 'charges_all') {
-          (this.unlockedSkills || ['jump', 'second']).forEach(s => {
+          let changed = 0;
+          unlocked.forEach(s => {
             const cur = this.getSkillCharges(s);
-            this.skillCharges[s] = Math.min(5, cur + 1);
+            if (cur < maxCharges) {
+              this.skillCharges[s] = Math.min(maxCharges, cur + 1);
+              changed++;
+            }
           });
-          localStorage.setItem('owl_skill_charges', JSON.stringify(this.skillCharges));
-          this.syncAbilitiesUI();
+          if (changed > 0) {
+            awardedLabel = '+1 Charge to All Skills';
+            this.saveEconomyState();
+            this.syncAbilitiesUI();
+          } else {
+            this.addCoins(50, 'lucky_wheel_charges_full');
+            awardedLabel = '50 Coins (all skill charges full)';
+          }
         }
 
-        this.showToast(`🎉 Lucky Wheel: Won ${reward.label}!`);
+        if (resEl) resEl.textContent = `Won: ${awardedLabel}! 🎉`;
+        this.showToast(`🎉 Lucky Wheel: Won ${awardedLabel}!`);
         this.updateLuckyWheelButtonUI();
         this.updateLuckyWheelBadge();
       }
