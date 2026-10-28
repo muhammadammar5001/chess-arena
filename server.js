@@ -102,6 +102,8 @@ const User = require('./models/User');
 // Connect to MongoDB (optional: the game runs without it, stats stay local)
 const dbUri = process.env.MONGO_URI || process.env.MONGODB_URI;
 let mongoConnectionError = null;
+let mongoConnectionErrorName = null;
+let mongoConnectionErrorCode = null;
 if (dbUri) {
   mongoose.connect(dbUri)
     .then(async () => {
@@ -114,6 +116,8 @@ if (dbUri) {
     })
     .catch(err => {
       mongoConnectionError = classifyMongoError(err);
+      mongoConnectionErrorName = (err && err.name) || 'Error';
+      mongoConnectionErrorCode = err && err.code ? String(err.code) : null;
       console.error('MongoDB connection error:', err.message);
     });
 } else {
@@ -193,7 +197,9 @@ app.get('/api/status', (req, res) => {
     activeRooms: rooms.size,
     mongoConfigured: Boolean(dbUri),
     mongoState: mongoose.connection.readyState,
-    mongoError: mongoConnectionError
+    mongoError: mongoConnectionError,
+    mongoErrorName: mongoConnectionErrorName,
+    mongoErrorCode: mongoConnectionErrorCode
   });
 });
 
