@@ -16,7 +16,7 @@
   <script src="https://bridge.playgama.com/v2/stable/playgama-bridge.js"></script>
   <link rel="stylesheet" href="/css/tokens.css">
   <link rel="stylesheet" href="/css/styles.css?v=1793223900000">
-  <link rel="stylesheet" href="/css/wooden-theme.css?v=1793223900000">
+  <link rel="stylesheet" href="/css/wooden-theme.css?v=1793230023938">
   <link rel="stylesheet" href="/css/home-lobby.css?v=1793225700000">
   <link rel="stylesheet" href="/css/abilities-screen.css?v=1793228570000">
   <style>
@@ -884,7 +884,15 @@
         <div class="profile-hero-avatar-wrap"
           style="width: 80px; height: 80px; margin: 0; flex-shrink: 0; position: relative;">
           <img id="profile-hero-avatar" src="/assets/avatar-default.svg" alt="Player" class="profile-hero-avatar"
-            style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #20120B; object-fit: cover;">
+            style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #20120B; object-fit: cover; background: #24140B;">
+          <button type="button" id="profile-avatar-edit-btn" class="profile-avatar-edit-btn"
+            onclick="app.openAvatarPicker()" title="Change avatar" aria-label="Change avatar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+          </button>
         </div>
         <div style="display: flex; flex-direction: column; justify-content: center; flex: 1;">
           <div style="display: flex; align-items: center; gap: 8px;">
@@ -1390,6 +1398,25 @@
     </div>
   </div>
 
+  <!-- --------------- AVATAR PICKER MODAL --------------- -->
+  <div id="modal-avatar-picker" class="modal hidden">
+    <div class="modal-overlay" onclick="app.hideModal('modal-avatar-picker')"></div>
+    <div class="modal-content avatar-picker-modal" role="dialog" aria-modal="true"
+      aria-labelledby="avatar-picker-title">
+      <button type="button" class="avatar-picker-close" onclick="app.hideModal('modal-avatar-picker')"
+        aria-label="Close avatar picker">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <h3 id="avatar-picker-title">Choose Your Avatar</h3>
+      <p class="avatar-picker-subtitle">Pick the portrait that represents you in the arena.</p>
+      <div id="avatar-picker-grid" class="avatar-picker-grid" role="group" aria-label="Avatar options"></div>
+    </div>
+  </div>
+
   <!-- --------------- DRAW OFFER MODAL --------------- -->
   <div id="modal-draw-offer" class="modal hidden">
     <div class="modal-overlay" onclick="app.declineDraw()"></div>
@@ -1565,7 +1592,7 @@
   <script src="/js/platform.js?v=1793153000000"></script>
   <script src="/js/storage-service.js?v=1793153000000"></script>
   <script src="/js/economy-config.js?v=1793065000000"></script>
-  <script src="/js/app.js?v=1793228570000"></script>
+  <script src="/js/app.js?v=1793230023938"></script>
   <!-- Lucky Tavern Wheel Modal -->
   <div id="modal-lucky-wheel" class="modal hidden" style="position: fixed; inset: 0; background: rgba(10, 5, 2, 0.88); backdrop-filter: blur(3px); z-index: 99999; display: none; align-items: center; justify-content: center;">
     <div style="background: radial-gradient(circle at 50% 0%, rgba(201, 151, 0, 0.22), transparent 42%), linear-gradient(180deg, #3A2315 0%, #1A0D06 100%); border: 2px solid #C99700; border-radius: 20px; width: 90%; max-width: 370px; padding: 20px 18px 18px; text-align: center; box-shadow: 0 18px 50px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.12); color: #FDF7EC; position: relative;">

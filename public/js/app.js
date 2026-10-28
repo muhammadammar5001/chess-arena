@@ -3,6 +3,15 @@
  * Main application logic: screen management, board rendering, game flow.
  */
 
+const PLAYER_AVATARS = Array.from({ length: 18 }, (_, index) => {
+  const number = String(index + 1).padStart(2, '0');
+  return {
+    id: `pfp-${number}`,
+    src: `/assets/avatars/pfp-${number}.webp`,
+    label: `Avatar ${index + 1}`
+  };
+});
+
 class App {
   constructor() {
     this.engine = null;
@@ -47,6 +56,11 @@ class App {
     };
     this.statsRecordedForGame = null;
     this.platformProfile = null;
+
+    // Avatar selection is local-first and mirrored into cloud progress so the
+    // same portrait follows a signed-in player between sessions/devices.
+    this.avatarIdFromStorage = false;
+    this.avatarId = this.resolveInitialAvatarId();
 
     // Cloud-backed player profile (YouTube Playables / PlayGama / localStorage).
     this.cloudProfile = null;
@@ -589,6 +603,7 @@ class App {
     // Load the local economy immediately so the UI is correct even before the
     // cloud profile resolves. The cloud profile then reconciles the coin balance.
     this.initEconomy();
+    this.applyAvatarToUI();
 
     // Load the account-linked profile after the local UI is usable. The prompt
     // is shown only when the cloud profile has no valid player name.
@@ -1058,6 +1073,73 @@ class App {
     this.createRoom();
   }
 
+  getAvatarById(avatarId) {
+    return PLAYER_AVATARS.find((avatar) => avatar.id === avatarId) || null;
+  }
+
+  getSelectedAvatar() {
+    return this.getAvatarById(this.avatarId) || PLAYER_AVATARS[0] || null;
+  }
+
+  getSelectedAvatarSrc() {
+    const avatar = this.getSelectedAvatar();
+    return avatar ? avatar.src : '/assets/avatar-default.svg';
+  }
+
+  getRandomAvatarSrc() {
+    const avatar = PLAYER_AVATARS.length
+      ? PLAYER_AVATARS[Math.floor(Math.random() * PLAYER_AVATARS.length)]
+      : null;
+    return avatar ? avatar.src : '/assets/avatar-default.svg';
+  }
+
+  readStoredAvatarId() {
+    try {
+      const saved = localStorage.getItem('chessarena_avatar_id');
+      return this.normalizeAvatarId(saved);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  persistAvatarId(avatarId = this.avatarId) {
+    try {
+      localStorage.setItem('chessarena_avatar_id', avatarId);
+    } catch (e) { /* localStorage may be unavailable */ }
+  }
+
+  resolveInitialAvatarId() {
+    const saved = this.readStoredAvatarId();
+    if (saved) {
+      this.avatarIdFromStorage = true;
+      return saved;
+    }
+    const random = PLAYER_AVATARS.length
+      ? PLAYER_AVATARS[Math.floor(Math.random() * PLAYER_AVATARS.length)]
+      : null;
+    const avatarId = random ? random.id : 'pfp-01';
+    this.persistAvatarId(avatarId);
+    return avatarId;
+  }
+
+  normalizeAvatarId(value) {
+    const avatarId = String(value || '').trim();
+    return PLAYER_AVATARS.some((avatar) => avatar.id === avatarId) ? avatarId : null;
+  }
+
+  buildAvatarStrip(count = 40) {
+    const strip = [];
+    while (strip.length < count && PLAYER_AVATARS.length) {
+      const batch = PLAYER_AVATARS.slice();
+      for (let i = batch.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [batch[i], batch[j]] = [batch[j], batch[i]];
+      }
+      strip.push(...batch.map((avatar) => avatar.src));
+    }
+    return strip.slice(0, count);
+  }
+
   buildUserAvatar(seed) {
     let hash = 2166136261;
     const source = String(seed || 'player');
@@ -1110,10 +1192,7 @@ class App {
 
   updateRoulettePlayerAvatar() {
     const avatar = document.getElementById('roulette-you-avatar');
-    if (avatar) {
-      const identity = this.playerId || this.userProfile?.username || 'you';
-      avatar.src = this.buildUserAvatar('player-' + identity);
-    }
+    if (avatar) avatar.src = this.getSelectedAvatarSrc();
   }
 
   startSlotMachine() {
@@ -1136,12 +1215,11 @@ class App {
 
     if (!machine) return;
 
+    this.opponentAvatarSrc = null;
     this.updateRoulettePlayerAvatar();
 
-    // Build a fresh strip of random generated player avatars (no image files).
-    const avatars = Array.from({ length: 40 }, (_, i) =>
-      this.buildUserAvatar(`opponent-${Date.now()}-${i}-${Math.random()}`)
-    );
+    // Build a fresh strip from the same portrait pool the player chooses from.
+    const avatars = this.buildAvatarStrip(40);
     this.slotAvatarPool = avatars;
 
     machine.innerHTML = '';
@@ -1198,15 +1276,15 @@ class App {
       machine.classList.remove('spinning');
       machine.style.transition = 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
       machine.style.transform = 'translateY(0px)';
-      // Replace with a generated opponent avatar
+      // Replace with a portrait from the same random opponent pool.
       setTimeout(() => {
         const pool = Array.isArray(this.slotAvatarPool) ? this.slotAvatarPool : [];
         const finalAvatar = pool.length
           ? pool[Math.floor(Math.random() * pool.length)]
-          : this.buildUserAvatar(`opponent-${Date.now()}-${Math.random()}`);
+          : this.getRandomAvatarSrc();
         machine.innerHTML = `<div class="slot-avatar-item matched"><img src="${finalAvatar}" alt="${opponentName || 'Opponent'}" style="object-fit:cover; border-radius:50%; width:100%; height:100%;"></div>`;
 
-        // Save the generated avatar so the game and victory screens can reuse it.
+        // Save the selected portrait so the game and victory screens can reuse it.
         this.opponentAvatarSrc = finalAvatar;
       }, 400);
     }
@@ -1237,6 +1315,7 @@ class App {
     if (!(await this.ensureProfileReady())) return;
     await this.ensureServerProfileSynced();
     this.privateRoom = false;
+    this.opponentAvatarSrc = null;
 
     if (!this.multiplayer) {
       this.multiplayer = new MultiplayerClient();
@@ -1267,6 +1346,7 @@ class App {
     if (!(await this.ensureProfileReady())) return;
     await this.ensureServerProfileSynced();
     this.privateRoom = true;
+    this.opponentAvatarSrc = null;
 
     if (!this.multiplayer) {
       this.multiplayer = new MultiplayerClient();
@@ -1333,6 +1413,7 @@ class App {
     this.hideModal('modal-join-confirm');
     this.pendingJoinData = null;
     this.privateRoom = true;
+    this.opponentAvatarSrc = null;
     this.multiplayer.joinRoom(roomCode, this.selectedAbilities || ['swap', 'freeze']);
   }
 
@@ -1452,8 +1533,8 @@ class App {
           try {
             const topAvatar = document.getElementById('top-player-avatar');
             if (topAvatar) {
-               const opponentSeed = this.multiplayer?.gameId || opponent || 'opponent';
-               topAvatar.src = this.opponentAvatarSrc || this.buildUserAvatar('opponent-' + opponentSeed);
+               if (!this.opponentAvatarSrc) this.opponentAvatarSrc = this.getRandomAvatarSrc();
+               topAvatar.src = this.opponentAvatarSrc;
             }
             this.showScreen('screen-game');
             setTimeout(() => this.startBgMusic(), 500);
@@ -1470,7 +1551,7 @@ class App {
             this.stopSlotMachine(); 
             setTimeout(() => {
                 if (typeof this.showMatchmakingFound === 'function') {
-                  this.showMatchmakingFound(opponent, this.opponentAvatarSrc || this.buildUserAvatar('opponent-' + (opponent || 'match')));
+                  this.showMatchmakingFound(opponent, this.opponentAvatarSrc || this.getRandomAvatarSrc());
                 }
                 setTimeout(startGame, 3000); 
             }, 1000);
@@ -1876,13 +1957,12 @@ class App {
     );
 
     this.renderGameHeader(selfMeta, normalizedOpponent);
-    
+    this.applyAvatarToUI();
+
     const topAvatar = document.getElementById('top-player-avatar');
     if (topAvatar) {
-       const opponentSeed = this.gameMode === 'ai'
-         ? `ai-${this.ai?.difficulty || 'opponent'}`
-         : (this.multiplayer?.gameId || opponentName || 'opponent');
-       topAvatar.src = this.opponentAvatarSrc || this.buildUserAvatar('opponent-' + opponentSeed);
+       if (!this.opponentAvatarSrc) this.opponentAvatarSrc = this.getRandomAvatarSrc();
+       topAvatar.src = this.opponentAvatarSrc;
     }
 
     // Show/hide online-only controls
@@ -4074,12 +4154,28 @@ class App {
     } catch (e) { /* not on a supported platform — keep local identity */ }
   }
 
+  applyAvatarToUI() {
+    const displayAvatar = this.getSelectedAvatarSrc();
+    if (!displayAvatar) return;
+
+    const heroAvatar = document.getElementById('profile-hero-avatar');
+    if (heroAvatar) heroAvatar.src = displayAvatar;
+    document.querySelectorAll('.fantasy-avatar-img').forEach(img => { img.src = displayAvatar; });
+    document.querySelectorAll('.nav-profile-avatar-img').forEach(img => { img.src = displayAvatar; });
+
+    const bottomPlayerAvatar = document.getElementById('bottom-player-avatar');
+    if (bottomPlayerAvatar) bottomPlayerAvatar.src = displayAvatar;
+    const victoryPlayerAvatar = document.getElementById('victory-player-avatar');
+    if (victoryPlayerAvatar) victoryPlayerAvatar.src = displayAvatar;
+    const rouletteYouAvatar = document.getElementById('roulette-you-avatar');
+    if (rouletteYouAvatar) rouletteYouAvatar.src = displayAvatar;
+  }
+
   applyIdentityToUI(platformName, platformAvatar, platformLabel) {
     const localName = (this.userProfile && this.userProfile.username) || null;
     // The cloud/server username is authoritative once authenticated. Before
     // that, fall back to the host platform's display name.
     const displayName = localName || platformName;
-    const displayAvatar = platformAvatar || null;
 
     if (displayName) {
       document.querySelectorAll('.fantasy-username').forEach(el => { el.textContent = displayName; });
@@ -4092,13 +4188,7 @@ class App {
       if (mainProfileName) mainProfileName.textContent = displayName;
     }
 
-    if (displayAvatar) {
-      const heroAvatar = document.getElementById('profile-hero-avatar');
-      if (heroAvatar) heroAvatar.src = displayAvatar;
-      document.querySelectorAll('.fantasy-avatar-img').forEach(img => { img.src = displayAvatar; });
-      document.querySelectorAll('.nav-profile-avatar-img').forEach(img => { img.src = displayAvatar; });
-    }
-
+    this.applyAvatarToUI();
   }
 
   syncAbilitiesUI() {
@@ -4444,6 +4534,48 @@ class App {
   }
 
   // --- Modals ----------------------------------------
+
+  renderAvatarPicker() {
+    const grid = document.getElementById('avatar-picker-grid');
+    if (!grid) return;
+
+    grid.innerHTML = PLAYER_AVATARS.map((avatar) => {
+      const selected = avatar.id === this.avatarId;
+      return `<button type="button" class="avatar-choice${selected ? ' selected' : ''}"
+        onclick="app.selectAvatar('${avatar.id}')"
+        aria-label="Use ${avatar.label}"
+        aria-pressed="${selected ? 'true' : 'false'}"
+        title="${avatar.label}">
+        <img src="${avatar.src}" alt="${avatar.label}" loading="lazy" draggable="false">
+        <span class="avatar-choice-check" aria-hidden="true">&#10003;</span>
+      </button>`;
+    }).join('');
+  }
+
+  openAvatarPicker() {
+    this.renderAvatarPicker();
+    this.showModal('modal-avatar-picker');
+    setTimeout(() => {
+      const selected = document.querySelector('#avatar-picker-grid .avatar-choice.selected');
+      if (selected) selected.focus({ preventScroll: true });
+    }, 30);
+  }
+
+  selectAvatar(avatarId) {
+    const normalized = this.normalizeAvatarId(avatarId);
+    if (!normalized) return;
+
+    this.avatarId = normalized;
+    this.avatarIdFromStorage = true;
+    this.persistAvatarId();
+    this.applyAvatarToUI();
+    this.saveEconomyState();
+    this.hideModal('modal-avatar-picker');
+    this.showToast('Avatar updated');
+
+    const trigger = document.getElementById('profile-avatar-edit-btn');
+    if (trigger) trigger.focus({ preventScroll: true });
+  }
 
   showModal(id) {
     const modal = document.getElementById(id);
@@ -4847,6 +4979,7 @@ class App {
   saveEconomyState() {
     try {
       localStorage.setItem('chessarena_coins', String(this.coins));
+      localStorage.setItem('chessarena_avatar_id', this.avatarId);
       localStorage.setItem('owl_player_level', String(this.playerLevel));
       localStorage.setItem('owl_player_xp', String(this.playerXP));
       localStorage.setItem('owl_slot2_unlocked', this.slot2Unlocked ? 'true' : 'false');
@@ -4870,6 +5003,7 @@ class App {
     return {
       version: 1,
       updatedAt: Date.now(),
+      avatarId: this.avatarId,
       level: Math.max(1, Math.floor(Number(this.playerLevel) || 1)),
       xp: Math.max(0, Math.floor(Number(this.playerXP) || 0)),
       slot2Unlocked: this.slot2Unlocked === true,
@@ -4926,6 +5060,13 @@ class App {
     const validSkills = ['jump', 'second', 'freeze', 'swap', 'shield'];
     const maxCharges = window.ECONOMY_CONFIG?.skills?.maxCharges || 5;
     const validBoards = (window.ECONOMY_CONFIG?.boards || []).map((b) => b.id);
+
+    const savedAvatarId = this.normalizeAvatarId(data.avatarId);
+    if (savedAvatarId && !this.avatarIdFromStorage) {
+      this.avatarId = savedAvatarId;
+      this.avatarIdFromStorage = true;
+      this.persistAvatarId();
+    }
 
     const level = parseInt(data.level, 10);
     if (Number.isFinite(level) && level > 0) this.playerLevel = Math.min(100, level);
@@ -4996,6 +5137,7 @@ class App {
     // Update local mirrors/UI. Cloud progress is now the source of truth for
     // progression; coins remain in the profile record.
     this.saveEconomyState();
+    this.applyAvatarToUI();
     this.updateCoinsDisplay();
     this.syncAbilitiesUI();
     this.syncShopUI();

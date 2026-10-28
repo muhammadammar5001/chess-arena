@@ -3322,4 +3322,249 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   color: #8C6538 !important;
 }
 
+/* ==========================================================================
+   PLAYER AVATARS + AVATAR PICKER
+   ========================================================================== */
+#screen-profile .profile-avatar-edit-btn {
+  position: absolute !important;
+  right: -4px !important;
+  bottom: -4px !important;
+  z-index: 3 !important;
+  width: 28px !important;
+  height: 28px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  border: 2px solid #F5D36C !important;
+  border-radius: 50% !important;
+  background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
+  color: #F5D36C !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.65) !important;
+  cursor: pointer !important;
+  transition: transform 0.16s ease, background 0.16s ease, color 0.16s ease !important;
+}
+
+#screen-profile .profile-avatar-edit-btn:hover {
+  background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%) !important;
+  color: #20120B !important;
+  transform: scale(1.08) !important;
+}
+
+#screen-profile .profile-avatar-edit-btn:focus-visible {
+  outline: 2px solid #FDF7EC !important;
+  outline-offset: 3px !important;
+}
+
+#screen-profile .profile-avatar-edit-btn svg {
+  width: 14px !important;
+  height: 14px !important;
+  display: block !important;
+}
+
+#profile-hero-avatar,
+.fantasy-avatar-img,
+.nav-profile-avatar-img,
+.roulette-avatar-img,
+.ingame-player-avatar,
+.recap-player-avatar {
+  background: #24140B !important;
+}
+
+#modal-avatar-picker {
+  padding: 16px !important;
+}
+
+#modal-avatar-picker .modal-content {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 480px !important;
+  max-height: calc(100vh - 32px) !important;
+  padding: 24px !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+
+#modal-avatar-picker .modal-content h3 {
+  padding-right: 34px !important;
+  text-align: left !important;
+}
+
+.avatar-picker-subtitle {
+  margin: -6px 0 16px !important;
+  color: #C9B18F !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+  text-align: left !important;
+}
+
+.avatar-picker-close {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  z-index: 2 !important;
+  width: 30px !important;
+  height: 30px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  border: 1px solid #5A351D !important;
+  border-radius: 50% !important;
+  background: rgba(31, 16, 8, 0.9) !important;
+  color: #EBD2A5 !important;
+  cursor: pointer !important;
+  transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease !important;
+}
+
+.avatar-picker-close svg {
+  width: 14px !important;
+  height: 14px !important;
+  display: block !important;
+}
+
+.avatar-picker-close:hover {
+  border-color: #F5D36C !important;
+  background: #3A2315 !important;
+  color: #FFD54F !important;
+}
+
+.avatar-picker-close:focus-visible {
+  outline: 2px solid #F5D36C !important;
+  outline-offset: 2px !important;
+}
+
+.avatar-picker-grid {
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  align-content: start !important;
+}
+
+.avatar-choice {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.avatar-choice img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+  border: 2px solid #5A351D !important;
+  border-radius: 50% !important;
+  background: #24140B !important;
+  object-fit: cover !important;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease !important;
+}
+
+.avatar-choice:hover img {
+  border-color: #C99700 !important;
+  transform: scale(1.05) !important;
+}
+
+.avatar-choice.selected img {
+  border-color: #FFD54F !important;
+  box-shadow:
+    0 0 0 3px rgba(245, 211, 108, 0.22),
+    0 0 16px rgba(245, 211, 108, 0.32) !important;
+}
+
+.avatar-choice:focus-visible {
+  outline: 2px solid #FDF7EC !important;
+  outline-offset: 3px !important;
+}
+
+.avatar-choice-check {
+  position: absolute !important;
+  right: -2px !important;
+  bottom: -2px !important;
+  z-index: 2 !important;
+  width: 18px !important;
+  height: 18px !important;
+  display: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 2px solid #20120B !important;
+  border-radius: 50% !important;
+  background: #F5D36C !important;
+  color: #20120B !important;
+  font-family: var(--font-sans) !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55) !important;
+}
+
+.avatar-choice.selected .avatar-choice-check {
+  display: inline-flex !important;
+}
+
+#modal-avatar-picker .avatar-picker-modal h3 {
+  font-size: 22px !important;
+}
+
+@media (max-width: 560px) {
+  #modal-avatar-picker .modal-content {
+    padding: 20px 18px 18px !important;
+  }
+
+  .avatar-picker-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 9px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  #modal-avatar-picker .modal-content {
+    padding: 18px 16px 16px !important;
+  }
+
+  #modal-avatar-picker .avatar-picker-modal h3 {
+    font-size: 19px !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .avatar-picker-subtitle {
+    margin-bottom: 12px !important;
+    font-size: 11.5px !important;
+  }
+
+  .avatar-picker-grid {
+    gap: 7px !important;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  #modal-avatar-picker .modal-content {
+    max-width: 640px !important;
+    padding: 16px 20px !important;
+  }
+
+  #modal-avatar-picker .avatar-picker-modal h3 {
+    margin-bottom: 10px !important;
+    padding-bottom: 8px !important;
+    font-size: 19px !important;
+  }
+
+  .avatar-picker-subtitle {
+    margin: -4px 0 10px !important;
+    font-size: 11.5px !important;
+  }
+
+  .avatar-picker-grid {
+    grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+}
+
 
