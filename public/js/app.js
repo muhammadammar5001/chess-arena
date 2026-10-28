@@ -3741,6 +3741,12 @@ class App {
     this.renderProfileTitle(totals.rating);
     this.updateProfileXP();
     document.querySelectorAll('.fantasy-rating').forEach(el => { el.textContent = 'Rating ' + totals.rating; });
+
+    const homeRank = this.getEloTitle(totals.rating);
+    const homeRankName = document.getElementById('home-rank-name');
+    if (homeRankName) homeRankName.textContent = homeRank ? homeRank.name : 'Unranked';
+    const homeRankRating = document.getElementById('home-rank-rating');
+    if (homeRankRating) homeRankRating.textContent = totals.rating;
   }
 
   refreshRecapRating() {
