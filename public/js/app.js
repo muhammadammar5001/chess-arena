@@ -3,11 +3,13 @@
  * Main application logic: screen management, board rendering, game flow.
  */
 
+const AVATAR_ASSET_VERSION = '2';
+
 const PLAYER_AVATARS = Array.from({ length: 18 }, (_, index) => {
   const number = String(index + 1).padStart(2, '0');
   return {
     id: `pfp-${number}`,
-    src: `/assets/avatars/pfp-${number}.webp`,
+    src: `/assets/avatars/pfp-${number}.webp?v=${AVATAR_ASSET_VERSION}`,
     label: `Avatar ${index + 1}`
   };
 });
