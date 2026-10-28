@@ -141,7 +141,7 @@ class App {
     // Pre-warm cloud multiplayer server if running on YouTube Playables / CDN
     try {
       if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        const wsUrl = (window.CHESS_WS_URL || 'wss://chess-arena-multiplayer.onrender.com');
+        const wsUrl = (window.CHESS_WS_URL || 'wss://chess-arena-262t.onrender.com');
         const httpUrl = wsUrl.replace('wss://', 'https://').replace('ws://', 'http://');
         fetch(`${httpUrl}/health`, { mode: 'no-cors' }).catch(() => {});
       }

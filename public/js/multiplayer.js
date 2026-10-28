@@ -45,22 +45,29 @@ class MultiplayerClient {
     }
 
     // 2. Local development check
-    const isLocal = typeof window !== 'undefined' && (
-      window.location.hostname === 'localhost' ||
-      window.location.hostname === '127.0.0.1' ||
-      window.location.hostname.startsWith('192.168.') ||
-      window.location.hostname.startsWith('10.') ||
-      window.location.hostname.endsWith('.local')
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+    const isLocal = (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.') ||
+      hostname.endsWith('.local')
     );
+    const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 
     if (isLocal) {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       return `${protocol}//${window.location.host}`;
     }
 
-    // 3. YouTube Playables / Playgama CDN production environment
+    // 3. When the game is served by Render, use the same origin so the
+    // WebSocket follows the deployed service URL automatically.
+    if (hostname.endsWith('.onrender.com')) {
+      return `${protocol}//${window.location.host}`;
+    }
+
+    // 4. YouTube Playables / Playgama CDN production environment
     // Fallback to our Free Cloud WebSocket Server (Render.com free tier)
-    return 'wss://chess-arena-multiplayer.onrender.com';
+    return 'wss://chess-arena-262t.onrender.com';
   }
 
   connect() {
