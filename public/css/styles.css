@@ -1716,20 +1716,6 @@ body {
 
 
 
-.spectator-count {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg-surface);
-  border: 1px solid var(--bg-surface-hover);
-  padding: 6px 12px;
-  border-radius: 20px;
-  margin-left: auto;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-}
-
 /* ─── Matchmaking Animation ──────────────────────────── */
 
 .matchmaking-animation {
@@ -1894,7 +1880,6 @@ body {
 }
 .chat-sender.white { color: #e5e5e5; }
 .chat-sender.black { color: #F5D36C; }
-.chat-sender.spectator { color: #eab308; }
 .chat-sender.system { color: var(--gray-500); font-style: italic; }
 
 .chat-input-area {

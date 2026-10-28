@@ -33,7 +33,6 @@ class MultiplayerClient {
     this.onRematchRequested = null;
     this.onRematchAccepted = null;
     this.onTimerSync = null;
-    this.onSpectatorJoined = null;
     this.onChatMessage = null;
     this.onCheckRoomResult = null;
   }
@@ -261,12 +260,6 @@ class MultiplayerClient {
         if (this.onTimerSync) this.onTimerSync(data.white, data.black);
         break;
 
-      case 'spectator_joined':
-        this.playerColor = 'spectator';
-        this.gameId = data.gameId;
-        if (this.onSpectatorJoined) this.onSpectatorJoined(data);
-        break;
-
       case 'chat_message':
         if (this.onChatMessage) this.onChatMessage(data.sender, data.senderName, data.text);
         break;
@@ -294,11 +287,6 @@ class MultiplayerClient {
   joinRoom(roomCode, abilities = []) {
     this.roomCode = roomCode.toUpperCase();
     this.send({ type: 'join_room', roomCode: this.roomCode, abilities: abilities });
-  }
-
-  spectateRoom(roomCode, spectatorName) {
-    this.roomCode = roomCode.toUpperCase();
-    this.send({ type: 'spectate_room', roomCode: this.roomCode, spectatorName });
   }
 
   sendChatMessage(text) {

@@ -1,13 +1,12 @@
 # Chess Arena
 
-Chess Arena is a free, mobile-first chess game for the web. It combines classic chess with **Tactical Mode** abilities, AI practice, online rooms, matchmaking, spectating, chat and rematches.
+Chess Arena is a free, mobile-first chess game for the web. It combines classic chess with **Tactical Mode** abilities, AI practice, online rooms, matchmaking, chat and rematches.
 
 ## Features
 
 - **Practice vs AI** — easy, medium and hard difficulty.
 - **Online multiplayer** — random matchmaking or private 6-character room codes.
 - **Tactical Mode** — equip two one-use abilities such as Swap, Freeze, Second Chance, Divine Shield and Pegasus Jump.
-- **Spectating** — watch live games by room code.
 - **Account-linked player profile** — name, rating, win/loss/draw totals, coins, match history and equipped board. YouTube Playables uses native cloud storage (`YT.getCloudStorage()`); otherwise the PlayGama Bridge store or `localStorage` is used.
 - **First-launch onboarding** — new players choose a 3–16 character alphanumeric name once. Existing profiles hydrate the saved name, rating, coins, board and global rank immediately.
 - **Global leaderboard** — every finished AI or online match updates the profile, syncs Elo/stats with `POST /api/leaderboard/sync`, and refreshes the player's rank and the leaderboard.

@@ -288,9 +288,6 @@ function getSocketProfile(ws) {
 function broadcastToRoom(room, data) {
   if (room.players.white) sendJSON(room.players.white, data);
   if (room.players.black) sendJSON(room.players.black, data);
-  if (room.spectators) {
-    room.spectators.forEach(ws => sendJSON(ws, data));
-  }
 }
 
 function handleMessage(ws, data) {
@@ -319,9 +316,6 @@ function handleMessage(ws, data) {
       break;
     case 'cancel_match':
       handleCancelMatch(ws);
-      break;
-    case 'spectate_room':
-      handleSpectateRoom(ws, data.roomCode, data.spectatorName);
       break;
     case 'chat_message':
       handleChatMessage(ws, data.text);
@@ -393,7 +387,6 @@ function createRoom(ws, timerMinutes, mode = 'standard', abilities = []) {
       white: roomTimerMinutes * 60 * 1000,
       black: roomTimerMinutes * 60 * 1000
     },
-    spectators: new Set(),
     lastMoveTime: null,
     lastActivity: Date.now(),
     rematchRequested: null,
@@ -541,7 +534,6 @@ function handleFindMatch(ws, mode = 'standard', abilities = []) {
       white: timerMinutes * 60 * 1000,
       black: timerMinutes * 60 * 1000
     },
-    spectators: new Set(),
     lastMoveTime: null,
     lastActivity: Date.now(),
     rematchRequested: null,
@@ -633,7 +625,7 @@ function handleMove(ws, data) {
 
   room.lastMoveTime = Date.now();
 
-  // Send move to all players & spectators
+  // Send move to both players
   broadcastToRoom(room, {
     type: 'opponent_move',
     from: data.from,
@@ -747,38 +739,8 @@ function handleReconnect(ws, data) {
   }
 
   const color = data.color;
-  if (!color || (color !== 'white' && color !== 'black' && color !== 'spectator')) {
+  if (!color || (color !== 'white' && color !== 'black')) {
     sendJSON(ws, { type: 'error', message: 'Invalid color' });
-    return;
-  }
-
-  if (color === 'spectator') {
-    ws.roomCode = data.roomCode;
-    ws.playerColor = 'spectator';
-    room.spectators.add(ws);
-    
-    const moveList = room.engine.moveHistory.map(m => { if (m.ability) return m; return { from: ChessEngine.toAlgebraic(m.from.row, m.from.col), to: ChessEngine.toAlgebraic(m.to.row, m.to.col), promotion: m.promotion || null }; });
-
-    sendJSON(ws, {
-      type: 'game_reconnect',
-        mode: room.mode,
-        color: 'spectator',
-      gameId: room.gameId,
-      opponent: 'Watching',
-      players: {
-        white: getSocketProfile(room.players.white),
-        black: getSocketProfile(room.players.black)
-      },
-      timer: room.timer,
-      timerMinutes: room.timer ? room.timer / 60000 : null,
-      moves: moveList,
-      abilities: { self: [], opponent: [] },
-        abilitiesUsed: room.engine.abilitiesUsed,
-        timers: room.timers ? {
-        white: room.timers.white - (room.engine.currentTurn === 'white' ? Date.now() - room.lastMoveTime : 0),
-        black: room.timers.black - (room.engine.currentTurn === 'black' ? Date.now() - room.lastMoveTime : 0)
-      } : null
-    });
     return;
   }
 
@@ -826,55 +788,15 @@ function handleReconnect(ws, data) {
   console.log('Player ' + color + ' reconnected to room ' + data.roomCode);
 }
 
-function handleSpectateRoom(ws, roomCode, spectatorName) {
-  const code = roomCode.toUpperCase();
-  const room = rooms.get(code);
-
-  if (!room) {
-    sendJSON(ws, { type: 'error', message: 'Room not found' });
-    return;
-  }
-
-  room.spectators.add(ws);
-  ws.roomCode = code;
-  ws.playerColor = 'spectator';
-  ws.spectatorName = spectatorName || 'Spectator';
-
-  // Build move history
-  const moveList = room.engine.moveHistory.map(m => { if (m.ability) return m; return { from: ChessEngine.toAlgebraic(m.from.row, m.from.col), to: ChessEngine.toAlgebraic(m.to.row, m.to.col), promotion: m.promotion || null }; });
-
-  sendJSON(ws, {
-    type: 'spectator_joined',
-    roomCode: code,
-    gameId: room.gameId,
-    players: {
-      white: getSocketProfile(room.players.white),
-      black: getSocketProfile(room.players.black)
-    },
-    timer: room.timer,
-    timerMinutes: room.timer ? room.timer / 60000 : null,
-    moves: moveList,
-      abilities: { self: [], opponent: [] },
-        abilitiesUsed: room.engine.abilitiesUsed,
-        timers: room.timers ? {
-      white: room.timers.white - (room.engine.currentTurn === 'white' && room.lastMoveTime ? Date.now() - room.lastMoveTime : 0),
-      black: room.timers.black - (room.engine.currentTurn === 'black' && room.lastMoveTime ? Date.now() - room.lastMoveTime : 0)
-    } : null
-  });
-
-  console.log(`Spectator joined room ${code}`);
-}
-
 function handleChatMessage(ws, text) {
   if (!ws.roomCode) return;
   const room = rooms.get(ws.roomCode);
   if (!room) return;
 
-  const sender = ws.playerColor; // 'white', 'black', or 'spectator'
-  let senderName = 'Spectator';
+  const sender = ws.playerColor; // 'white' or 'black'
+  let senderName = 'Player';
   if (sender === 'white') senderName = 'White';
   else if (sender === 'black') senderName = 'Black';
-  else if (ws.spectatorName) senderName = ws.spectatorName;
 
   broadcastToRoom(room, {
     type: 'chat_message',
@@ -891,12 +813,6 @@ function handleDisconnect(ws) {
 
   const room = rooms.get(ws.roomCode);
   if (!room) return;
-
-  if (ws.playerColor === 'spectator') {
-    room.spectators.delete(ws);
-    console.log(`Spectator disconnected from room ${ws.roomCode}`);
-    return;
-  }
 
   // If creator disconnects while still waiting for an opponent to join
   if (ws.playerColor === 'white' && !room.players.black) {
@@ -1254,7 +1170,6 @@ function handleUseAbility(ws, data) {
   if (!room || !room.engine || room.engine.gameOver) return;
 
   const color = ws.playerColor;
-  if (color === 'spectator') return;
 
   const ability = data.ability;
   const args = data.args;

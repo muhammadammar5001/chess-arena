@@ -1241,36 +1241,6 @@ class App {
     this.pendingJoinData = null;
   }
 
-  showSpectateModal() {
-    this.showModal('modal-spectate');
-    setTimeout(() => document.getElementById('spectate-code-input')?.focus(), 150);
-  }
-
-  async submitSpectateCode() {
-    const input = document.getElementById('spectate-code-input');
-    const code = input.value.trim().toUpperCase();
-
-    if (code.length !== 6) {
-      this.showToast('Enter a 6-character room code');
-      return;
-    }
-
-    if (!(await this.ensureProfileReady())) return;
-
-    if (!this.multiplayer) {
-      this.multiplayer = new MultiplayerClient();
-      this.setupMultiplayerCallbacks();
-    }
-
-    try {
-      this.hideModal('modal-spectate');
-      await this.multiplayer.connect();
-      this.multiplayer.spectateRoom(code);
-    } catch {
-      this.showToast('Failed to connect to server');
-    }
-  }
-
   sendChatMessage() {
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
@@ -1352,9 +1322,6 @@ class App {
           hintBtn.classList.add('hidden');
           hintBtn.style.display = 'none';
         }
-        const spectateBtn = document.getElementById('btn-leave-spectate');
-        if (spectateBtn) spectateBtn.classList.add('hidden');
-
         const youName = this.getPreferredDisplayName() || 'Player';
         const oppName = opponent || 'Opponent';
 
@@ -1508,7 +1475,6 @@ class App {
       document.getElementById('btn-ingame-undo').style.display = 'none';
       document.getElementById('btn-ingame-hint').classList.add('hidden');
       document.getElementById('btn-ingame-hint').style.display = 'none';
-      document.getElementById('btn-leave-spectate').classList.add('hidden');
 
       // Read timer from server
       if (data.timerMinutes) {
@@ -1558,83 +1524,6 @@ class App {
       this.updatePlayerBars();
       this.startTimerTick();
       this.showToast('Reconnected!');
-    };
-
-    mp.onSpectatorJoined = (data) => {
-      this.gameMode = 'online';
-      this.playerColor = 'spectator';
-      this.boardFlipped = false;
-      this.engine = new ChessEngine();
-        this.lastMove = null;
-        if (!this.gameStartTime) this.gameStartTime = Date.now();
-      this.lastMatchCoinsEarned = 0;
-      this.lastMatchDoubled = false;
-      this.abilitiesActivatedThisMatch = new Set();
-      document.getElementById('chat-messages').innerHTML = ''; // clear chat
-
-      if (data.timerMinutes) this.timerMinutes = data.timerMinutes;
-
-      const whiteProfile = (data.players && data.players.white) || { username: 'White', rating: 1200, level: 1 };
-      const blackProfile = (data.players && data.players.black) || { username: 'Black', rating: 1200, level: 1 };
-      this.setupGameUI(
-        whiteProfile.username,
-        blackProfile.username,
-        true,
-        whiteProfile,
-        blackProfile
-      );
-      this.showScreen('screen-game');
-        setTimeout(() => this.startBgMusic(), 500);
-      this.clearMoveHistory();
-      this.clearCapturedPieces();
-
-      if (data.state && data.state.abilitiesUsed) this.engine.abilitiesUsed = data.state.abilitiesUsed;
-      if (data.moves && data.moves.length > 0) {
-        for (const move of data.moves) {
-          const from = ChessEngine.fromAlgebraic(move.from);
-          const to = ChessEngine.fromAlgebraic(move.to);
-          const result = this.engine.makeMove(from.row, from.col, to.row, to.col, move.promotion);
-          if (result) {
-            this.lastMove = { from: result.from, to: result.to };
-            this.updateMoveHistory(result);
-          }
-        }
-      }
-
-      if (data.timers) {
-        this.timers.white = data.timers.white;
-        this.timers.black = data.timers.black;
-      } else {
-        this.timers.white = null;
-        this.timers.black = null;
-      }
-
-      this.renderBoard();
-      this.updateCapturedPieces();
-      this.updatePlayerBars();
-      this.startTimerTick();
-      
-      // UI setup for spectator
-      document.getElementById('btn-ingame-resign').classList.add('hidden');
-      document.getElementById('btn-ingame-draw').classList.add('hidden');
-      document.getElementById('btn-ingame-undo').classList.add('hidden');
-      document.getElementById('btn-ingame-hint').classList.add('hidden');
-      document.getElementById('btn-leave-spectate').classList.remove('hidden');
-      const ab1 = document.getElementById('btn-ability-1');
-      if (ab1) ab1.classList.add('hidden');
-      const ab2 = document.getElementById('btn-ability-2');
-      if (ab2) ab2.classList.add('hidden');
-
-      this.showToast('You are spectating the match');
-    };
-
-    mp.onSpectatorCount = (count) => {
-      const countEl = document.getElementById('spectator-count-text');
-      const container = document.getElementById('spectator-count-container');
-      if (countEl && container) {
-        countEl.textContent = count;
-        container.style.display = count > 0 ? 'flex' : 'none';
-      }
     };
 
     mp.onChatMessage = (sender, senderName, text) => {
@@ -2230,7 +2119,7 @@ class App {
 
   handleSquareClick(row, col) {
     if (this.isAnimatingMove) return;
-    if (this.engine.gameOver || this.playerColor === 'spectator') return;
+    if (this.engine.gameOver) return;
 
     if (this.activeAbility) {
         if (this.activeAbility === 'shield') {
@@ -2831,7 +2720,7 @@ class App {
     const bottomBar = document.getElementById('player-bottom');
 
     const wasMyTurn = this.isMyTurn || false;
-    this.isMyTurn = this.engine && this.playerColor !== 'spectator' ? this.engine.currentTurn === this.playerColor : false;
+    this.isMyTurn = this.engine ? this.engine.currentTurn === this.playerColor : false;
 
     if (topBar) topBar.classList.toggle('active-turn', this.engine && this.engine.currentTurn === topColor);
     if (bottomBar) bottomBar.classList.toggle('active-turn', this.engine && this.engine.currentTurn === bottomColor);
@@ -2839,17 +2728,12 @@ class App {
     // Update in-game Turn Status Badge
     const turnBadge = document.getElementById('turn-status-badge');
     if (turnBadge && this.engine) {
-      if (this.playerColor === 'spectator') {
-        turnBadge.classList.remove('your-turn');
-        turnBadge.textContent = this.engine.currentTurn === 'white' ? "White's Turn" : "Black's Turn";
+      if (this.isMyTurn) {
+        turnBadge.classList.add('your-turn');
+        turnBadge.textContent = 'Your Turn';
       } else {
-        if (this.isMyTurn) {
-          turnBadge.classList.add('your-turn');
-          turnBadge.textContent = 'Your Turn';
-        } else {
-          turnBadge.classList.remove('your-turn');
-          turnBadge.textContent = "Opponent's Turn";
-        }
+        turnBadge.classList.remove('your-turn');
+        turnBadge.textContent = "Opponent's Turn";
       }
     }
 
@@ -3819,7 +3703,6 @@ class App {
   // Records a finished game exactly once per game session.
   recordGameResult(result) {
     if (!result) return;
-    if (this.playerColor === 'spectator') return;
     const mode = this.gameMode === 'online' ? 'online' : 'ai';
     const gameId = (this.multiplayer && this.multiplayer.gameId) ? this.multiplayer.gameId : null;
     const sessionKey = mode + ':' + (gameId || ('local:' + (this.gameStartTime || 'unknown')));
@@ -4327,7 +4210,6 @@ class App {
     // Hide all possible open modals
     this.hideModal('modal-confirm');
     this.hideModal('modal-draw-offer');
-    this.hideModal('modal-spectate');
     
     this.engine = null;
     this.ai = null;
@@ -4341,13 +4223,7 @@ class App {
       if (resignBtn) resignBtn.classList.remove('hidden');
       const drawBtn = document.getElementById('btn-ingame-draw');
       if (drawBtn) drawBtn.classList.remove('hidden');
-      const leaveBtn = document.getElementById('btn-leave-spectate');
-      if (leaveBtn) leaveBtn.classList.add('hidden');
-      
-      // Hide spectator count
-      const specCount = document.getElementById('spectator-count-container');
-      if (specCount) specCount.style.display = 'none';
-      
+
       // Hide connection status banner
       const connStatus = document.getElementById('connection-status');
       if (connStatus) connStatus.classList.add('hidden');

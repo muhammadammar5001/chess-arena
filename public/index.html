@@ -619,12 +619,6 @@
           <div class="captured-rail captured-rail-right" id="bottom-captured" title="Your Captured Pieces"></div>
         </div>
 
-        <!-- Spectators Counter Badge (Compact) -->
-        <div id="spectator-count-container" class="spectator-count" style="display: none; align-items: center; justify-content: center; gap: 4px; margin: 4px auto;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          <span id="spectator-count-text">0</span>
-        </div>
-
         <!-- In-game Action Bar (Abilities + Undo/Draw + Resign) -->
         <div class="ingame-action-bar">
           <button class="btn-game-pill" id="btn-ability-1" style="display: none;" title="Tactical Ability 1">
@@ -663,7 +657,7 @@
           </button>
         </div>
 
-        <!-- Hidden controls for spectate & chat -->
+        <!-- Hidden controls for chat -->
 
 
         <div class="game-controls">
@@ -1241,13 +1235,9 @@
       <h3 style=" font-size: 20px; color: #caa674; margin-bottom: 6px;">Chess Arena Open</h3>
       <p style="color: #94a3b8; font-size: 13px; line-height: 1.5; margin-bottom: 16px;">
         Season 1 Championship with a <strong style="color: #f1dfbe;">50,000 Coins</strong> prize pool opens soon!
-        Spectate live matches or sharpen your play in Practice mode.
+        Sharpen your play in Practice mode until then.
       </p>
       <div class="confirm-buttons" style="flex-direction: column; gap: 8px;">
-        <button class="btn btn-primary btn-small" style="width: 100%;"
-          onclick="app.hideModal('modal-tournaments'); app.showModal('modal-spectate');">
-          👁️ Spectate Live Match
-        </button>
         <button class="btn btn-secondary btn-small" style="width: 100%;"
           onclick="app.hideModal('modal-tournaments'); app.showAIDifficultySelect();">
           🤖 Practice with AI
@@ -1360,23 +1350,6 @@
       </div>
 
       <button type="button" class="settings-done-btn" onclick="app.hideModal('modal-settings')">Done</button>
-    </div>
-  </div>
-
-  <!-- --------------- SPECTATE MODAL --------------- -->
-  <div id="modal-spectate" class="modal hidden">
-    <div class="modal-overlay" onclick="app.hideModal('modal-spectate')"></div>
-    <div class="modal-content">
-      <h3 style="margin-bottom: 8px;">Spectate Match</h3>
-      <p class="screen-desc" style="margin-bottom: 20px;">Enter a Room Code to watch</p>
-
-      <input type="text" id="spectate-code-input" class="room-input" placeholder="CODE" maxlength="6" autocomplete="off"
-        oninput="this.value = this.value.toUpperCase()">
-
-      <div class="confirm-buttons" style="margin-top: 24px;">
-        <button class="btn btn-secondary" onclick="app.hideModal('modal-spectate')">Cancel</button>
-        <button class="btn btn-primary" onclick="app.submitSpectateCode()">Watch</button>
-      </div>
     </div>
   </div>
 
