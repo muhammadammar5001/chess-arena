@@ -2483,7 +2483,7 @@ body, html, .screen, .fantasy-home-screen, #screen-home, #screen-profile, .shop-
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important;
-    object-position: center 35% !important;
+    object-position: center top !important;
   }
 
   /* Content items centered with balanced, elegant desktop width */
