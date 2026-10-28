@@ -533,15 +533,19 @@
 }
 
 #screen-abilities .ability-recharge-btn {
-  min-height: 22px !important;
-  height: 22px !important;
-  padding: 0 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  min-height: 30px !important;
+  height: 30px !important;
+  padding: 0 9px !important;
   border: 1px solid #8C6538 !important;
-  border-radius: 5px !important;
+  border-radius: 7px !important;
   background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
   color: #F5D36C !important;
   font-family: var(--font-sans) !important;
-  font-size: 8px !important;
+  font-size: 9.5px !important;
   font-weight: 800 !important;
   letter-spacing: 0.01em !important;
   line-height: 1 !important;
@@ -550,8 +554,29 @@
 
 #screen-abilities .ability-recharge-btn span {
   color: #C9B18F !important;
-  font-size: 7px !important;
+  font-size: 7.5px !important;
   font-weight: 700 !important;
+}
+
+#screen-abilities .ability-recharge-btn .ability-coin-cost {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  color: #E8CC8B !important;
+  font-size: 8.5px !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+}
+
+#screen-abilities .ability-recharge-btn .ability-coin-cost::before {
+  content: "";
+  display: inline-block;
+  flex: 0 0 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #FFF7D1 0 12%, #F7DD8A 13% 40%, #D9A82B 41% 72%, #8C6538 73% 100%);
+  box-shadow: inset 0 0 0 1px rgba(32, 18, 11, 0.5), 0 1px 0 rgba(0, 0, 0, 0.3);
 }
 
 #screen-abilities .ability-recharge-btn--ad {
@@ -714,8 +739,29 @@
     min-height: 26px;
   }
 
+  #screen-abilities .ability-economy-badge {
+    gap: 4px !important;
+  }
+
+  #screen-abilities .ability-charge-actions {
+    gap: 3px !important;
+  }
+
   #screen-abilities .ability-recharge-btn {
-    padding: 0 5px !important;
+    min-height: 25px !important;
+    height: 25px !important;
+    padding: 0 3px !important;
+    font-size: 8px !important;
+  }
+
+  #screen-abilities .ability-recharge-btn .ability-coin-cost {
+    font-size: 7.5px !important;
+  }
+
+  #screen-abilities .ability-recharge-btn .ability-coin-cost::before {
+    flex-basis: 7.5px;
+    width: 7.5px;
+    height: 7.5px;
   }
 }
 
@@ -829,13 +875,14 @@
   }
 
   #screen-abilities .ability-recharge-btn {
-    min-height: 20px !important;
-    height: 20px !important;
+    min-height: 24px !important;
+    height: 24px !important;
     padding: 0 4px !important;
-    font-size: 7.5px !important;
+    font-size: 8.5px !important;
   }
 
-  #screen-abilities .ability-recharge-btn span {
+  #screen-abilities .ability-recharge-btn span,
+  #screen-abilities .ability-recharge-btn .ability-coin-cost {
     display: none !important;
   }
 
@@ -946,10 +993,10 @@
   }
 
   #screen-abilities .ability-recharge-btn {
-    min-height: 20px !important;
-    height: 20px !important;
-    padding: 0 4px !important;
-    font-size: 7.5px !important;
+    min-height: 25px !important;
+    height: 25px !important;
+    padding: 0 5px !important;
+    font-size: 8.5px !important;
   }
 
   #screen-abilities .abilities-shell > .btn-lime {
@@ -963,7 +1010,15 @@
     font-size: 11px !important;
   }
 
-  #screen-abilities .ability-recharge-btn span {
+  #screen-abilities .ability-recharge-btn {
+    min-height: 24px !important;
+    height: 24px !important;
+    padding: 0 4px !important;
+    font-size: 8px !important;
+  }
+
+  #screen-abilities .ability-recharge-btn span,
+  #screen-abilities .ability-recharge-btn .ability-coin-cost {
     display: none !important;
   }
 
@@ -1147,14 +1202,15 @@
   }
 
   #screen-abilities .ability-recharge-btn {
-    min-height: 18px !important;
-    height: 18px !important;
-    padding: 0 3px !important;
-    border-radius: 4px !important;
-    font-size: 7px !important;
+    min-height: 24px !important;
+    height: 24px !important;
+    padding: 0 4px !important;
+    border-radius: 5px !important;
+    font-size: 8px !important;
   }
 
-  #screen-abilities .ability-recharge-btn span {
+  #screen-abilities .ability-recharge-btn span,
+  #screen-abilities .ability-recharge-btn .ability-coin-cost {
     display: none !important;
   }
 

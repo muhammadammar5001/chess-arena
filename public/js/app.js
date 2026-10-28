@@ -4165,10 +4165,12 @@ class App {
             <div class="ability-charge-actions">
               <button class="ability-recharge-btn ability-recharge-btn--coin" ${canAdd1 ? '' : 'disabled'}
                 onclick="event.stopPropagation(); app.refillSkill('${id}', 1, ${singleCost})"
-                title="${canAdd1 ? `Add 1 charge for ${singleCost} coins` : 'Not enough room for +1 charge'}">+1 <span>${singleCost}</span></button>
+                aria-label="${canAdd1 ? `Add 1 charge for ${singleCost} coins` : 'Not enough room for +1 charge'}"
+                title="${canAdd1 ? `Add 1 charge for ${singleCost} coins` : 'Not enough room for +1 charge'}">+1 <span class="ability-coin-cost">${singleCost}</span></button>
               <button class="ability-recharge-btn ability-recharge-btn--coin" ${canAdd3 ? '' : 'disabled'}
                 onclick="event.stopPropagation(); app.refillSkill('${id}', 3, ${packCost})"
-                title="${canAdd3 ? `Add 3 charges for ${packCost} coins` : 'Not enough room for +3 charges'}">+3 <span>${packCost}</span></button>
+                aria-label="${canAdd3 ? `Add 3 charges for ${packCost} coins` : 'Not enough room for +3 charges'}"
+                title="${canAdd3 ? `Add 3 charges for ${packCost} coins` : 'Not enough room for +3 charges'}">+3 <span class="ability-coin-cost">${packCost}</span></button>
               <button class="ability-recharge-btn ability-recharge-btn--ad" ${canAddAd ? '' : 'disabled'}
                 onclick="event.stopPropagation(); app.refillSkillViaAd('${id}')"
                 title="${canAddAd ? `Watch an ad for +${adCharges} charges` : 'Not enough room for the ad refill'}">+${adCharges} <span>AD</span></button>
