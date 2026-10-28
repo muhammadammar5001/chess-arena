@@ -232,7 +232,18 @@ function cleanupRooms() {
 // Cleanup every 10 minutes
 setInterval(cleanupRooms, 600000);
 
-// Server-side timer enforcement — tick every second
+function getTimersAt(room, activeColor = room.engine.currentTurn, now = Date.now()) {
+  if (!room || !room.timers) return null;
+  const elapsed = room.lastMoveTime ? Math.max(0, now - room.lastMoveTime) : 0;
+  return {
+    white: Math.max(0, room.timers.white - (activeColor === 'white' ? elapsed : 0)),
+    black: Math.max(0, room.timers.black - (activeColor === 'black' ? elapsed : 0))
+  };
+}
+
+// Server-side timer enforcement — tick every second. The server is the single
+// source of truth: clients receive the remaining time every second so a
+// throttled/paused background tab cannot drift away from the opponent.
 setInterval(() => {
   const now = Date.now();
   for (const [code, room] of rooms) {
@@ -240,14 +251,21 @@ setInterval(() => {
     if (!room.players.white || !room.players.black) continue;
 
     const currentTurn = room.engine.currentTurn;
-    const elapsed = now - room.lastMoveTime;
-    const remaining = room.timers[currentTurn] - elapsed;
+    const timers = getTimersAt(room, currentTurn, now);
 
-    if (remaining <= 0) {
+    if (timers[currentTurn] <= 0) {
       room.timers[currentTurn] = 0;
       const winner = currentTurn === 'white' ? 'black' : 'white';
       finishGame(room, 'timeout', winner);
+      continue;
     }
+
+    broadcastToRoom(room, {
+      type: 'timer_sync',
+      white: timers.white,
+      black: timers.black,
+      serverTime: now
+    });
   }
 }, 1000);
 
@@ -485,6 +503,7 @@ function joinRoom(ws, roomCode, abilities = []) {
 
   const whiteProfile = getSocketProfile(room.players.white);
   const blackProfile = getSocketProfile(ws);
+  const startTimers = getTimersAt(room, 'white', Date.now());
 
   sendJSON(ws, {
     type: 'game_start',
@@ -497,6 +516,7 @@ function joinRoom(ws, roomCode, abilities = []) {
     selfProfile: blackProfile,
     timer: room.timer,
     timerMinutes: room.timer ? room.timer / 60000 : null,
+    timers: startTimers,
     mode: room.mode
   });
 
@@ -511,6 +531,7 @@ function joinRoom(ws, roomCode, abilities = []) {
     selfProfile: whiteProfile,
     timer: room.timer,
     timerMinutes: room.timer ? room.timer / 60000 : null,
+    timers: startTimers,
     mode: room.mode
   });
 
@@ -556,13 +577,14 @@ function handleFindMatch(ws, mode = 'standard', abilities = []) {
       white: timerMinutes * 60 * 1000,
       black: timerMinutes * 60 * 1000
     },
-    lastMoveTime: null,
+    lastMoveTime: Date.now(),
     lastActivity: Date.now(),
     rematchRequested: null,
     mode: mode
   };
 
   rooms.set(roomCode, room);
+  const startTimers = getTimersAt(room, 'white', room.lastMoveTime);
 
   opponentWs.roomCode = roomCode;
   opponentWs.playerColor = 'white';
@@ -575,13 +597,13 @@ function handleFindMatch(ws, mode = 'standard', abilities = []) {
   sendJSON(opponentWs, {
     type: 'game_start', roomCode: roomCode, abilities: { self: room.abilities.white, opponent: room.abilities.black }, color: 'white', gameId: gameId,
     opponent: blackProfile.username, opponentProfile: blackProfile, selfProfile: whiteProfile,
-    timer: room.timer, timerMinutes: timerMinutes, mode: mode
+    timer: room.timer, timerMinutes: timerMinutes, timers: startTimers, mode: mode
   });
 
   sendJSON(ws, {
     type: 'game_start', roomCode: roomCode, abilities: { self: room.abilities.black, opponent: room.abilities.white }, color: 'black', gameId: gameId,
     opponent: whiteProfile.username, opponentProfile: whiteProfile, selfProfile: blackProfile,
-    timer: room.timer, timerMinutes: timerMinutes, mode: mode
+    timer: room.timer, timerMinutes: timerMinutes, timers: startTimers, mode: mode
   });
 
   console.log(`Random match created: Room ${roomCode} | Mode: ${mode} | Abilities: ${JSON.stringify(abilities)}`);
@@ -800,11 +822,8 @@ function handleReconnect(ws, data) {
     timer: room.timer,
     timerMinutes: room.timer ? room.timer / 60000 : null,
     moves: moveList,
-        abilitiesUsed: room.engine.abilitiesUsed,
-        timers: room.timers ? {
-      white: room.timers.white - (room.engine.currentTurn === 'white' ? Date.now() - room.lastMoveTime : 0),
-      black: room.timers.black - (room.engine.currentTurn === 'black' ? Date.now() - room.lastMoveTime : 0)
-    } : null
+    abilitiesUsed: room.engine.abilitiesUsed,
+    timers: getTimersAt(room, room.engine.currentTurn, Date.now())
   });
 
   console.log('Player ' + color + ' reconnected to room ' + data.roomCode);

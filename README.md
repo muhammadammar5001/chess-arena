@@ -108,7 +108,7 @@ YouTube Playables requires validation of story/orientation guidance and strict b
 
 ## PlayGama publishing checklist
 
-- **Bridge lifecycle:** the game boots immediately, reads `platform.language`, sends `game_ready`, and subscribes to audio and pause state changes. Music, timers and AI are paused with the host.
+- **Bridge lifecycle:** the game boots immediately, reads `platform.language`, sends `game_ready`, and subscribes to audio and pause state changes. Music, local effects and AI pause with the host; the authoritative PvP clock keeps running server-side and resynchronizes on resume.
 - **Storage:** real platform sessions use Bridge Storage after Bridge readiness; localhost and standalone sessions fall back to `localStorage`. Progress, settings, ad counters and player stats are saved in one versioned snapshot.
 - **Ads:** rewarded ads resolve only on the host `rewarded` event, never on close. Interstitials are shown only at a natural post-game break, never during active PvP gameplay.
 - **External calls:** online matchmaking is disabled when the host reports external calls are unsupported. AI and local play remain available.

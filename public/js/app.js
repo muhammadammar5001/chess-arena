@@ -35,6 +35,7 @@ class App {
     this.postGameBreak = false;
     this.economyStorageKey = 'chessarena_progress_v1';
     this.matchType = 'tactical'; // 'standard' or 'tactical'
+    this.privateRoom = false;
     this.lastRatingChange = 0;
 
     // Player progression (local-first; synced from server when available)
@@ -1235,6 +1236,7 @@ class App {
     if (!this.onlinePlayAvailable()) return;
     if (!(await this.ensureProfileReady())) return;
     await this.ensureServerProfileSynced();
+    this.privateRoom = false;
 
     if (!this.multiplayer) {
       this.multiplayer = new MultiplayerClient();
@@ -1264,6 +1266,7 @@ class App {
     if (!this.onlinePlayAvailable()) return;
     if (!(await this.ensureProfileReady())) return;
     await this.ensureServerProfileSynced();
+    this.privateRoom = true;
 
     if (!this.multiplayer) {
       this.multiplayer = new MultiplayerClient();
@@ -1329,6 +1332,7 @@ class App {
     const { roomCode } = this.pendingJoinData;
     this.hideModal('modal-join-confirm');
     this.pendingJoinData = null;
+    this.privateRoom = true;
     this.multiplayer.joinRoom(roomCode, this.selectedAbilities || ['swap', 'freeze']);
   }
 
@@ -1424,12 +1428,16 @@ class App {
         if (timerMinutes) {
           this.timerMinutes = timerMinutes;
         }
-        if (this.timerMinutes) {
-          this.timers.white = this.timerMinutes * 60 * 1000;
-          this.timers.black = this.timerMinutes * 60 * 1000;
+        const serverTimers = gameData.timers;
+        if (serverTimers && Number.isFinite(serverTimers.white) && Number.isFinite(serverTimers.black)) {
+          this.timers = { white: serverTimers.white, black: serverTimers.black };
+        } else if (this.timerMinutes) {
+          this.timers = {
+            white: this.timerMinutes * 60 * 1000,
+            black: this.timerMinutes * 60 * 1000
+          };
         } else {
-          this.timers.white = null;
-          this.timers.black = null;
+          this.timers = { white: null, black: null };
         }
 
         this.setupGameUI(
@@ -1458,7 +1466,7 @@ class App {
         };
 
         const animContainer = document.getElementById('matchmaking-animation');
-        if (animContainer && !animContainer.classList.contains('hidden') && typeof this.stopSlotMachine === 'function') {
+        if (!this.privateRoom && animContainer && !animContainer.classList.contains('hidden') && typeof this.stopSlotMachine === 'function') {
             this.stopSlotMachine(); 
             setTimeout(() => {
                 if (typeof this.showMatchmakingFound === 'function') {
@@ -1529,10 +1537,22 @@ class App {
     };
 
     mp.onTimerSync = (white, black) => {
-      this.timers.white = white;
-      this.timers.black = black;
+      if (Number.isFinite(white) && Number.isFinite(black)) {
+        this.timers.white = white;
+        this.timers.black = black;
+      }
       this.lastMoveTime = Date.now();
       this.updateTimerDisplay();
+
+      // A throttled/background tab can miss ticks. Server sync is authoritative,
+      // so always revive the local countdown if it was stopped early.
+      const gameScreen = document.getElementById('screen-game');
+      const inGame = !!(gameScreen && gameScreen.classList.contains('active'));
+      const hasClock = this.timers.white !== null || this.timers.black !== null;
+      if (this.gameMode === 'online' && this.engine && !this.engine.gameOver &&
+          hasClock && inGame && !this.timerInterval) {
+        this.startTimerTick();
+      }
     };
 
     mp.onOpponentDisconnected = () => {
@@ -2772,9 +2792,11 @@ class App {
         this.timers[currentTurn] = Math.max(0, this.timers[currentTurn] - elapsed);
 
         if (this.timers[currentTurn] <= 0) {
-          this.stopTimerTick();
-          // In AI mode, handle timeout locally
+          this.timers[currentTurn] = 0;
+          // In AI mode, handle timeout locally. Online timeouts are decided by
+          // the server, so keep the tick alive until game_over or the next sync.
           if (this.gameMode === 'ai') {
+            this.stopTimerTick();
             const winner = currentTurn === 'white' ? 'black' : 'white';
             this.engine.gameOver = true;
             this.engine.gameResult = { winner, reason: 'timeout' };

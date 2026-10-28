@@ -173,7 +173,7 @@ A strictly larger client total advances the server profile (offline/AI progress)
 3. Room creation: `create_room` → `room_created`; the host waits on `screen-waiting`.
 4. Joining: `check_room` → `check_room_result`; `join_room` → `game_start` to both colors.
 5. Matchmaking: `find_match` → `waiting_for_match`; when paired, both receive `game_start`.
-6. Moves are validated by the server engine and relayed as `opponent_move`, with `timer_sync` updates.
+6. Moves are validated by the server engine and relayed as `opponent_move`, with `timer_sync` updates. The server owns the clock, includes the effective timers in `game_start`, and broadcasts `timer_sync` every second so background-tab throttling, host pauses, and reconnect delays cannot desynchronize the two clients.
 7. Game end broadcasts `game_over`; the server updates Mongo profiles and sends `stats_update` when possible.
 8. Rematch, draw offers, chat, spectating, and abilities use dedicated message types.
 
