@@ -4293,3 +4293,87 @@ div.game-layout-wrapper {
   transform: scale(1.1);
   background: #BFE0FD;
 }
+
+/* Short landscape phones: keep the board and action bar reachable without
+   requiring a vertical scroll. Portrait/tablet layouts are unchanged. */
+@media (max-height: 500px) and (orientation: landscape) {
+  #screen-game .game-layout-wrapper {
+    padding: 0 !important;
+    max-width: 100vw !important;
+  }
+
+  #screen-game .game-container {
+    min-height: 100dvh !important;
+    padding: 2px 4px !important;
+    gap: 2px !important;
+    justify-content: flex-start !important;
+  }
+
+  #screen-game .ingame-match-header {
+    height: 36px;
+    padding: 0 !important;
+  }
+
+  .ingame-player-avatar {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .ingame-level-badge {
+    display: none !important;
+  }
+
+  #screen-game .ingame-timers-row {
+    height: 24px;
+    margin: 0 0 2px !important;
+  }
+
+  .timer-pill,
+  .turn-status-badge {
+    font-size: 11px !important;
+    padding: 2px 8px !important;
+    min-height: 0 !important;
+  }
+
+  .move-ticker-container,
+  .game-controls,
+  .chat-container {
+    display: none !important;
+  }
+
+  #screen-game .board-arena-container {
+    width: 100% !important;
+    max-width: calc(100dvh - 118px) !important;
+    margin: 0 auto !important;
+  }
+
+  #screen-game .captured-rail {
+    display: none !important;
+  }
+
+  #screen-game .board-arena-container .board-wrap {
+    max-width: calc(100dvh - 118px) !important;
+  }
+
+  #screen-game .board-frame {
+    padding: 7px !important;
+  }
+
+  #screen-game .ingame-action-bar {
+    max-width: calc(100dvh - 118px) !important;
+    height: 40px !important;
+    margin: 2px auto 0 !important;
+    gap: 4px !important;
+  }
+
+  #screen-game .btn-game-pill {
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    padding: 0 6px !important;
+  }
+
+  #screen-game .btn-game-pill .btn-label {
+    display: none !important;
+  }
+}

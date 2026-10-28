@@ -28,6 +28,12 @@ class App {
     this.bgMusicNodes = [];
     this.bgMusicGain = null;
     this.isAnimatingMove = false;
+    this.platformAudioMuted = false;
+    this.platformPaused = false;
+    this.platformStateReady = false;
+    this.economyPersistenceReady = false;
+    this.postGameBreak = false;
+    this.economyStorageKey = 'chessarena_progress_v1';
     this.matchType = 'tactical'; // 'standard' or 'tactical'
     this.lastRatingChange = 0;
 
@@ -126,6 +132,17 @@ class App {
     } catch (e) {
       console.warn('[Profile] storage init failed', e);
     }
+
+    // Load non-profile progression (level, XP, skills, loadout, ad counters,
+    // settings) through the same Bridge/local adapter. This is the key
+    // cross-session storage path required by PlayGama.
+    try {
+      await this.loadEconomyProgress();
+    } catch (e) {
+      console.warn('[Progress] load failed', e);
+    }
+    this.economyPersistenceReady = true;
+    this.saveEconomyState();
 
     let profile = null;
     try {
@@ -532,6 +549,18 @@ class App {
     }
   }
 
+  onlinePlayAvailable() {
+    try {
+      const platform = window.ChessArenaPlatform;
+      if (platform && typeof platform.isExternalCallsSupported === 'function' &&
+          platform.isExternalCallsSupported() === false) {
+        this.showToast('Online play is unavailable on this platform. AI matches still work.');
+        return false;
+      }
+    } catch (e) { /* allow local play */ }
+    return true;
+  }
+
   createGuestId() {
     const bytes = new Uint8Array(8);
     if (window.crypto && window.crypto.getRandomValues) {
@@ -630,6 +659,66 @@ class App {
     document.addEventListener('click',      startMusicOnFirstGesture, { capture: true, once: true });
     document.addEventListener('touchstart', startMusicOnFirstGesture, { capture: true, once: true });
     document.addEventListener('keydown',    startMusicOnFirstGesture, { capture: true, once: true });
+
+    // PlayGama lifecycle: apply the initial audio/pause state and react to
+    // later host changes (tab switches, ads, platform mute/pause).
+    window.addEventListener('chessarena:platform-state', (event) => {
+      this.applyPlatformState(event && event.detail);
+    });
+    const platform = window.ChessArenaPlatform;
+    if (platform && typeof platform.getState === 'function') {
+      this.applyPlatformState(platform.getState());
+    }
+    if (platform && typeof platform.gameReady === 'function') {
+      platform.gameReady().catch(() => {});
+    }
+  }
+
+  applyPlatformState(state) {
+    if (!state || typeof state !== 'object') return;
+    const initial = !this.platformStateReady;
+    this.setPlatformAudioEnabled(state.audioEnabled !== false, { initial });
+    this.setPlatformPaused(state.paused === true, { initial });
+    this.platformStateReady = true;
+  }
+
+  setPlatformAudioEnabled(enabled, options = {}) {
+    this.platformAudioMuted = enabled === false;
+    if (this.platformAudioMuted) {
+      this.stopBgMusic();
+      try {
+        if (this.audioCtx && this.audioCtx.state === 'running') {
+          this.audioCtx.suspend().catch(() => {});
+        }
+      } catch (e) { /* ignore */ }
+      return;
+    }
+    const gameActive = document.getElementById('screen-game')?.classList.contains('active');
+    if (!options.initial && gameActive && this.musicEnabled && !this.platformPaused && !this.bgMusicRunning) {
+      this.startBgMusic();
+    }
+  }
+
+  setPlatformPaused(paused, options = {}) {
+    const next = paused === true;
+    if (this.platformPaused === next) return;
+    this.platformPaused = next;
+    this.lastMoveTime = Date.now();
+
+    if (next) {
+      this.stopBgMusic();
+      try {
+        if (this.audioCtx && this.audioCtx.state === 'running') {
+          this.audioCtx.suspend().catch(() => {});
+        }
+      } catch (e) { /* ignore */ }
+    } else {
+      this.lastMoveTime = Date.now();
+      const gameActive = document.getElementById('screen-game')?.classList.contains('active');
+      if (!options.initial && gameActive && this.musicEnabled && !this.platformAudioMuted && !this.bgMusicRunning) {
+        this.startBgMusic();
+      }
+    }
   }
 
   // --- Audio -----------------------------------------
@@ -644,7 +733,7 @@ class App {
   }
 
   playSound(type) {
-    if (this.soundMuted) return;
+    if (this.soundMuted || this.platformAudioMuted || this.platformPaused) return;
     try {
       this.initAudio();
       const ctx = this.audioCtx;
@@ -898,6 +987,10 @@ class App {
 
   makeAIMove() {
     if (!this.engine || this.engine.gameOver) return;
+    if (this.platformPaused) {
+      setTimeout(() => this.makeAIMove(), 250);
+      return;
+    }
     if (this.engine.currentTurn === this.playerColor) return;
 
     this.isAnimatingMove = false;
@@ -1139,6 +1232,7 @@ class App {
   // --- Online Game -----------------------------------
 
   async findMatch() {
+    if (!this.onlinePlayAvailable()) return;
     if (!(await this.ensureProfileReady())) return;
     await this.ensureServerProfileSynced();
 
@@ -1167,6 +1261,7 @@ class App {
   }
 
   async createRoom() {
+    if (!this.onlinePlayAvailable()) return;
     if (!(await this.ensureProfileReady())) return;
     await this.ensureServerProfileSynced();
 
@@ -1186,6 +1281,7 @@ class App {
   }
 
   async joinRoom() {
+    if (!this.onlinePlayAvailable()) return;
     const input = document.getElementById('room-code-input');
     const code = input ? input.value.trim().toUpperCase() : '';
 
@@ -2653,6 +2749,13 @@ class App {
         return;
       }
 
+      // Host pause (tab switch, ad, system pause): do not let the local clock
+      // run down while the player cannot interact.
+      if (this.platformPaused) {
+        this.lastMoveTime = Date.now();
+        return;
+      }
+
       const now = Date.now();
       const elapsed = now - this.lastMoveTime;
       this.lastMoveTime = now;
@@ -2939,7 +3042,7 @@ class App {
   // ------------------------------------------
 
   startBgMusic() {
-    if (!this.musicEnabled) return;
+    if (!this.musicEnabled || this.platformAudioMuted || this.platformPaused) return;
     if (this.bgMusicRunning) return;
 
     // Ensure AudioContext (user-gesture already happened by game start)
@@ -3044,6 +3147,7 @@ class App {
       this.stopBgMusic();
     }
     this.syncSettingsUI();
+    this.saveEconomyState();
     this.showToast(this.musicEnabled ? 'Music enabled' : 'Music muted');
   }
 
@@ -3051,8 +3155,20 @@ class App {
   showGameOver() {
     this.stopBgMusic();
     this.stopTimerTick();
+    this.postGameBreak = true;
     const result = (this.engine && this.engine.gameResult) ? this.engine.gameResult : { winner: null, reason: 'completed' };
     this.showVictoryScreen(result);
+  }
+
+  async maybeShowPostGameInterstitial() {
+    if (!this.postGameBreak) return;
+    this.postGameBreak = false;
+    if (!window.AdService || typeof window.AdService.showInterstitial !== 'function') return;
+    try {
+      // Natural breakpoint only: after the result screen, before the next
+      // match or a return to the menu. Never during active gameplay/PvP.
+      await window.AdService.showInterstitial('game_completed');
+    } catch (e) { /* never block the next action on an ad */ }
   }
 
   showVictoryScreen(result) {
@@ -3222,7 +3338,8 @@ class App {
     this.showScreen('screen-victory');
   }
 
-  restartGame() {
+  async restartGame() {
+    await this.maybeShowPostGameInterstitial();
     if (this.gameMode === 'ai') {
       const difficulty = this.ai ? this.ai.difficulty : 'medium';
       this.startAIGame(difficulty);
@@ -3513,6 +3630,7 @@ class App {
     try {
       localStorage.setItem(this.statsStorageKey(), JSON.stringify(this.playerStats));
     } catch (e) { /* storage may be unavailable; keep in-memory stats */ }
+    if (this.economyPersistenceReady) this.scheduleEconomyPersist();
   }
 
   getTotalStats() {
@@ -4195,7 +4313,9 @@ class App {
     }
   }
 
-  goHome() {
+  async goHome(showPostGameAd = false) {
+    if (showPostGameAd) await this.maybeShowPostGameInterstitial();
+    else this.postGameBreak = false;
     this.stopBgMusic();
     if (this.matchmakingTimeout) {
       clearTimeout(this.matchmakingTimeout);
@@ -4286,6 +4406,7 @@ class App {
   toggleSound() {
     this.soundMuted = !this.soundMuted;
     this.syncSettingsUI();
+    this.saveEconomyState();
     this.showToast(this.soundMuted ? 'Sound effects muted' : 'Sound effects enabled');
   }
 
@@ -4663,7 +4784,152 @@ class App {
       localStorage.setItem('owl_unlocked_boards', JSON.stringify(this.unlockedBoards));
       localStorage.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
       localStorage.setItem('chessarena_abilities', JSON.stringify(this.selectedAbilities));
+      localStorage.setItem('owl_ad_tracking', JSON.stringify(this.adTracking));
+      localStorage.setItem('owl_settings', JSON.stringify({
+        soundMuted: this.soundMuted,
+        musicEnabled: this.musicEnabled
+      }));
     } catch (e) { /* localStorage may be unavailable; in-memory state still works */ }
+
+    if (this.economyPersistenceReady) this.scheduleEconomyPersist();
+  }
+
+  buildEconomySnapshot() {
+    return {
+      version: 1,
+      updatedAt: Date.now(),
+      level: Math.max(1, Math.floor(Number(this.playerLevel) || 1)),
+      xp: Math.max(0, Math.floor(Number(this.playerXP) || 0)),
+      slot2Unlocked: this.slot2Unlocked === true,
+      slot2AdsWatched: Math.max(0, Math.min(3, Math.floor(Number(this.slot2AdsWatched) || 0))),
+      unlockedSkills: Array.isArray(this.unlockedSkills) ? this.unlockedSkills.slice(0, 12) : [],
+      skillCharges: Object.assign({}, this.skillCharges),
+      unlockedBoards: Array.isArray(this.unlockedBoards) ? this.unlockedBoards.slice(0, 32) : [],
+      selectedAbilities: Array.isArray(this.selectedAbilities) ? this.selectedAbilities.slice(0, 2) : [],
+      adTracking: Object.assign({}, this.adTracking),
+      stats: this.playerStats ? JSON.parse(JSON.stringify(this.playerStats)) : null,
+      settings: {
+        soundMuted: this.soundMuted === true,
+        musicEnabled: this.musicEnabled !== false
+      }
+    };
+  }
+
+  scheduleEconomyPersist() {
+    if (this._economyPersistTimer) return;
+    this._economyPersistTimer = setTimeout(() => {
+      this._economyPersistTimer = null;
+      this.persistEconomyProgress();
+    }, 350);
+  }
+
+  async persistEconomyProgress() {
+    const storage = window.ChessArenaStorage;
+    if (!storage || typeof storage.saveValue !== 'function') return false;
+    try {
+      return await storage.saveValue(
+        this.economyStorageKey,
+        JSON.stringify(this.buildEconomySnapshot())
+      );
+    } catch (e) {
+      console.warn('[Progress] save failed', e);
+      return false;
+    }
+  }
+
+  async loadEconomyProgress() {
+    const storage = window.ChessArenaStorage;
+    if (!storage || typeof storage.loadValue !== 'function') return false;
+    let raw = null;
+    try { raw = await storage.loadValue(this.economyStorageKey); }
+    catch (e) { return false; }
+    if (raw == null) return false;
+
+    let data = raw;
+    if (typeof data === 'string') {
+      try { data = JSON.parse(data); } catch (e) { return false; }
+    }
+    if (!data || typeof data !== 'object') return false;
+
+    const validSkills = ['jump', 'second', 'freeze', 'swap', 'shield'];
+    const maxCharges = window.ECONOMY_CONFIG?.skills?.maxCharges || 5;
+    const validBoards = (window.ECONOMY_CONFIG?.boards || []).map((b) => b.id);
+
+    const level = parseInt(data.level, 10);
+    if (Number.isFinite(level) && level > 0) this.playerLevel = Math.min(100, level);
+    const xp = parseInt(data.xp, 10);
+    if (Number.isFinite(xp) && xp >= 0) this.playerXP = xp;
+    this.slot2AdsWatched = Math.max(0, Math.min(3, parseInt(data.slot2AdsWatched, 10) || 0));
+    this.slot2Unlocked = data.slot2Unlocked === true || this.slot2AdsWatched >= 3;
+
+    if (Array.isArray(data.unlockedSkills) && data.unlockedSkills.length > 0) {
+      this.unlockedSkills = [...new Set(data.unlockedSkills.map((s) => s === 'undo' ? 'second' : s))]
+        .filter((s) => validSkills.includes(s));
+    }
+    if (!this.unlockedSkills || this.unlockedSkills.length === 0) {
+      this.unlockedSkills = ['second', 'jump'];
+    }
+
+    if (data.skillCharges && typeof data.skillCharges === 'object') {
+      const next = {};
+      validSkills.forEach((id) => {
+        const value = parseInt(data.skillCharges[id], 10);
+        next[id] = Number.isFinite(value) ? Math.max(0, Math.min(maxCharges, value)) : 3;
+      });
+      this.skillCharges = next;
+    }
+
+    if (Array.isArray(data.unlockedBoards)) {
+      this.unlockedBoards = [...new Set(data.unlockedBoards)].filter((id) => validBoards.includes(id));
+    }
+    if (!this.unlockedBoards.includes('classic-oak')) this.unlockedBoards.unshift('classic-oak');
+
+    if (Array.isArray(data.selectedAbilities)) {
+      const selected = data.selectedAbilities
+        .map((s) => s === 'undo' ? 'second' : s)
+        .filter((s) => validSkills.includes(s) && this.unlockedSkills.includes(s));
+      this.selectedAbilities = this.slot2Unlocked ? selected.slice(0, 2) : selected.slice(0, 1);
+    }
+    if (!Array.isArray(this.selectedAbilities) || this.selectedAbilities.length === 0) {
+      this.selectedAbilities = [this.unlockedSkills[0] || 'second'];
+    }
+
+    if (data.adTracking && typeof data.adTracking === 'object') {
+      this.adTracking = Object.assign(this.createDefaultAdTracking(), data.adTracking);
+    }
+    if (data.stats && typeof data.stats === 'object') {
+      const count = (value) => Math.max(0, Math.floor(Number(value) || 0));
+      this.playerStats = {
+        rating: Math.max(100, Math.floor(Number(data.stats.rating) || 1200)),
+        ai: {
+          wins: count(data.stats.ai && data.stats.ai.wins),
+          losses: count(data.stats.ai && data.stats.ai.losses),
+          draws: count(data.stats.ai && data.stats.ai.draws)
+        },
+        online: {
+          wins: count(data.stats.online && data.stats.online.wins),
+          losses: count(data.stats.online && data.stats.online.losses),
+          draws: count(data.stats.online && data.stats.online.draws)
+        },
+        hasServerStats: data.stats.hasServerStats === true
+      };
+      this.savePlayerStats();
+      this.renderProfileStats();
+    }
+    if (data.settings && typeof data.settings === 'object') {
+      this.soundMuted = data.settings.soundMuted === true;
+      this.musicEnabled = data.settings.musicEnabled !== false;
+    }
+
+    // Update local mirrors/UI. Cloud progress is now the source of truth for
+    // progression; coins remain in the profile record.
+    this.saveEconomyState();
+    this.updateCoinsDisplay();
+    this.syncAbilitiesUI();
+    this.syncShopUI();
+    this.syncSettingsUI();
+    this.updateLuckyWheelBadge();
+    return true;
   }
 
   initEconomy() {
@@ -4734,6 +5000,14 @@ class App {
         : this.createDefaultAdTracking();
       this.ensureDailyTracking();
 
+      try {
+        const settings = JSON.parse(localStorage.getItem('owl_settings') || 'null');
+        if (settings && typeof settings === 'object') {
+          this.soundMuted = settings.soundMuted === true;
+          this.musicEnabled = settings.musicEnabled !== false;
+        }
+      } catch (e) { /* ignore */ }
+
       // Daily free charge: +1 to every unlocked ability, at most once per day.
       const today = this.getEconomyDateKey();
       if (this.adTracking.lastChargeRefillDate !== today) {
@@ -4788,6 +5062,7 @@ class App {
     try {
       localStorage.setItem('owl_ad_tracking', JSON.stringify(this.adTracking));
     } catch (e) {}
+    if (this.economyPersistenceReady) this.scheduleEconomyPersist();
   }
 
   updateProfileXP() {

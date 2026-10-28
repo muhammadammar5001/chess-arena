@@ -71,7 +71,7 @@ The sync endpoint treats a strictly larger client total as newer offline progres
 ```bash
 npm start   # production server
 npm run dev # server with file watching
-npm test    # chess engine characterization tests (11)
+npm test    # chess engine + economy tests (24 total)
 ```
 
 ## Project structure
@@ -105,6 +105,18 @@ test/                     Engine tests
 ## Playables notes
 
 YouTube Playables requires validation of story/orientation guidance and strict build-size limits. The current build references the PlayGama Bridge CDN from `index.html` and uses mock ads when no host ad adapter is present. Native profile persistence uses `YT.getCloudStorage()` when the SDK provides it; the real Playables cloud API cannot be exercised on localhost, so localhost and standalone builds use `localStorage`. Multiplayer needs a hosted WebSocket backend. See `docs/ARCHITECTURE.md` for details and remaining blockers.
+
+## PlayGama publishing checklist
+
+- **Bridge lifecycle:** the game boots immediately, reads `platform.language`, sends `game_ready`, and subscribes to audio and pause state changes. Music, timers and AI are paused with the host.
+- **Storage:** real platform sessions use Bridge Storage after Bridge readiness; localhost and standalone sessions fall back to `localStorage`. Progress, settings, ad counters and player stats are saved in one versioned snapshot.
+- **Ads:** rewarded ads resolve only on the host `rewarded` event, never on close. Interstitials are shown only at a natural post-game break, never during active PvP gameplay.
+- **External calls:** online matchmaking is disabled when the host reports external calls are unsupported. AI and local play remain available.
+- **Localization:** the UI is English-only; `document.documentElement.lang` follows `platform.language`. Declare English as the only language in the PlayGama dashboard.
+- **Orientation:** portrait and landscape are supported. Short landscape phones use a compact in-game layout that fits the board and action bar without page scrolling.
+- **Live deployment:** `https://chess-arena-262t.onrender.com/` is the production URL used for publishing.
+
+Dashboard declarations to make with the submission: English only, portrait and landscape supported, rewarded ads in the shop/ability flow, post-game interstitial, and online modes unavailable when external calls are blocked.
 
 ## License
 

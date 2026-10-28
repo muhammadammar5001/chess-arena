@@ -15,6 +15,17 @@
   const BRIDGE_SRC = 'https://bridge.playgama.com/v2/stable/playgama-bridge.js';
   const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
+  let bridgeRef = null;
+  let gameReadySent = false;
+  let readyResolved = false;
+  const lifecycle = {
+    platformId: '',
+    language: 'en',
+    audioEnabled: true,
+    paused: false,
+    externalCallsSupported: true
+  };
+
   const PLATFORM_LABELS = {
     youtube: 'YouTube',
     playgama: 'PlayGama',
@@ -171,6 +182,82 @@
     }
   }
 
+  function emitLifecycleState() {
+    const detail = Object.assign({}, lifecycle);
+    try {
+      window.dispatchEvent(new CustomEvent('chessarena:platform-state', { detail }));
+    } catch (e) { /* older browsers */ }
+
+    // The app object is created near the end of app.js, while the bridge can
+    // initialize before or after that point. Push the current state whenever it
+    // becomes available so the game always starts with the host's real state.
+    const app = window.app;
+    if (!app) return;
+    try {
+      if (typeof app.setPlatformAudioEnabled === 'function') {
+        app.setPlatformAudioEnabled(lifecycle.audioEnabled);
+      }
+      if (typeof app.setPlatformPaused === 'function') {
+        app.setPlatformPaused(lifecycle.paused);
+      }
+    } catch (e) { /* keep platform boot alive */ }
+  }
+
+  function subscribeLifecycle(bridge) {
+    const platform = bridge && bridge.platform;
+    if (!platform || typeof platform.on !== 'function') return;
+    const events = bridge.EVENT_NAME || {};
+    try {
+      if (events.AUDIO_STATE_CHANGED) {
+        platform.on(events.AUDIO_STATE_CHANGED, (enabled) => {
+          lifecycle.audioEnabled = enabled !== false;
+          emitLifecycleState();
+        });
+      }
+      if (events.PAUSE_STATE_CHANGED) {
+        platform.on(events.PAUSE_STATE_CHANGED, (paused) => {
+          lifecycle.paused = paused === true;
+          emitLifecycleState();
+        });
+      }
+    } catch (e) {
+      console.warn('[Platform] Lifecycle subscription failed', e);
+    }
+  }
+
+  function applyInitialLifecycle(bridge) {
+    const platform = bridge && bridge.platform;
+    if (!platform) return;
+    lifecycle.platformId = platform.id ? String(platform.id) : '';
+    lifecycle.language = (typeof platform.language === 'string' && platform.language)
+      ? platform.language.slice(0, 8).toLowerCase()
+      : 'en';
+    lifecycle.audioEnabled = platform.isAudioEnabled !== false;
+    lifecycle.paused = platform.isPaused === true;
+    lifecycle.externalCallsSupported = platform.isExternalCallsSupported !== false;
+
+    try {
+      document.documentElement.lang = lifecycle.language;
+      document.documentElement.dataset.platform = lifecycle.platformId || 'web';
+    } catch (e) { /* ignore */ }
+
+    emitLifecycleState();
+  }
+
+  async function sendGameReady() {
+    if (gameReadySent || !bridgeRef || !bridgeRef.platform) return false;
+    if (typeof bridgeRef.platform.sendMessage !== 'function') return false;
+    gameReadySent = true;
+    try {
+      const result = bridgeRef.platform.sendMessage('game_ready');
+      if (result && typeof result.catch === 'function') result.catch(() => {});
+      return true;
+    } catch (e) {
+      console.warn('[Platform] game_ready failed', e);
+      return false;
+    }
+  }
+
   async function boot() {
     try {
       const bridge = await loadBridgeScript();
@@ -179,30 +266,53 @@
         return;
       }
       await initializeBridge(bridge);
+      bridgeRef = bridge;
+      applyInitialLifecycle(bridge);
+      subscribeLifecycle(bridge);
       const profile = readPlayer(bridge);
       if (profile) {
         cachedProfile = profile;
         try { localStorage.setItem(CACHE_KEY, JSON.stringify(profile)); } catch (e) {}
       }
-      resolveReady(profile);
+      if (!readyResolved) {
+        readyResolved = true;
+        resolveReady(profile);
+      }
+
+      // Send game_ready after the first playable document is interactive. The
+      // app also calls gameReady() after its own init as a safety net; the
+      // bridge message is intentionally sent only once.
+      const fireReady = () => setTimeout(() => { sendGameReady(); }, 50);
+      if (document.readyState === 'complete') fireReady();
+      else window.addEventListener('load', fireReady, { once: true });
     } catch (e) {
-      resolveReady(null);
+      if (!readyResolved) {
+        readyResolved = true;
+        resolveReady(null);
+      }
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot, { once: true });
-  } else {
-    boot();
-  }
+  // Start immediately: this script is loaded after the Bridge script, and the
+  // app initializes its storage before DOMContentLoaded. Waiting for
+  // DOMContentLoaded here made Playgama storage silently fall back to
+  // localStorage on the first run.
+  boot();
 
   window.ChessArenaPlatform = {
     whenReady,
     getCached: () => cachedProfile,
     getPlayer: () => cachedProfile,
-    isSupported: () => !!(window.bridge && window.bridge.player),
+    isSupported: () => !!bridgeRef,
     getStorage: storageGet,
     setStorage: storageSet,
-    getPlatformId: () => realPlatformId()
+    getPlatformId: () => realPlatformId(),
+    getLanguage: () => lifecycle.language,
+    isAudioEnabled: () => lifecycle.audioEnabled,
+    isPaused: () => lifecycle.paused,
+    isExternalCallsSupported: () => lifecycle.externalCallsSupported,
+    getState: () => Object.assign({}, lifecycle),
+    isGameReadySent: () => gameReadySent,
+    gameReady: sendGameReady
   };
 })();

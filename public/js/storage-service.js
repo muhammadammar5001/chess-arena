@@ -114,6 +114,20 @@
         return this.mode;
       }
 
+      // On Playgama the bridge initializes asynchronously. Wait for its
+      // handshake before deciding the storage backend, otherwise the first
+      // profile read/write falls back to localStorage and cloud progress is
+      // lost on the next device/session.
+      const platformApi = window.ChessArenaPlatform;
+      if (platformApi && platformApi.whenReady) {
+        try {
+          await Promise.race([
+            Promise.resolve(platformApi.whenReady),
+            sleep(5000)
+          ]);
+        } catch (e) { /* local fallback */ }
+      }
+
       const platform = this._playgamaAdapter();
       if (platform) {
         this.adapter = platform;
@@ -230,6 +244,30 @@
         pending: !!this._pending,
         lastError: this.lastError ? String(this.lastError.message || this.lastError) : null
       };
+    }
+
+    // Generic Bridge-backed values for game progress that is not part of the
+    // public player profile (economy, settings, ad-trackers). On the host this
+    // uses Bridge Storage; in local play the local adapter is used.
+    async loadValue(key) {
+      await this.init();
+      try {
+        return await this.adapter.getItem(key);
+      } catch (e) {
+        this.lastError = e;
+        return null;
+      }
+    }
+
+    async saveValue(key, value) {
+      await this.init();
+      try {
+        await this.adapter.setItem(key, value);
+        return true;
+      } catch (e) {
+        this.lastError = e;
+        return false;
+      }
     }
 
     sanitizeUsername(value) {
