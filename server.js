@@ -585,16 +585,28 @@ function handleMove(ws, data) {
   const room = rooms.get(ws.roomCode);
   if (!room) return;
 
+  if (room.engine.gameOver) {
+    sendJSON(ws, { type: 'error', message: 'Game is over' });
+    return;
+  }
+
   const color = ws.playerColor;
   if (room.engine.currentTurn !== color) {
     sendJSON(ws, { type: 'error', message: 'Not your turn' });
     return;
   }
 
+  const isValidSquare = (value) => typeof value === 'string' && /^[a-h][1-8]$/.test(value);
+  if (!isValidSquare(data.from) || !isValidSquare(data.to)) {
+    sendJSON(ws, { type: 'error', message: 'Invalid move' });
+    return;
+  }
+
   const from = ChessEngine.fromAlgebraic(data.from);
   const to = ChessEngine.fromAlgebraic(data.to);
 
-  const moveResult = room.engine.makeMove(from.row, from.col, to.row, to.col, data.promotion);
+  // Multiplayer is server-authoritative: never force an illegal move.
+  const moveResult = room.engine.makeMove(from.row, from.col, to.row, to.col, data.promotion, true);
   if (!moveResult) {
     sendJSON(ws, { type: 'error', message: 'Invalid move' });
     return;
@@ -743,7 +755,7 @@ function handleReconnect(ws, data) {
   if (color === 'spectator') {
     ws.roomCode = data.roomCode;
     ws.playerColor = 'spectator';
-    room.spectators.push(ws);
+    room.spectators.add(ws);
     
     const moveList = room.engine.moveHistory.map(m => { if (m.ability) return m; return { from: ChessEngine.toAlgebraic(m.from.row, m.from.col), to: ChessEngine.toAlgebraic(m.to.row, m.to.col), promotion: m.promotion || null }; });
 

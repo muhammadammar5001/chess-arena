@@ -534,7 +534,7 @@ class ChessEngine {
   /**
    * Execute a move. Returns move metadata for UI/network.
    */
-  makeMove(fromRow, fromCol, toRow, toCol, promotionType = null) {
+  makeMove(fromRow, fromCol, toRow, toCol, promotionType = null, strict = false) {
       const piece = this.getPiece(fromRow, fromCol);
     if (!piece || piece.color !== this.currentTurn) return null;
 
@@ -548,6 +548,9 @@ class ChessEngine {
     });
 
     if (!move) {
+      // The authoritative multiplayer server must reject illegal moves.
+      // The force path is only a last-resort client recovery mechanism.
+      if (strict) return null;
       console.warn("makeMove failed: move not in legalMoves. Forcing move for multiplayer sync.", { fromRow, fromCol, toRow, toCol });
       move = { row: toRow, col: toCol, promotion: promotionType };
       if (this.board[toRow][toCol]) move.captured = true;
