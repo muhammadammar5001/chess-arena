@@ -101,6 +101,7 @@ const User = require('./models/User');
 
 // Connect to MongoDB (optional: the game runs without it, stats stay local)
 const dbUri = process.env.MONGO_URI || process.env.MONGODB_URI;
+let mongoConnectionError = null;
 if (dbUri) {
   mongoose.connect(dbUri)
     .then(async () => {
@@ -111,9 +112,21 @@ if (dbUri) {
         console.error('User index migration warning:', err.message);
       }
     })
-    .catch(err => console.error('MongoDB connection error:', err.message));
+    .catch(err => {
+      mongoConnectionError = classifyMongoError(err);
+      console.error('MongoDB connection error:', err.message);
+    });
 } else {
   console.warn('No MONGO_URI set. Running without persistent profiles.');
+}
+
+function classifyMongoError(err) {
+  const message = String((err && err.message) || '');
+  if (/whitelist|not whitelisted|IP address|not allowed to access/i.test(message)) return 'network_whitelist';
+  if (/authentication failed|bad auth|invalid username|invalid password|credentials/i.test(message)) return 'authentication';
+  if (/ENOTFOUND|querySrv|DNS/i.test(message)) return 'dns';
+  if (/ECONNREFUSED|ETIMEDOUT|server selection|connection timed out/i.test(message)) return 'network';
+  return 'connection_failed';
 }
 
 /**
@@ -179,7 +192,8 @@ app.get('/api/status', (req, res) => {
     connections: wss.clients.size,
     activeRooms: rooms.size,
     mongoConfigured: Boolean(dbUri),
-    mongoState: mongoose.connection.readyState
+    mongoState: mongoose.connection.readyState,
+    mongoError: mongoConnectionError
   });
 });
 
