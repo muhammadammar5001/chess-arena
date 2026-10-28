@@ -1,5 +1,5 @@
 /**
- * Owl's Gambit — Chess Engine
+ * Chess Arena — Chess Engine
  * Complete chess rules implementation with all special moves.
  */
 
@@ -448,6 +448,10 @@ class ChessEngine {
   isKingInCheck(color) {
     const kp = this.kingPositions[color];
     return this.isSquareAttacked(kp.row, kp.col, color);
+  }
+
+  isCheckmate(color) {
+    return this.isKingInCheck(color) && this.getAllLegalMoves(color).length === 0;
   }
 
   /**

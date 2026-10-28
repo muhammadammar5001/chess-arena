@@ -1254,12 +1254,52 @@ function handleUseAbility(ws, data) {
       room.engine.abilitiesUsed[color].push(ability);
     }
 
+    // Turn-consuming abilities (swap & jump) update timers and check game over
+    if (ability === 'swap' || ability === 'jump') {
+      if (room.timers && room.lastMoveTime) {
+        const now = Date.now();
+        const elapsed = now - room.lastMoveTime;
+        room.timers[color] -= elapsed;
+        if (room.timers[color] <= 0) {
+          room.timers[color] = 0;
+          const winner = color === 'white' ? 'black' : 'white';
+          broadcastToRoom(room, { type: 'game_over', reason: 'timeout', winner });
+          room.engine.gameOver = true;
+          room.engine.gameResult = { winner, reason: 'timeout' };
+          return;
+        }
+      }
+      room.lastMoveTime = Date.now();
+    }
+
     broadcastToRoom(room, {
       type: 'ability_used',
       color: color,
       ability: ability,
       args: args
     });
+
+    if (ability === 'swap' || ability === 'jump') {
+      if (room.timers) {
+        broadcastToRoom(room, {
+          type: 'timer_sync',
+          white: room.timers.white,
+          black: room.timers.black
+        });
+      }
+
+      // Check if ability resulted in checkmate / stalemate
+      const opponentColor = color === 'white' ? 'black' : 'white';
+      if (room.engine.isCheckmate(opponentColor)) {
+        room.engine.gameOver = true;
+        room.engine.gameResult = { winner: color, reason: 'checkmate' };
+        broadcastToRoom(room, { type: 'game_over', reason: 'checkmate', winner: color });
+      } else if (room.engine.isStalemate && room.engine.isStalemate(opponentColor)) {
+        room.engine.gameOver = true;
+        room.engine.gameResult = { winner: null, reason: 'stalemate' };
+        broadcastToRoom(room, { type: 'game_over', reason: 'stalemate', winner: null });
+      }
+    }
   } else {
     sendJSON(ws, { type: 'error', message: 'Invalid ability use' });
   }
