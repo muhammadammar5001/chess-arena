@@ -177,7 +177,9 @@ app.get('/api/status', (req, res) => {
     version: '1.0.0',
     platform: 'YouTube Playables / Playgama',
     connections: wss.clients.size,
-    activeRooms: rooms.size
+    activeRooms: rooms.size,
+    mongoConfigured: Boolean(dbUri),
+    mongoState: mongoose.connection.readyState
   });
 });
 
