@@ -2475,7 +2475,7 @@ body, html, .screen, .fantasy-home-screen, #screen-home, #screen-profile, .shop-
   /* Desktop Stage Hero Card & Artwork Banner */
   .fantasy-hero-banner {
     height: auto !important;
-    aspect-ratio: 1600 / 893;
+    aspect-ratio: 1600 / 670;
     border-radius: 18px !important;
     overflow: hidden !important;
   }
