@@ -1,27 +1,25 @@
 {
-  "name": "owls-gambit",
+  "name": "chess-arena",
   "version": "1.0.0",
-  "description": "A free mobile-first PvP chess game with online multiplayer and AI opponent",
+  "description": "Chess Arena — free online PvP chess with tactical abilities, AI and rooms",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "node test/chess-rules.test.js"
+    "test": "node test/chess-rules.test.js && node test/economy.test.js"
   },
   "keywords": [
     "chess",
     "pvp",
     "multiplayer",
-    "mobile"
+    "mobile",
+    "playables"
   ],
   "license": "MIT",
   "dependencies": {
-    "@typesafe-ai/sdk": "^0.7.0",
     "dotenv": "^18.0.5",
-    "ethers": "^6.17.0",
     "express": "^4.18.2",
     "mongoose": "^9.10.3",
-    "sqlite3": "^6.0.1",
     "uuid": "^9.0.0",
     "ws": "^8.16.0"
   }

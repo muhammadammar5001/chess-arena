@@ -1,8 +1,10 @@
 ---
 name: owls-gambit-full-stack-builder
-description: Build, test, secure, and document the Robin Owls PvP chess game, including frontend, backend, realtime gameplay, Robin Mode abilities, NFT utility, referral system, economic rules, admin tools, analytics, infrastructure, and Robinhood Chain smart contracts. Use this as the single project source of truth and execute the project in audited milestones rather than generating an untested monolithic implementation.
+description: ARCHIVED pre-rebrand web3 specification. Do not use for the shipped Chess Arena app; see README.md and docs/ARCHITECTURE.md instead.
 version: 1.0.0
 ---
+
+> **Archived:** This document describes the pre-rebrand Owl's Gambit web3 prototype. It is not part of the shipped Chess Arena app and must not be used as an implementation source of truth. The shipped game uses YouTube Playables cloud storage, optional MongoDB profiles, and local/PlayGama fallbacks documented in `README.md` and `docs/ARCHITECTURE.md`.
 
 # Owl's Gambit - All-in-One Antigravity Build Skill
 

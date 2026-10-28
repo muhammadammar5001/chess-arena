@@ -1,12 +1,7 @@
 ﻿node_modules/
-contracts/node_modules/
-contracts/artifacts/
-contracts/cache/
 .env
-*.sqlite
+.env.*
+!.env.example
 .graphify*
 graphify-out/
-cost.json
-temp.js
-db_chk.cjs
-extracted_log.txt
+*.log

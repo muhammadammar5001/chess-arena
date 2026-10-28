@@ -14,8 +14,8 @@
   <!-- PlayGama Bridge (bundles the YouTube Playables adapter) -->
   <script src="https://bridge.playgama.com/v2/stable/playgama-bridge.js"></script>
   <link rel="stylesheet" href="/css/tokens.css">
-  <link rel="stylesheet" href="/css/styles.css?v=1792715271864">
-  <link rel="stylesheet" href="/css/wooden-theme.css?v=1792715271864">
+  <link rel="stylesheet" href="/css/styles.css?v=1793066000008">
+  <link rel="stylesheet" href="/css/wooden-theme.css?v=1793066000005">
   <style>
     #username-modal.hidden {
       display: none !important;
@@ -120,10 +120,10 @@
             <div class="menu-icon-box">
               <svg class="menu-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 3h18v4H3z" />
-                <path d="M3 7l2 14h14l2-14" />
-                <path d="M10 11v6" />
-                <path d="M14 11v6" />
+                <path d="M3 3h2l2.4 11.2a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L21.5 7H6.2" />
+                <path d="M9.5 11h9" />
+                <circle cx="9" cy="20" r="1.4" />
+                <circle cx="18" cy="20" r="1.4" />
               </svg>
             </div>
             <span class="menu-card-label">Shop Items</span>
@@ -132,7 +132,8 @@
             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="9 18 15 12 9 6" />
           </svg>
-        
+        </button>
+
         <button class="fantasy-menu-card" onclick="app.showLuckyWheelModal()" style="margin-top: 8px;">
           <div class="menu-card-left">
             <div class="menu-icon-box" style="background: rgba(255, 213, 79, 0.15); color: #FFD54F; font-size: 18px;">🎡</div>
@@ -312,18 +313,6 @@
 
       </div>
 
-      <!-- Timer control -->
-      <div class="timer-select" style="margin-top: 20px;">
-        <label>Time Control (for room you create)</label>
-        <select id="timer-select">
-          <option value="">No timer</option>
-          <option value="5">5 min</option>
-          <option value="10" selected>10 min</option>
-          <option value="15">15 min</option>
-          <option value="30">30 min</option>
-        </select>
-      </div>
-
     </div>
   </div>
 
@@ -430,7 +419,7 @@
           <!-- Your avatar (static) -->
           <div class="roulette-player-col">
             <div class="roulette-avatar-frame you">
-              <img src="/assets/avatar-default.svg" alt="You" class="roulette-avatar-img">
+              <img id="roulette-you-avatar" alt="You" class="roulette-avatar-img">
             </div>
             <span class="roulette-player-label">You</span>
             <span class="roulette-player-rating">1240</span>
@@ -487,30 +476,38 @@
 
         <!-- Top match player header -->
         <div class="ingame-match-header">
-          <div class="ingame-player-pill" id="player-self-tag" style="position: relative;">
-            <div class="avatar-chat-wrapper" style="position: relative;"> <img src="/assets/avatar-default.svg" alt="You"
-                class="ingame-player-avatar" id="bottom-player-avatar">
+          <div class="ingame-player-pill" id="player-self-tag">
+            <div class="avatar-chat-wrapper">
+              <img src="/assets/avatar-default.svg" alt="You" class="ingame-player-avatar" id="bottom-player-avatar">
+              <span class="ingame-level-badge" id="bottom-player-level-badge" title="Player Level">Lv 1</span>
               <div id="bottom-chat-bubble" class="ingame-chat-bubble"></div>
             </div>
             <div class="ingame-player-meta">
               <span class="ingame-player-name">
-                <span id="bottom-player-name">Player</span>
+                <span class="ingame-player-name-text" id="bottom-player-name">Player</span>
                 <span class="online-dot-mini"></span>
               </span>
-              <span class="ingame-player-rating" id="bottom-player-rating">1240</span>
+              <span class="ingame-player-stats">
+                <span class="ingame-player-rating" id="bottom-player-rating">1200 Elo</span>
+                <span class="ingame-player-title" id="bottom-player-title"></span>
+              </span>
             </div>
           </div>
 
-          <div class="ingame-player-pill" id="player-opp-tag" style="position: relative;">
-            <div class="ingame-player-meta" style="align-items: flex-end;">
+          <div class="ingame-player-pill" id="player-opp-tag">
+            <div class="ingame-player-meta ingame-player-meta-right">
               <span class="ingame-player-name">
-                <span id="top-player-name">Opponent</span>
+                <span class="ingame-player-name-text" id="top-player-name">Opponent</span>
                 <span class="online-dot-mini"></span>
               </span>
-              <span class="ingame-player-rating" id="top-player-rating">1180</span>
+              <span class="ingame-player-stats">
+                <span class="ingame-player-rating" id="top-player-rating">1200 Elo</span>
+                <span class="ingame-player-title" id="top-player-title"></span>
+              </span>
             </div>
-            <div class="avatar-chat-wrapper" style="position: relative;"> <img src="/assets/avatar-default.svg"
-                alt="Opponent" class="ingame-player-avatar" id="top-player-avatar">
+            <div class="avatar-chat-wrapper">
+              <img src="/assets/avatar-default.svg" alt="Opponent" class="ingame-player-avatar" id="top-player-avatar">
+              <span class="ingame-level-badge" id="top-player-level-badge" title="Player Level">Lv 1</span>
               <div id="top-chat-bubble" class="ingame-chat-bubble"></div>
             </div>
           </div>
@@ -645,6 +642,13 @@
             <span class="btn-label" id="btn-ingame-undo-label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">Undo
               <span class="undo-cost-badge" style="color: #FFD54F; font-size: 11px; font-weight: 700;">🪙50</span></span>
           </button>
+          <button class="btn-game-pill" id="btn-ingame-hint" onclick="app.getHint()" title="Get a Hint (AI only)" style="display: none;">
+            <span class="btn-icon" style="display: inline-flex; align-items: center; justify-content: center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2.1V18h6v-1.2c0-.9.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+            </span>
+            <span class="btn-label" id="btn-ingame-hint-label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">Hint
+              <span style="color: #FFD54F; font-size: 11px; font-weight: 700;">🪙25</span></span>
+          </button>
           <button class="btn-game-pill" id="btn-ingame-draw" style="display: none;" onclick="app.offerDraw()" title="Offer Draw">
             <span class="btn-icon" style="display: inline-flex; align-items: center; justify-content: center;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88"/><path d="m18 10 2-2a2 2 0 0 0-3-3l-7 7a2 2 0 0 0 0 3l2 2"/></svg>
@@ -709,56 +713,77 @@
       <div class="abilities-hero-wrap" style="text-align: center; margin-bottom: 20px;">
         <div class="wooden-abilities-preview"
           style="display: flex; justify-content: center; gap: 10px; margin: 12px 0 16px 0;">
-          <div id="preview-medallion-swap" onclick="app.toggleAbility('swap')" title="Tactical Swap"
-            style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(145deg, #4A2E1B, #20120B); border: 2px solid #C99700; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
-            <img src="/assets/Asset 42.png" style="width: 28px; height: 28px; object-fit: contain;">
-          </div>
-          <div id="preview-medallion-freeze" onclick="app.toggleAbility('freeze')" title="Piece Freeze"
-            style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(145deg, #4A2E1B, #20120B); border: 2px solid #C99700; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
-            <img src="/assets/Asset 43.png" style="width: 28px; height: 28px; object-fit: contain;">
-          </div>
           <div id="preview-medallion-second" onclick="app.toggleAbility('second')" title="Second Chance"
             style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(145deg, #4A2E1B, #20120B); border: 2px solid #C99700; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
             <img src="/assets/Asset 44.png" style="width: 28px; height: 28px; object-fit: contain;">
-          </div>
-          <div id="preview-medallion-shield" onclick="app.toggleAbility('shield')" title="Divine Shield"
-            style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(145deg, #4A2E1B, #20120B); border: 2px solid #C99700; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
-            <img src="/assets/Asset 45.png" style="width: 28px; height: 28px; object-fit: contain;">
           </div>
           <div id="preview-medallion-jump" onclick="app.toggleAbility('jump')" title="Pegasus Jump"
             style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(145deg, #4A2E1B, #20120B); border: 2px solid #C99700; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
             <img src="/assets/Asset 46.png" style="width: 28px; height: 28px; object-fit: contain;">
           </div>
+          <div id="preview-medallion-freeze" onclick="app.toggleAbility('freeze')" title="Piece Freeze"
+            style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(145deg, #4A2E1B, #20120B); border: 2px solid #C99700; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
+            <img src="/assets/Asset 43.png" style="width: 28px; height: 28px; object-fit: contain;">
+          </div>
+          <div id="preview-medallion-swap" onclick="app.toggleAbility('swap')" title="Tactical Swap"
+            style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(145deg, #4A2E1B, #20120B); border: 2px solid #C99700; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
+            <img src="/assets/Asset 42.png" style="width: 28px; height: 28px; object-fit: contain;">
+          </div>
+          <div id="preview-medallion-shield" onclick="app.toggleAbility('shield')" title="Divine Shield"
+            style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(145deg, #4A2E1B, #20120B); border: 2px solid #C99700; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
+            <img src="/assets/Asset 45.png" style="width: 28px; height: 28px; object-fit: contain;">
+          </div>
         </div>
         <h3 class="abilities-heading"
-          style="font-family: 'Georgia', serif; font-size: 20px; color: #20120B; margin-bottom: 4px;">Choose 2 Abilities
+          style="font-family: 'Georgia', serif; font-size: 20px; color: #20120B; margin-bottom: 4px;">Choose Your Abilities
         </h3>
-        <p class="abilities-subheading" style="color: #8C6538; font-size: 13px; font-weight: 700;">Each ability can be
-          used once per match.</p>
+        <p class="abilities-subheading" style="color: #8C6538; font-size: 13px; font-weight: 700;">Slot 1 is active. Slot 2 unlocks after 3 ads. Each ability is used once per match.</p>
       </div>
 
       <!-- Slot 1 & Slot 2 Loadout Status -->
-        <div id="abilities-slots-container" style="display: flex; justify-content: center; gap: 14px; margin: 12px auto 16px auto; max-width: 380px;">
-          <div style="flex: 1; background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%); border: 2px solid #C99700; border-radius: 10px; padding: 8px 10px; text-align: center;">
-            <div style="font-size: 10px; color: #F5D36C; font-weight: 700; letter-spacing: 0.5px;">SLOT 1 (ACTIVE)</div>
-            <div id="slot-1-display" style="font-size: 12px; color: #FFF; font-weight: 800; margin-top: 4px;">Pegasus Jump</div>
+        <div id="abilities-slots-container" style="display: flex; justify-content: center; gap: 10px; margin: 12px auto 14px auto; width: 100%; max-width: 290px; box-sizing: border-box;">
+          <div style="flex: 1; min-width: 0; background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%); border: 1.5px solid #C99700; border-radius: 9px; padding: 8px 10px; text-align: center; box-sizing: border-box;">
+            <div style="font-size: 9px; color: #F5D36C; font-weight: 800; letter-spacing: 0.75px; line-height: 1.1;">SLOT 1 · ACTIVE</div>
+            <div id="slot-1-display" style="font-size: 12px; color: #FFF; font-weight: 800; margin-top: 3px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Second Chance</div>
           </div>
-          <div id="slot-2-box" style="flex: 1; background: linear-gradient(180deg, #2B160B 0%, #170904 100%); border: 2px dashed #8C6538; border-radius: 10px; padding: 8px 10px; text-align: center; position: relative;">
-            <div id="slot-2-header" style="font-size: 10px; color: #A58463; font-weight: 700; letter-spacing: 0.5px;">SLOT 2 (LOCKED)</div>
-            <div id="slot-2-content" style="margin-top: 4px;">
-              <button onclick="app.promptUnlockSlot2()" style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; border: none; border-radius: 6px; font-weight: 800; font-size: 10px; padding: 4px 8px; cursor: pointer;">Unlock (500🪙 / 🎬 3 Ads)</button>
+          <div id="slot-2-box" style="flex: 1; min-width: 0; background: linear-gradient(180deg, #2B160B 0%, #170904 100%); border: 1.5px dashed #8C6538; border-radius: 9px; padding: 8px 10px; text-align: center; position: relative; box-sizing: border-box;">
+            <div id="slot-2-header" style="font-size: 9px; color: #A58463; font-weight: 800; letter-spacing: 0.75px; line-height: 1.1;">SLOT 2 · 0/3</div>
+            <div id="slot-2-content" style="margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 5px;">
+              <button onclick="app.promptUnlockSlot2()" style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; border: none; border-radius: 5px; font-weight: 900; font-size: 9px; padding: 4px 8px; cursor: pointer; box-shadow: 0 1px 0 #8A6500; white-space: nowrap;" title="Watch 3 ads to unlock Slot 2">🎬 Unlock</button>
+              <span style="display: flex; gap: 3px;">
+                <span style="width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: #3A2315; border: 1px solid #8C6538;"></span>
+                <span style="width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: #3A2315; border: 1px solid #8C6538;"></span>
+                <span style="width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: #3A2315; border: 1px solid #8C6538;"></span>
+              </span>
             </div>
           </div>
         </div>
+      <div style="max-width: 360px; margin: 0 auto 14px; padding: 8px 10px; border-radius: 8px; background: rgba(58, 35, 21, 0.08); border: 1px solid rgba(140, 101, 56, 0.35); color: #6B4A2A; font-size: 11px; line-height: 1.4; text-align: center; font-weight: 700;">
+        Select your favorite skill below.
+      </div>
+
       <div class="abilities-list">
-        <div class="ability-card" id="ability-card-swap" onclick="app.toggleAbility('swap')">
+        <div class="ability-card" id="ability-card-second" onclick="app.toggleAbility('second')">
           <div class="ability-left">
             <div class="ability-icon-circle" style="background: transparent; border: none; box-shadow: none;"><img
-                src="/assets/Asset 42.png" alt="Tactical Swap" style="width: 40px; height: 40px; object-fit: contain;">
+                src="/assets/Asset 44.png" alt="Second Chance" style="width: 40px; height: 40px; object-fit: contain;">
             </div>
             <div class="ability-info">
-              <span class="ability-name">Tactical Swap</span>
-              <span class="ability-desc">Swap positions of two of your pieces.</span>
+              <span class="ability-name">Second Chance</span>
+              <span class="ability-desc">Take back your last move before opponent responds.</span>
+            </div>
+          </div>
+          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+        </div>
+
+        <div class="ability-card" id="ability-card-jump" onclick="app.toggleAbility('jump')">
+          <div class="ability-left">
+            <div class="ability-icon-circle" style="background: transparent; border: none; box-shadow: none;"><img
+                src="/assets/Asset 46.png" alt="Pegasus Jump" style="width: 40px; height: 40px; object-fit: contain;">
+            </div>
+            <div class="ability-info">
+              <span class="ability-name">Pegasus Jump</span>
+              <span class="ability-desc">Vault directly over 1 obstacle in front to empty square ahead.</span>
             </div>
           </div>
           <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
@@ -777,14 +802,14 @@
           <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
         </div>
 
-        <div class="ability-card" id="ability-card-second" onclick="app.toggleAbility('second')">
+        <div class="ability-card" id="ability-card-swap" onclick="app.toggleAbility('swap')">
           <div class="ability-left">
             <div class="ability-icon-circle" style="background: transparent; border: none; box-shadow: none;"><img
-                src="/assets/Asset 44.png" alt="Second Chance" style="width: 40px; height: 40px; object-fit: contain;">
+                src="/assets/Asset 42.png" alt="Tactical Swap" style="width: 40px; height: 40px; object-fit: contain;">
             </div>
             <div class="ability-info">
-              <span class="ability-name">Second Chance</span>
-              <span class="ability-desc">Take back your last move before opponent responds.</span>
+              <span class="ability-name">Tactical Swap</span>
+              <span class="ability-desc">Swap positions of two of your pieces.</span>
             </div>
           </div>
           <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
@@ -798,19 +823,6 @@
             <div class="ability-info">
               <span class="ability-name">Divine Shield</span>
               <span class="ability-desc">1 friendly piece cannot be captured on opponent's next turn.</span>
-            </div>
-          </div>
-          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-        </div>
-
-        <div class="ability-card" id="ability-card-jump" onclick="app.toggleAbility('jump')">
-          <div class="ability-left">
-            <div class="ability-icon-circle" style="background: transparent; border: none; box-shadow: none;"><img
-                src="/assets/Asset 46.png" alt="Pegasus Jump" style="width: 40px; height: 40px; object-fit: contain;">
-            </div>
-            <div class="ability-info">
-              <span class="ability-name">Pegasus Jump</span>
-              <span class="ability-desc">Vault directly over 1 obstacle in front to empty square ahead.</span>
             </div>
           </div>
           <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
@@ -855,12 +867,22 @@
                 <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
               </svg></span>
           </div>
-          <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
+          <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 4px;">
             <span class="profile-hero-level" style="font-size: 14px; color: #FFD54F; font-weight: 700; margin: 0;">Lvl
-              12</span>
+              <span id="profile-hero-level">1</span></span>
             <span id="profile-rank-badge" style="font-size: 11px; font-weight: 800; letter-spacing: 0.4px; color: #20120B; background: #F5D36C; padding: 2px 8px; border-radius: 9999px;">Unranked</span>
-            <span id="profile-platform-source"
-              style="display: none; font-size: 11px; font-weight: 700; letter-spacing: 0.4px; color: #8C6538; background: rgba(201, 151, 0, 0.14); border: 1px solid rgba(201, 151, 0, 0.35); padding: 2px 8px; border-radius: 9999px;"></span>
+            <span id="profile-title-badge" class="elo-title-badge" style="display: none;"></span>
+          </div>
+          <div class="profile-xp-meter">
+            <div class="profile-xp-row">
+              <span class="profile-xp-label">XP</span>
+              <span class="profile-xp-value" id="profile-xp-text">0 / 100 XP</span>
+            </div>
+            <div class="profile-xp-track" id="profile-xp-track" role="progressbar" aria-label="Experience progress"
+              aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+              aria-valuetext="0 of 100 XP toward level 2">
+              <div class="profile-xp-fill" id="profile-xp-fill"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -935,9 +957,29 @@
         style="width: 100%; max-width: 580px; margin: 0 auto; padding-bottom: 160px; box-sizing: border-box;">
         <!-- Coin Vault Badge -->
         <div
-          style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(180deg, #3A2315 0%, #201108 100%); border: 1.5px solid #C99700; border-radius: 12px; padding: 10px 16px; margin-bottom: 16px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">
+          style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(180deg, #3A2315 0%, #201108 100%); border: 1.5px solid #C99700; border-radius: 12px; padding: 10px 16px; margin-bottom: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">
           <span style="font-family: var(--font-serif); font-weight: 700; color: #FDF7EC;">Your Coins</span>
-          <span id="shop-coin-balance" style="font-family: var(--font-serif); font-weight: 800; color: #FFD54F; font-size: 16px;">🪙 1,000 Coins</span>
+          <span style="display: flex; align-items: center; gap: 10px;">
+            <span id="shop-coin-balance" style="font-family: var(--font-serif); font-weight: 800; color: #FFD54F; font-size: 16px;">🪙 1,000 Coins</span>
+            <span title="Your player level. It unlocks boards and skills." style="font-size: 11px; font-weight: 800; color: #4ade80; background: rgba(74, 222, 128, 0.12); border: 1px solid rgba(74, 222, 128, 0.4); border-radius: 999px; padding: 3px 8px;">Player Lv <span id="shop-player-level">1</span></span>
+          </span>
+        </div>
+
+        <!-- Free Coins: optional rewarded ads -->
+        <div style="background: linear-gradient(180deg, #2B160B 0%, #170904 100%); border: 1.5px dashed #8C6538; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div style="flex: 1 1 190px; min-width: 0;">
+              <div style="font-family: var(--font-serif); font-weight: 800; color: #FFD54F;">🪙 Free Coins</div>
+              <div style="font-size: 11px; color: #C9B18F; margin-top: 3px; line-height: 1.35;">Watch an optional ad and the bonus coins are added to your balance.</div>
+            </div>
+            <div style="text-align: right;">
+              <button id="shop-gold-vault-btn" onclick="app.claimFreeAdCoins()"
+                style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; border: none; border-radius: 8px; padding: 8px 12px; font-size: 11px; font-weight: 900; cursor: pointer; box-shadow: 0 3px 0 #8A6500; white-space: nowrap;">
+                🎬 Watch Ad · +150 🪙
+              </button>
+              <div id="shop-gold-vault-coins" style="font-size: 10px; color: #C9B18F; margin-top: 5px; font-weight: 700;">Today: 0/6 ads</div>
+            </div>
+          </div>
         </div>
 
         <!-- Shop Collection -->
@@ -945,87 +987,79 @@
         <!-- TAB PANE 1: BOARDS -->
         <div class="shop-tab-pane active" id="shop-pane-boards" style="display: block !important;">
           <div class="shop-shelf">
-            <div class="shop-shelf-title">
-              <span>🪵 Wooden Boards Collection</span>
+            <div class="shop-shelf-head">
+              <div>
+                <div class="shop-shelf-title"><span class="shop-shelf-icon">♜</span> Wooden Boards Collection</div>
+                <div class="shop-shelf-subtitle">Cosmetic board skins · Unlock with coins and player level</div>
+              </div>
+              <span class="shop-shelf-count">6 BOARDS</span>
             </div>
             <div class="shop-grid">
               <!-- Classic Oak -->
-              <div class="shop-item-card equipped" data-id="classic-oak">
+              <article class="shop-item-card equipped" data-id="classic-oak">
+                <span class="shop-equip-ribbon">✓ EQUIPPED</span>
                 <div class="shop-card-preview">
-                  <div class="shop-board-preview-grid board-preview-oak">
-                    <div class="sq-l"></div><div class="sq-d"></div>
-                    <div class="sq-d"></div><div class="sq-l"></div>
-                  </div>
+                  <div class="shop-board-preview-grid board-preview-oak"></div>
                 </div>
                 <div class="shop-item-name">Classic Oak</div>
-                <div style="font-size: 10px; color: #4ade80; font-weight: 700; margin-bottom: 4px;">Starter Board</div>
+                <div class="shop-item-meta"><span class="shop-item-level is-starter">Starter</span></div>
                 <button class="btn-shop-action equipped" onclick="app.buyOrEquipBoard('classic-oak')">Equipped</button>
-              </div>
+              </article>
 
               <!-- Emberwood Board -->
-              <div class="shop-item-card" data-id="ember">
+              <article class="shop-item-card" data-id="ember">
+                <span class="shop-equip-ribbon">✓ EQUIPPED</span>
                 <div class="shop-card-preview">
-                  <div class="shop-board-preview-grid board-preview-ember">
-                    <div class="sq-l"></div><div class="sq-d"></div>
-                    <div class="sq-d"></div><div class="sq-l"></div>
-                  </div>
+                  <div class="shop-board-preview-grid board-preview-ember"></div>
                 </div>
                 <div class="shop-item-name">Emberwood</div>
-                <div style="font-size: 10px; color: #F5D36C; font-weight: 700; margin-bottom: 4px;">Level 3 Required</div>
-                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('ember')">Unlock (1,200 🪙)</button>
-              </div>
+                <div class="shop-item-meta"><span class="shop-item-level">🔒 Lv 3</span></div>
+                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('ember')">Unlock · 1,200 🪙</button>
+              </article>
 
               <!-- Moonlit Grove Board -->
-              <div class="shop-item-card" data-id="moonlit">
+              <article class="shop-item-card" data-id="moonlit">
+                <span class="shop-equip-ribbon">✓ EQUIPPED</span>
                 <div class="shop-card-preview">
-                  <div class="shop-board-preview-grid board-preview-moonlit">
-                    <div class="sq-l"></div><div class="sq-d"></div>
-                    <div class="sq-d"></div><div class="sq-l"></div>
-                  </div>
+                  <div class="shop-board-preview-grid board-preview-moonlit"></div>
                 </div>
                 <div class="shop-item-name">Moonlit Grove</div>
-                <div style="font-size: 10px; color: #F5D36C; font-weight: 700; margin-bottom: 4px;">Level 6 Required</div>
-                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('moonlit')">Unlock (2,500 🪙)</button>
-              </div>
+                <div class="shop-item-meta"><span class="shop-item-level">🔒 Lv 6</span></div>
+                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('moonlit')">Unlock · 2,500 🪙</button>
+              </article>
 
               <!-- Sakurawood Board -->
-              <div class="shop-item-card" data-id="sakura">
+              <article class="shop-item-card" data-id="sakura">
+                <span class="shop-equip-ribbon">✓ EQUIPPED</span>
                 <div class="shop-card-preview">
-                  <div class="shop-board-preview-grid board-preview-sakura">
-                    <div class="sq-l"></div><div class="sq-d"></div>
-                    <div class="sq-d"></div><div class="sq-l"></div>
-                  </div>
+                  <div class="shop-board-preview-grid board-preview-sakura"></div>
                 </div>
                 <div class="shop-item-name">Sakurawood</div>
-                <div style="font-size: 10px; color: #F5D36C; font-weight: 700; margin-bottom: 4px;">Level 9 Required</div>
-                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('sakura')">Unlock (4,000 🪙)</button>
-              </div>
+                <div class="shop-item-meta"><span class="shop-item-level">🔒 Lv 9</span></div>
+                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('sakura')">Unlock · 4,000 🪙</button>
+              </article>
 
               <!-- Walnut & Maple -->
-              <div class="shop-item-card" data-id="walnut-maple">
+              <article class="shop-item-card" data-id="walnut-maple">
+                <span class="shop-equip-ribbon">✓ EQUIPPED</span>
                 <div class="shop-card-preview">
-                  <div class="shop-board-preview-grid board-preview-walnut">
-                    <div class="sq-l"></div><div class="sq-d"></div>
-                    <div class="sq-d"></div><div class="sq-l"></div>
-                  </div>
+                  <div class="shop-board-preview-grid board-preview-walnut"></div>
                 </div>
                 <div class="shop-item-name">Walnut & Maple</div>
-                <div style="font-size: 10px; color: #F5D36C; font-weight: 700; margin-bottom: 4px;">Level 12 Required</div>
-                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('walnut-maple')">Unlock (6,000 🪙)</button>
-              </div>
+                <div class="shop-item-meta"><span class="shop-item-level">🔒 Lv 12</span></div>
+                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('walnut-maple')">Unlock · 6,000 🪙</button>
+              </article>
 
               <!-- Royal Ebony & Ivory -->
-              <div class="shop-item-card" data-id="ebony-ivory">
+              <article class="shop-item-card" data-id="ebony-ivory">
+                <span class="shop-equip-ribbon">✓ EQUIPPED</span>
                 <div class="shop-card-preview">
-                  <div class="shop-board-preview-grid board-preview-ebony">
-                    <div class="sq-l"></div><div class="sq-d"></div>
-                    <div class="sq-d"></div><div class="sq-l"></div>
-                  </div>
+                  <div class="shop-board-preview-grid board-preview-ebony"></div>
                 </div>
                 <div class="shop-item-name">Ebony & Ivory</div>
-                <div style="font-size: 10px; color: #F5D36C; font-weight: 700; margin-bottom: 4px;">Level 15 Required</div>
-                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('ebony-ivory')">Unlock (9,000 🪙)</button>
-              </div>
+                <div class="shop-item-meta"><span class="shop-item-level">🔒 Lv 15</span></div>
+                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('ebony-ivory')">Unlock · 9,000 🪙</button>
+              </article>
             </div>
           </div>
         </div>
@@ -1228,36 +1262,104 @@
   <!-- --------------- SETTINGS MODAL --------------- -->
   <div id="modal-settings" class="modal hidden">
     <div class="modal-overlay" onclick="app.hideModal('modal-settings')"></div>
-    <div class="modal-content settings-modal">
-      <h3 style="margin-bottom: 16px;">Game Settings</h3>
-      <div class="settings-options">
-        <div class="setting-item"
-          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-          <span>Sound Effects</span>
-          <button id="btn-toggle-sound" class="btn btn-secondary btn-small" onclick="app.toggleSound()">
-            🔊 SFX: On
-          </button>
+    <div class="modal-content settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+      <div class="settings-modal-header">
+        <div class="settings-heading">
+          <div class="settings-emblem" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+              </path>
+            </svg>
+          </div>
+          <div class="settings-title-wrap">
+            <h3 id="settings-modal-title">Game Settings</h3>
+            <p class="settings-subtitle">Fine-tune your arena experience</p>
+          </div>
         </div>
-        <div class="setting-item"
-          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-          <span>Background Music</span>
-          <button id="btn-toggle-music" class="btn btn-secondary btn-small" onclick="app.toggleMusic()">
-            🎵 Music: On</button>
-        </div>
-        <div class="setting-item"
-          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-          <span>Game Guide</span>
-          <button class="btn btn-secondary btn-small"
-            onclick="app.hideModal('modal-settings'); app.showScreen('screen-howto');">
-            📜 View Rules
-          </button>
-        </div>
-      </div>
-      <div class="confirm-buttons" style="margin-top: 20px;">
-        <button class="btn btn-tertiary btn-small" style="width: 100%;" onclick="app.hideModal('modal-settings')">
-          Close
+        <button type="button" class="settings-close" onclick="app.hideModal('modal-settings')"
+          aria-label="Close settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
         </button>
       </div>
+
+      <div class="settings-section">
+        <span class="settings-section-label">Audio</span>
+        <div class="settings-options">
+          <div class="setting-item">
+            <div class="setting-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+              </svg>
+            </div>
+            <div class="setting-copy">
+              <span class="setting-title">Sound Effects</span>
+              <span class="setting-desc">Moves, captures &amp; alerts</span>
+            </div>
+            <button type="button" id="btn-toggle-sound" class="setting-switch is-on" role="switch"
+              aria-checked="true" aria-label="Sound effects on" onclick="app.toggleSound()">
+              <span class="setting-switch-label">On</span>
+              <span class="setting-switch-track"><span class="setting-switch-thumb"></span></span>
+            </button>
+          </div>
+          <div class="setting-item">
+            <div class="setting-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M9 18V5l12-2v13"></path>
+                <circle cx="6" cy="18" r="3"></circle>
+                <circle cx="18" cy="16" r="3"></circle>
+              </svg>
+            </div>
+            <div class="setting-copy">
+              <span class="setting-title">Background Music</span>
+              <span class="setting-desc">Ambient soundtrack</span>
+            </div>
+            <button type="button" id="btn-toggle-music" class="setting-switch is-on" role="switch"
+              aria-checked="true" aria-label="Background music on" onclick="app.toggleMusic()">
+              <span class="setting-switch-label">On</span>
+              <span class="setting-switch-track"><span class="setting-switch-thumb"></span></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <span class="settings-section-label">Help</span>
+        <div class="settings-options">
+          <button type="button" class="setting-item setting-item-action"
+            onclick="app.hideModal('modal-settings'); app.showScreen('screen-howto');">
+            <div class="setting-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              </svg>
+            </div>
+            <div class="setting-copy">
+              <span class="setting-title">Game Guide</span>
+              <span class="setting-desc">Rules, controls &amp; abilities</span>
+            </div>
+            <span class="setting-chevron" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <button type="button" class="settings-done-btn" onclick="app.hideModal('modal-settings')">Done</button>
     </div>
   </div>
 
@@ -1445,29 +1547,35 @@
   </div>
 
   <!-- --------------- SCRIPTS --------------- -->
-  <script src="/js/chess-engine.js?v=1792715271864"></script>
-  <script src="/js/multiplayer.js?v=1792715271864"></script>
+  <script src="/js/chess-engine.js?v=1793056000000"></script>
+  <script src="/js/multiplayer.js?v=1793066000004"></script>
   <script src="/js/ai-engine.js?v=1792715271864"></script>
   <script src="/js/pieces.js?v=1792976860981"></script>
-  <script src="/js/ad-service.js"></script>
-  <script src="/js/platform.js"></script>
-  <script src="/js/storage-service.js"></script>
-  <script src="/js/economy-config.js?v=1793035870628"></script>
-  <script src="/js/app.js?v=1793035870629"></script>
+  <script src="/js/ad-service.js?v=1793056000000"></script>
+  <script src="/js/platform.js?v=1793056000000"></script>
+  <script src="/js/storage-service.js?v=1793056000000"></script>
+  <script src="/js/economy-config.js?v=1793065000000"></script>
+  <script src="/js/app.js?v=1793066000006"></script>
   <!-- Lucky Tavern Wheel Modal -->
-  <div id="modal-lucky-wheel" class="modal hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 99999; display: none; align-items: center; justify-content: center;">
-    <div style="background: linear-gradient(180deg, #3A2315 0%, #1A0D06 100%); border: 3px solid #C99700; border-radius: 20px; width: 90%; max-width: 360px; padding: 20px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.9); color: #FDF7EC; position: relative;">
-      <button onclick="app.closeLuckyWheelModal()" style="position: absolute; top: 12px; right: 14px; background: none; border: none; color: #F5D36C; font-size: 22px; cursor: pointer;">✕</button>
-      <h2 style="font-family: 'Cinzel', serif; font-size: 20px; color: #F5D36C; margin: 0 0 4px 0;">Lucky Tavern Wheel</h2>
-      <p style="font-size: 12px; color: #D6BD9B; margin: 0 0 14px 0;">Spin daily to win coins and skill charges!</p>
-      <div style="position: relative; width: 220px; height: 220px; margin: 0 auto 14px auto;">
-        <canvas id="lucky-wheel-canvas" width="220" height="220" style="border-radius: 50%; box-shadow: 0 0 20px rgba(201, 151, 0, 0.4);"></canvas>
-        <div style="position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 20px solid #FFD54F; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); z-index: 10;"></div>
+  <div id="modal-lucky-wheel" class="modal hidden" style="position: fixed; inset: 0; background: rgba(10, 5, 2, 0.88); backdrop-filter: blur(3px); z-index: 99999; display: none; align-items: center; justify-content: center;">
+    <div style="background: radial-gradient(circle at 50% 0%, rgba(201, 151, 0, 0.22), transparent 42%), linear-gradient(180deg, #3A2315 0%, #1A0D06 100%); border: 2px solid #C99700; border-radius: 20px; width: 90%; max-width: 370px; padding: 20px 18px 18px; text-align: center; box-shadow: 0 18px 50px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.12); color: #FDF7EC; position: relative;">
+      <button onclick="app.closeLuckyWheelModal()" style="position: absolute; top: 10px; right: 12px; width: 30px; height: 30px; border-radius: 50%; background: rgba(0,0,0,0.28); border: 1px solid rgba(245, 211, 108, 0.35); color: #F5D36C; font-size: 18px; cursor: pointer;">✕</button>
+      <div style="font-size: 9px; letter-spacing: 2.2px; color: #A58463; font-weight: 900; text-transform: uppercase; margin-bottom: 4px;">Daily Reward</div>
+      <h2 style="font-family: 'Cinzel', serif; font-size: 21px; color: #F5D36C; margin: 0 0 4px 0; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">Lucky Tavern Wheel</h2>
+      <p style="font-size: 11px; color: #D6BD9B; margin: 0 0 10px 0;">1 free spin daily · then up to 3 ad spins</p>
+      <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 12px;">
+        <span style="font-size: 9px; font-weight: 800; color: #FFD54F; background: rgba(201,151,0,0.13); border: 1px solid rgba(201,151,0,0.4); border-radius: 999px; padding: 3px 8px;">🪙 Coins</span>
+        <span style="font-size: 9px; font-weight: 800; color: #9EE6FF; background: rgba(80,180,235,0.12); border: 1px solid rgba(80,180,235,0.35); border-radius: 999px; padding: 3px 8px;">⚡ Skill Charges</span>
       </div>
-      <div id="lucky-wheel-result" style="min-height: 22px; font-weight: 800; color: #FFD54F; font-size: 13px; margin-bottom: 10px;"></div>
-      <button id="btn-spin-wheel" onclick="app.spinLuckyWheel()" class="btn-lime" style="font-weight: 800; font-size: 15px; width: 100%; padding: 12px 0;">
+      <div style="position: relative; width: 240px; height: 240px; margin: 0 auto 12px auto;">
+        <canvas id="lucky-wheel-canvas" width="240" height="240" style="border-radius: 50%; box-shadow: 0 8px 26px rgba(0,0,0,0.65), 0 0 24px rgba(201, 151, 0, 0.28);"></canvas>
+        <div style="position: absolute; top: -5px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent; border-top: 18px solid #FFD54F; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.85)); z-index: 10;"></div>
+      </div>
+      <div id="lucky-wheel-result" style="min-height: 34px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.22); border: 1px solid rgba(245,211,108,0.18); border-radius: 9px; font-weight: 800; color: #FFD54F; font-size: 12px; margin-bottom: 10px; padding: 5px 8px;">Tap spin to begin 🍀</div>
+      <button id="btn-spin-wheel" onclick="app.spinLuckyWheel()" class="btn-lime" style="font-weight: 900; font-size: 15px; width: 100%; padding: 12px 0; letter-spacing: 0.2px;">
         <span id="btn-spin-wheel-text">Spin for Free! 🎡</span>
       </button>
+      <p style="font-size: 9px; color: #A58463; line-height: 1.4; margin: 9px 0 0 0;">Skill charges are added to Your Abilities. Equip the skill there, then use it in online PvP.</p>
     </div>
   </div>
 </body>

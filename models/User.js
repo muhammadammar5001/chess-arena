@@ -1,27 +1,32 @@
 ﻿const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  walletAddress: { 
-    type: String, 
-    required: true, 
+  playerId: {
+    type: String,
+    required: true,
     unique: true,
-    lowercase: true 
+    sparse: true, // legacy profiles may predate the playerId field
+    lowercase: true
   },
-  username: { 
-    type: String, 
-    unique: true, 
-    sparse: true // Allows null/undefined if they haven't set a username yet
+  username: {
+    type: String,
+    unique: true,
+    sparse: true // Allows null/undefined until the player picks a name
   },
-  elo: { 
-    type: Number, 
-    default: 1200 
+  elo: {
+    type: Number,
+    default: 1200
   },
   wins: { type: Number, default: 0 },
   losses: { type: Number, default: 0 },
   draws: { type: Number, default: 0 },
-  createdAt: { 
-    type: Date, 
-    default: Date.now 
+  totalMatches: { type: Number, default: 0 },
+  winStreak: { type: Number, default: 0 },
+  bestStreak: { type: Number, default: 0 },
+  lastUpdated: { type: Date, default: Date.now },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
 });
 

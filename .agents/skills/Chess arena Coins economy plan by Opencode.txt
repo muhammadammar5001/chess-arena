@@ -1,0 +1,183 @@
+Chess Arena — Coin Economy Plan
+Abhi code mein economy weak hai: boards free hain, saari 5 abilities unlocked hain, XP/level system nahi hai, aur AdService mock mode pe init hota hai. Isliye pehle earning + spending + progression ka proper loop banani hogi.
+
+Core Rules
+1 soft currency: Coins + XP/Level (level sirf unlock eligibility ke liye, coins se nahi khareeda ja sakta).
+Cosmetics only — boards, frames, emotes, piece sets. Koi stat boost ya pay-to-win nahi.
+Ads optional aur capped — match ke beech mein kabhi nahi.
+Ranked PvP fair rahega — hints/undo ranked mein off, ability charges ranked mein free.
+New player: 1,000 coins + 2 abilities unlocked.
+Quick Answers
+Sawal	Recommended Answer
+Rewarded ad se coins	100 coins; first ad of day 150; max 6 rewarded ads/day
+Post-match double ad	Match reward +100%, max 2/day
+Hint cost	25 → 50 → 100 → 200 coins, max 4 hints/match
+Undo cost	50 → 100 → 200 coins, max 2/match
+Boards	Classic free; baaki 1,200 / 2,500 / 4,000 / 6,000 / 9,000 coins + level gate
+Start skills	2 unlocked: Tactical Swap + Piece Freeze
+Remaining skills	Level + coins se unlock
+Match loadout	2 skills, har skill 1 baar per match
+Skill charges	3 start, max 5; ranked mein free, AI/casual mein consume
+Refill cost	50 coins/charge, 120 coins/3 charges, ya 1 ad = +2 charges
+Daily free refill	Har unlocked ability ko +1 charge/day
+1. Earning Plan
+Source	Coins	Cap
+Tutorial / first account bonus	300	One-time
+PvP win	90	—
+PvP draw	55	—
+PvP loss	30	—
+AI win — easy / medium / hard	30 / 45 / 70	First 5 AI wins/day full, phir 25%
+First win of the day	+100	1/day
+Daily missions — 3 missions	50 / 75 / 100 = 225	1/day
+Daily login	75	Day 7 = 250
+Win streak 3 / 5 / 7	+50 / +100 / +200	Once/day
+Rank promotion	250 / 500 / 750 / 1,000	One-time per rank
+Weekly challenge — 10 wins	500	1/week
+Rewarded ad	100; first ad 150	6/day
+Double match reward ad	+100% match coins	2/day
+Daily example — normal player:
+
+4 matches = 265 coins
+First win = 100
+Missions = 225
+Login = 75
+3 ads = 300
+1 double = 90
+Total ≈ 1,055 coins/day
+Max ads + doubles ≈ 1,500/day. Ye enough hai boards ke liye, lekin inflationary nahi.
+
+2. Spending Plan
+Sink	Cost	Purpose
+Hint 1/2/3/4	25 / 50 / 100 / 200	Strong coin sink
+Undo 1/2	50 / 100 / 200	Mistake correction
+Board unlocks	1,200–9,000	Main long-term goal
+Ability unlocks	600–2,000	Progression sink
+Ability refills	50/charge or 120/3	Ad/coin sink
+Emotes	200–600	Cosmetic
+Profile frames/titles	500–2,000	Cosmetic
+Alternate piece sets	5,000–15,000	Endgame sink
+Weekly tournament entry	500	Prize pool + sink
+Daily shop discount	20% off	Rotating sink
+Important: Hint aur Undo ranked PvP mein disabled rakho. Warna coins se match jeetna possible ho jayega.
+
+3. Board Prices
+Board	Level	Coins
+Classic Oak	1	Free
+Emberwood	3	1,200
+Moonlit Grove	6	2,500
+Sakurawood	9	4,000
+Walnut & Maple	12	6,000
+Ebony & Ivory	15	9,000
+Ads se direct unlock nahi. Ads coins dete hain, aur coins se board unlock hota hai. Isse coins ki value bani rehti hai.
+
+Optional: board purchase par 1 ad = 10% discount, max once per board.
+
+4. Skills / Abilities
+Starting loadout
+2 abilities unlocked:
+
+Tactical Swap
+Piece Freeze
+1 ability se start karna acha nahi — game ka core “choose 2” loop hi nahi chalega.
+
+Remaining unlocks
+Ability	Level	Coin Cost
+Second Chance	5	600
+Divine Shield	10	1,200
+Pegasus Jump	15	2,000
+Level earned hota hai, isliye ye pay-to-win nahi — players ko pehle khelna padega, phir coins spend kar ke permanently unlock karenge.
+
+Match rules
+Sirf 2 abilities equip.
+Har ability 1 baar per match.
+Charges:
+Start 3 charges per ability
+Max 5
+1 use = 1 charge
+Daily free +1 charge to all unlocked abilities
+Refill: 50 coins/charge ya 120 coins/3 charges
+Rewarded ad: +2 charges
+AI / casual matches: charges consume hoti hain.
+Ranked PvP: charges consume nahi hoti; har selected ability match mein 1 baar free. Isse ranked fair rahega.
+Agar aap all modes mein charges chahte hain: start 5 charges, daily +2, refill 75/180. Lekin main launch ke liye recommended nahi karta — players ability use karna chhor denge.
+
+5. Ads Plan
+Rewarded ad placements
+Get 100 coins — first ad of day 150
+Double match reward — +100% coins
+Refill 2 ability charges
+Free hint — max 1/day
+Free undo — max 1/day
+Caps
+Max 6 rewarded ads/day
+Max 2 double-reward ads/day
+First 3 matches: no ads — new player experience kharab na ho
+Interstitial: every 3rd completed match, max 2/day
+Match ke beech mein koi ad nahi
+Ad dekhne ke baad hi reward; skip/cancel par nahi
+Revenue sanity check
+Agar rewarded eCPM roughly $8–$15 hai, to ek completed 30s ad ka revenue approx $0.008–$0.015 hota hai. 100 coins per ad ka matlab roughly $0.01 ad revenue per 100 coins. Board 9,000 coins sirf ads se nahi, matches/missions se bhi unlock hoga — isliye players ko 90 ads grind nahi karna padega.
+
+Target: 2–4 rewarded ads per active user/day, 6 sirf cap hai.
+
+6. More Economy / Fun Ideas
+Board Mastery
+Har board se 10 wins = gold trim; 50 wins = animated shimmer. Purane boards ki value badhti hai, bina naya content banaye.
+Daily rotating shop
+Har din 2–3 cosmetics, ek 20% off. Coin sink + urgency.
+Alternate piece sets
+Classic, Obsidian, Marble, Royal Gold — 5,000–15,000 coins. Ye biggest endgame sink hoga.
+Weekly Crown Cup
+500 coin entry, 8-player bracket, prizes 3,000 / 1,500 / 750. Entry fees prize pool se zyada hon, taake coins sink hon.
+Comeback bonus
+3 losses in a row = 100 coins ya 1 free hint. Churn kam karega.
+Rematch bonus
+Rematch karne par +20 coins. Social retention.
+Daily missions with variety
+“Play 3 matches”, “Win 1 match”, “Use 1 ability”, “Capture 10 pieces”. Har din different.
+No loot boxes
+YouTube policies aur player trust ke liye direct cosmetic purchases better hain.
+Endgame Royal Vault
+20,000–50,000 coins ka prestige board/piece set. Veterans ke coins absorb karega.
+7. Inflation Control
+AI rewards ko daily cap karo — warna bot farming se inflation hogi.
+Har 4–6 weeks naya cosmetic sink add karo.
+Board prices ko daily income ke against tune karo:
+Ember ≈ 1 day
+Moonlit ≈ 2.5 days
+Sakura ≈ 4 days
+Walnut ≈ 6 days
+Ebony ≈ 9 days
+Median coin balance track karo. Agar median 20,000+ ho jaye, naya high-tier sink launch karo.
+Ads se direct coins hi do, “ad = free board” nahi — warna coin currency useless ho jayegi.
+8. Technical Notes Before Implementation
+Profile mein add karna hoga:
+level, xp
+unlockedAbilities, abilityCharges
+unlockedBoards
+adDailyCount, lastAdReset
+dailyMissions, loginStreak
+In sab fields ko sanitize/clamp karna hoga.
+Leaderboard sync coins ko overwrite na kare — coins local/cloud profile mein rahen, warna match sync se balance ud sakta hai.
+Ad reward idempotent ho: rewardId store karo, taake reconnect par double reward na mile.
+AdService ko PlayGama/YouTube adapter auto-detect karna hoga; abhi default mock hai.
+Hint/Undo ranked mein disable.
+Economy values ek central config file mein rakho, taake baad mein tune karna easy ho.
+Recommended Launch Order
+Phase 1: Coins from matches, daily missions, login, rewarded ads, new hint/undo costs, board prices, ability unlock/refill.
+
+Phase 2: XP/levels, daily shop, board mastery, win streaks.
+
+Phase 3: Piece sets, tournaments, seasonal vault.
+
+Final Recommendation
+Launch with the balanced version:
+
+100 coins/ad, max 6/day
+Hints 25/50/100/200
+Boards 1,200–9,000 + level gates
+2 starting abilities
+3 charges, 50 coins/charge, ranked free
+No pay-to-win in ranked
+Cosmetics + boards as main sinks
+Agar yeh direction approve hai, main Phase 1 implement kar sakta hoon: profile fields, ad rewards, board prices, ability unlock/refill UI, daily caps, aur ranked restrictions.

@@ -1,0 +1,70 @@
+6:26 AM
+YouTube Playables aur Playgama ke model mein Rewarded Video Ads sabse zyada revenue generate karte hain (Tier-1 countries mein $15–$35+ eCPM milta hai).
+
+Ads revenue ko maximize karne ka golden rule yeh hai: Player ko zabardasti ads na dikhayein, balki player khud faida dekh kar khushi khushi ad button dabaye.
+
+Aapke poore economy system ka detailed balanced plan yeh raha:
+
+1. Coin Economy: Faucets (Earning) & Sinks (Spending)
+Action / Source	Coins	Type / Condition
+Welcome Bonus	+300 🪙	New player first launch (enough to test features)
+Match Win (PvP/AI)	+40 🪙	Organic gameplay reward
+Match Loss	+10 🪙	Consolation reward (demotivate na ho)
+🎬 Rewarded Video Ad	+150 🪙	Direct "Watch Ad for Coins" button in Shop/Home
+🎬 3x Match Win Bonus	+120 🪙	Match jeetne ke baad: "Watch Ad to 3X your Win (+120 🪙)"
+Daily Tavern Login	+50 🪙	Retention booster (24h cooldown)
+2. Hints & Doubledown Cost System
+Chess mein "Best Move Hint" bohot powerful cheez hoti hai, isliye iska cost match ke andar progressive (Double-Down) hona chahiye:
+
+1st Hint in match: 25 🪙 (Impulse buy, har koi use karega)
+2nd Hint in match: 50 🪙 (Double-down)
+3rd Hint in match: 100 🪙 (Double-down)
+4th+ Hint in match: 200 🪙 (Capped, taake poora balance ek match mein wipe out na ho)
+Alternative Direct Ad: Agar player ke paas coins na hon: "Watch 1 quick Ad for an Instant Grandmaster Hint".
+3. Boards Unlock Economy (Progression + Ad Revenue)
+Boards ko sirf coins par nahi, balki Levels aur Direct Ad Watches ke combination par unlock karna best hai:
+
+Board Name	Unlock Requirement	Monetization Strategy
+Classic Oak	Free (Default)	Starter board
+Walnut & Maple	350 🪙 (or Level 3)	Early goal (1-2 matches + 1 Ad)
+Emberwood	600 🪙 (or Level 5)	Mid-tier goal (4 Ads ya gameplay)
+Moonlit Grove	900 🪙 (or Level 8)	High-tier prestige
+Sakurawood	1,500 🪙 (or Level 12)	Long-term coin sink
+Royal Ebony & Ivory	🎬 3 Ads Milestone	"Watch 3 Ads total to unlock permanently" (100% Ad Conversion)
+4. Skills Economy: Levels, Loadout & Refills
+A. Starting vs Locked Skills:
+Start mein 2 Skills Unlocked rahengi:
+Pegasus Jump: (Game ka core fun factor hai, shuru se hona chahiye).
+Undo / Second Chance: (Beginners ke blunders bachane ke liye zaroori hai).
+Baqi 3 Skills Level-Locked hongi:
+Freeze Skill: Unlock at Level 4 (+ 200 🪙 unlock fee).
+Swap Skill: Unlock at Level 7 (+ 400 🪙 unlock fee).
+Divine Shield: Unlock at Level 10 (+ 600 🪙 unlock fee).
+B. Loadout & Match Rules (Aapke mutabiq):
+Match shuru karne se pehle player apne loadout mein sirf 2 Skills select kar sakega.
+Ek match mein har equipped skill sirf 1 baar use ho sakegi.
+C. Skill Refills (Constant Coin Sink):
+Har skill ke paas Charges (Bottles) hongi (Max capacity: 5 charges). Match mein use karne par 1 charge consume hoga.
+
+Single Refill (1 Charge): 40 🪙
+Full Pack Refill (5 Charges): 150 🪙 (Save 50 coins — exactly 1 Ad value!)
+🎬 Free 0-Charge Recovery: Agar kisi skill ke 0 charges ho jayein:
+Button par aayega: 🎬 Watch Ad for +3 Charges Free. (Ye button sabse zyada clicks lega!)
+5. Game ko mazeed Fun aur Profitable banane ke 4 Unique Ideas:
+"Lucky Tavern Wheel" (Daily Spinner):
+Har roz 1 Free spin.
+Uske baad har extra spin par 1 Rewarded Ad.
+Prizes: 50 🪙, 100 🪙, 250 🪙 Jackpot, +2 Skill Charges, 1-Hour Board Trial.
+Win-Streak Protector (Loss Aversion):
+Jab player 3+ matches lagataar jeet chuka ho aur agla match haarne lage:
+Popup: "Protect your 3-Win Streak! Watch an Ad to keep the streak alive." (Psychology: Log apni streak bachane ke liye foran ad dekhte hain).
+Revenge Match Boost:
+AI ya online match haarne par rematch screen par:
+"Watch Ad to Rematch with +1 Free Tactical Skill Charge".
+Tavern Trophy Titles (Bragging Rights):
+Profile par Titles jo rating aur level se unlock hon (e.g. Apprentice, Tavern Knight, Grandmaster). No coins needed, pure motivation to keep playing.
+Implementation Overview (Jab aap decide karein ge):
+State Manager (StorageService): Player data schema mein coins, level, skillCharges: { jump: 3, undo: 3, ... } add karenge.
+Shop & Loadout UI: Shop screen par Refill Packs aur Boards ke Ad counters add karenge, aur match start se pehle 2-Skill Loadout selector banayenge.
+Playgama Ad Hooks: AdService.showRewarded() call karke coins aur refills instantly credit karenge.
+Yeh plan aapko kaisa laga? Isme koi number ya price kam/zyada karni ho to batayein, aur jab aap bolein ge ke "ye implement krdo", hum is par kaam start kar denge!

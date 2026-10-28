@@ -5,16 +5,25 @@
 
 const ECONOMY_CONFIG = {
   currency: {
-    startingCoins: 300,
+    startingCoins: 1000,
     pvp: {
       win: 90,
       draw: 50,
       loss: 25
     },
     ai: {
-      easy: { win: 30, loss: 10, xp: 20 },
-      medium: { win: 50, loss: 10, xp: 35 },
-      hard: { win: 80, loss: 10, xp: 60 }
+      easy: {
+        win: 30, draw: 15, loss: 10,
+        xp: { win: 20, draw: 12, loss: 8 }
+      },
+      medium: {
+        win: 50, draw: 25, loss: 10,
+        xp: { win: 35, draw: 20, loss: 12 }
+      },
+      hard: {
+        win: 80, draw: 40, loss: 10,
+        xp: { win: 60, draw: 35, loss: 20 }
+      }
     },
     firstWinOfDayBonus: 100
   },
@@ -22,12 +31,13 @@ const ECONOMY_CONFIG = {
   progression: {
     baseXpPerLevel: 100, // Level N requires N * 100 XP
     pvpXpWin: 50,
-    pvpXpLoss: 20
+    pvpXpDraw: 25,
+    pvpXpLoss: 20,
+    pvpXp: { win: 50, draw: 25, loss: 20 }
   },
 
   skillSlots: {
     slot1Unlocked: true,
-    slot2Cost: 500,
     slot2AdsRequired: 3
   },
 
@@ -38,10 +48,11 @@ const ECONOMY_CONFIG = {
   },
 
   skills: {
-    startingUnlocked: ['jump', 'undo'],
+    startingUnlocked: ['second', 'jump'],
+    // Ordered from the most standard ability to the most advanced, and by cost.
     catalog: [
+      { id: 'second', name: 'Second Chance', icon: '↺', reqLevel: 1, cost: 0, isDefault: true },
       { id: 'jump', name: 'Pegasus Jump', icon: '🐴', reqLevel: 1, cost: 0, isDefault: true },
-      { id: 'undo', name: 'Second Chance', icon: '↺', reqLevel: 1, cost: 0, isDefault: true },
       { id: 'freeze', name: 'Piece Freeze', icon: '❄️', reqLevel: 4, cost: 600 },
       { id: 'swap', name: 'Tactical Swap', icon: '⚡', reqLevel: 7, cost: 1200 },
       { id: 'shield', name: 'Divine Shield', icon: '🛡️', reqLevel: 10, cost: 2000 }
@@ -68,6 +79,37 @@ const ECONOMY_CONFIG = {
     maxDailyDoublers: 3
   }
 };
+
+/**
+ * Single source of truth for match payouts. Keeping this pure makes the
+ * economy easy to test and prevents the UI/config from drifting apart.
+ */
+function calculateMatchReward(mode, difficulty, outcome) {
+  const result = ['win', 'draw', 'loss'].includes(outcome) ? outcome : 'draw';
+  const isPvp = mode === 'online' || mode === 'pvp';
+
+  if (isPvp) {
+    const coins = Number(ECONOMY_CONFIG.currency.pvp[result] || 0);
+    const xpTable = ECONOMY_CONFIG.progression.pvpXp || {
+      win: ECONOMY_CONFIG.progression.pvpXpWin || 50,
+      draw: ECONOMY_CONFIG.progression.pvpXpDraw || 25,
+      loss: ECONOMY_CONFIG.progression.pvpXpLoss || 20
+    };
+    return { coins, xp: Number(xpTable[result] || 0) };
+  }
+
+  const key = String(difficulty || 'medium').toLowerCase();
+  const ai = ECONOMY_CONFIG.currency.ai[key] || ECONOMY_CONFIG.currency.ai.medium;
+  const xpTable = ai.xp && typeof ai.xp === 'object'
+    ? ai.xp
+    : { win: Number(ai.xp) || 0, draw: Number(ai.xp) || 0, loss: Number(ai.xp) || 0 };
+  return {
+    coins: Number(ai[result] != null ? ai[result] : 0),
+    xp: Number(xpTable[result] || 0)
+  };
+}
+
+ECONOMY_CONFIG.calculateMatchReward = calculateMatchReward;
 
 if (typeof window !== 'undefined') {
   window.ECONOMY_CONFIG = ECONOMY_CONFIG;

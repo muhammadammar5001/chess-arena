@@ -1,5 +1,5 @@
 /**
- * Owl's Gambit — AI Engine
+ * Chess Arena — AI Engine
  * Minimax with alpha-beta pruning and configurable difficulty.
  */
 

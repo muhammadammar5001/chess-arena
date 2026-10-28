@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Victory">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="72%">
+      <stop offset="0%" stop-color="#3A2315"/>
+      <stop offset="100%" stop-color="#160D07"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFEAA6"/>
+      <stop offset="42%" stop-color="#E0AE33"/>
+      <stop offset="100%" stop-color="#936105"/>
+    </linearGradient>
+  </defs>
+  <circle cx="120" cy="120" r="116" fill="url(#bg)" stroke="#C99700" stroke-width="4"/>
+  <circle cx="120" cy="120" r="101" fill="none" stroke="#8C6538" stroke-width="1.5" opacity="0.75"/>
+  <g opacity="0.35" stroke="#D9A62B" stroke-width="1.5">
+    <path d="M120 18v22M120 200v22M18 120h22M200 120h22M49 49l15 15M176 176l15 15M191 49l-15 15M64 176l-15 15"/>
+  </g>
+  <g transform="translate(120 132)">
+    <path fill="url(#gold)" d="M-54 18h108l-8 52H-46z"/>
+    <path fill="url(#gold)" d="M-64 -44h30v36h-30zM34 -44h30v36h-30zM-52 -50h104v16H-52z"/>
+    <path fill="url(#gold)" d="M-42 -34c0 36 18 58 42 58s42-22 42-58z"/>
+    <path fill="url(#gold)" d="M-34 -50l-10-22 22 10zM34 -50l10-22-22 10z"/>
+    <circle cx="0" cy="-70" r="9" fill="#FFEAA6"/>
+    <path fill="url(#gold)" d="M-22 76h44l8 16h-60z"/>
+    <path d="M-62 -44c0 44 26 76 62 76s62-32 62-76" fill="none" stroke="#FFE7A0" stroke-width="2" opacity="0.55"/>
+  </g>
+  <g fill="#FFD54F">
+    <path d="M63 78l5 12 13 1-10 8 3 13-11-7-12 7 4-13-10-8 13-1z"/>
+    <path d="M177 78l5 12 13 1-10 8 3 13-11-7-12 7 4-13-10-8 13-1z" opacity="0.8"/>
+  </g>
+</svg>
