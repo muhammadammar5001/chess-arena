@@ -2305,14 +2305,19 @@ body {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 12px;
+  bottom: 0;
   z-index: 2;
   text-align: center;
-  padding: 0 16px;
+  padding: 16px 16px 10px;
+  background: linear-gradient(180deg,
+    rgba(10, 6, 3, 0) 0%,
+    rgba(10, 6, 3, 0.35) 35%,
+    rgba(10, 6, 3, 0.78) 100%);
 }
 
 .fantasy-title-block p {
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95), 0 0 16px rgba(0, 0, 0, 0.65);
+  color: #FFE9A8;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 2px 10px rgba(0, 0, 0, 0.9);
 }
 
 .fantasy-brand-title {
@@ -2327,13 +2332,13 @@ body {
 }
 
 .fantasy-brand-tagline {
-  font-size: 10px;
-  font-weight: 600;
-  color: #F5D36C;
-  letter-spacing: 3.5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #FFE9A8;
+  letter-spacing: 2.8px;
   margin-top: 6px;
   text-transform: uppercase;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 2px 10px rgba(0, 0, 0, 0.9);
 }
 
 /* Main Gold PLAY Button */
