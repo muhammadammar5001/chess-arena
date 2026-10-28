@@ -4125,16 +4125,18 @@ class App {
       if (card) {
         if (this.selectedAbilities.includes(id)) {
           card.classList.add('selected');
+          card.setAttribute('aria-pressed', 'true');
         } else {
           card.classList.remove('selected');
+          card.setAttribute('aria-pressed', 'false');
         }
+        card.classList.toggle('locked', !isUnlocked);
 
         // Render charges and unlock/refill controls inside card
         let badgeEl = card.querySelector('.ability-economy-badge');
         if (!badgeEl) {
           badgeEl = document.createElement('div');
           badgeEl.className = 'ability-economy-badge';
-          badgeEl.style.cssText = 'display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 6px; font-size: 11px;';
           const info = card.querySelector('.ability-info');
           if (info) info.appendChild(badgeEl);
         }
@@ -4157,19 +4159,19 @@ class App {
 
           badgeEl.innerHTML = `
             <div class="ability-charge-summary">
-              <span class="ability-charge-label">⚡ Skill Charges</span>
+              <span class="ability-charge-label">Skill Charges</span>
               <strong class="ability-charge-value">${charges}<span>/${maxCharges}</span></strong>
             </div>
             <div class="ability-charge-actions">
               <button class="ability-recharge-btn ability-recharge-btn--coin" ${canAdd1 ? '' : 'disabled'}
                 onclick="event.stopPropagation(); app.refillSkill('${id}', 1, ${singleCost})"
-                title="${canAdd1 ? `Add 1 charge for ${singleCost} coins` : 'Not enough room for +1 charge'}">+1 <span>${singleCost}🪙</span></button>
+                title="${canAdd1 ? `Add 1 charge for ${singleCost} coins` : 'Not enough room for +1 charge'}">+1 <span>${singleCost}</span></button>
               <button class="ability-recharge-btn ability-recharge-btn--coin" ${canAdd3 ? '' : 'disabled'}
                 onclick="event.stopPropagation(); app.refillSkill('${id}', 3, ${packCost})"
-                title="${canAdd3 ? `Add 3 charges for ${packCost} coins` : 'Not enough room for +3 charges'}">+3 <span>${packCost}🪙</span></button>
+                title="${canAdd3 ? `Add 3 charges for ${packCost} coins` : 'Not enough room for +3 charges'}">+3 <span>${packCost}</span></button>
               <button class="ability-recharge-btn ability-recharge-btn--ad" ${canAddAd ? '' : 'disabled'}
                 onclick="event.stopPropagation(); app.refillSkillViaAd('${id}')"
-                title="${canAddAd ? `Watch an ad for +${adCharges} charges` : 'Not enough room for the ad refill'}">🎬 +${adCharges} <span>AD</span></button>
+                title="${canAddAd ? `Watch an ad for +${adCharges} charges` : 'Not enough room for the ad refill'}">+${adCharges} <span>AD</span></button>
             </div>
             <div class="ability-charge-note">${note}</div>`;
         } else {
@@ -4177,8 +4179,8 @@ class App {
           const skillItem = catalog.find(s => s.id === id);
           const reqLvl = skillItem?.reqLevel || 1;
           const cost = skillItem?.cost || 500;
-          badgeEl.innerHTML = `<span style="color: #A58463; font-weight: 700;">Locked (Level ${reqLvl})</span>
-            <button onclick="event.stopPropagation(); app.promptUnlockSkill('${id}')" style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; border: none; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: 800; cursor: pointer;">Unlock (${cost.toLocaleString()}🪙)</button>`;
+          badgeEl.innerHTML = `<span class="ability-lock-label">Level ${reqLvl}</span>
+            <button class="ability-unlock-btn" onclick="event.stopPropagation(); app.promptUnlockSkill('${id}')">Unlock · ${cost.toLocaleString()}</button>`;
         }
       }
 
@@ -5419,6 +5421,14 @@ class App {
       'swap': 'Tactical Swap',
       'shield': 'Divine Shield'
     };
+    const iconMap = {
+      'jump': '/assets/Asset 46.png',
+      'second': '/assets/Asset 44.png',
+      'undo': '/assets/Asset 44.png',
+      'freeze': '/assets/Asset 43.png',
+      'swap': '/assets/Asset 42.png',
+      'shield': '/assets/Asset 45.png'
+    };
 
     if (slot1Display) {
       const s1 = this.selectedAbilities[0];
@@ -5426,30 +5436,28 @@ class App {
     }
 
     if (slot2Box && slot2Header && slot2Content) {
+      slot2Box.classList.toggle('is-active', !!this.slot2Unlocked);
+      slot2Box.classList.toggle('is-locked', !this.slot2Unlocked);
+      slot2Header.classList.toggle('is-active', !!this.slot2Unlocked);
+
       if (this.slot2Unlocked) {
-        slot2Box.style.border = '1.5px solid #C99700';
-        slot2Box.style.background = 'linear-gradient(180deg, #3A2315 0%, #1F1008 100%)';
-        slot2Header.style.color = '#F5D36C';
         slot2Header.textContent = 'SLOT 2 · ACTIVE';
         const s2 = this.selectedAbilities[1];
-        slot2Content.innerHTML = `<div style="font-size: 11.5px; color: #FFF; font-weight: 800; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s2 ? (nameMap[s2] || s2) : 'Empty · tap a skill'}</div>`;
+        slot2Content.innerHTML = s2
+          ? `<div class="loadout-slot-skill"><img src="${iconMap[s2] || ''}" alt=""><span>${nameMap[s2] || s2}</span></div>`
+          : `<div class="loadout-slot-empty">Empty · select a skill</div>`;
       } else {
         const requiredAds = window.ECONOMY_CONFIG?.skillSlots?.slot2AdsRequired || 3;
         const watched = Math.max(0, Math.min(requiredAds, this.slot2AdsWatched || 0));
         const remaining = Math.max(0, requiredAds - watched);
         const dots = Array.from({ length: requiredAds }, (_, i) =>
-          `<span style="width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: ${i < watched ? '#4ade80' : '#3A2315'}; border: 1px solid ${i < watched ? '#4ade80' : '#8C6538'}; box-shadow: ${i < watched ? '0 0 6px rgba(74,222,128,0.5)' : 'none'};"></span>`
+          `<span class="slot-progress-dot${i < watched ? ' is-filled' : ''}"></span>`
         ).join('');
 
-        slot2Box.style.border = '1.5px dashed #8C6538';
-        slot2Box.style.background = 'linear-gradient(180deg, #2B160B 0%, #170904 100%)';
-        slot2Header.style.color = '#A58463';
         slot2Header.textContent = `SLOT 2 · ${watched}/${requiredAds}`;
         slot2Content.innerHTML = `
-          <button onclick="app.promptUnlockSlot2()" title="${remaining} more ad${remaining === 1 ? '' : 's'} to unlock Slot 2" style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; border: none; border-radius: 5px; font-weight: 900; font-size: 9px; padding: 4px 8px; cursor: pointer; box-shadow: 0 1px 0 #8A6500; white-space: nowrap;">
-            🎬 Unlock
-          </button>
-          <span style="display: flex; gap: 3px;">${dots}</span>`;
+          <button type="button" class="slot-unlock-btn" onclick="app.promptUnlockSlot2()" title="${remaining} more ad${remaining === 1 ? '' : 's'} to unlock Slot 2">Unlock</button>
+          <span class="slot-progress">${dots}</span>`;
       }
     }
   }
