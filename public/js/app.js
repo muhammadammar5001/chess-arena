@@ -1596,10 +1596,8 @@ class App {
       if (data.state && data.state.abilitiesUsed) this.engine.abilitiesUsed = data.state.abilitiesUsed;
       if (data.moves && data.moves.length > 0) {
         for (const move of data.moves) {
-          const from = ChessEngine.fromAlgebraic(move.from);
-          const to = ChessEngine.fromAlgebraic(move.to);
-          const result = this.engine.makeMove(from.row, from.col, to.row, to.col, move.promotion);
-          if (result) {
+          const result = this.applyHistoryEntry(this.engine, move);
+          if (result && !move.ability) {
             this.lastMove = { from: result.from, to: result.to };
             this.updateMoveHistory(result);
           }
@@ -2185,6 +2183,7 @@ class App {
     if (!this.engine) return [];
     const piece = this.engine.getPiece(row, col);
     if (!piece || piece.color !== this.playerColor) return [];
+    if (this.engine.isPieceFrozen(row, col)) return [];
 
     const dir = this.playerColor === 'white' ? -1 : 1;
     const targetRow = row + 2 * dir;
@@ -2248,6 +2247,10 @@ class App {
                 const piece = this.engine.getPiece(row, col);
                 if (!piece || piece.color !== this.playerColor) {
                     this.showToast('Select your piece to jump');
+                    return;
+                }
+                if (this.engine.isPieceFrozen(row, col)) {
+                    this.showToast('This piece is frozen!');
                     return;
                 }
                 const targets = this.getValidJumpTargets(row, col);
@@ -2327,7 +2330,7 @@ class App {
                 const ok = this.engine.validateAbility('freeze', { row, col }, this.playerColor);
                 if (ok) {
                     this.markAbilityUsed('freeze');
-                    this.showToast('❄️ Piece Frozen for 3 turns!');
+                    this.showToast('❄️ Piece Frozen for its next full turn!');
                 } else {
                     this.showToast('Cannot freeze that piece');
                 }
@@ -2340,6 +2343,10 @@ class App {
             const piece = this.engine.getPiece(row, col);
             if (!piece || piece.color !== this.playerColor) {
                 this.showToast('Must select your own piece');
+                return;
+            }
+            if (this.engine.isPieceFrozen(row, col)) {
+                this.showToast('Frozen pieces cannot be swapped');
                 return;
             }
             if (piece.type === 'king') {
@@ -3478,6 +3485,38 @@ class App {
     }
   }
 
+  applyHistoryEntry(engine, entry) {
+    if (!engine || !entry) return null;
+    if (entry.ability === 'second') {
+      // The move that Second Chance undid is already absent from the final
+      // history, so replay the state it left behind without undoing twice.
+      engine.moveHistory.push({
+        notation: 'USE_SECOND_CHANCE',
+        color: entry.color,
+        ability: 'second',
+        args: null
+      });
+      if (engine.abilitiesUsed && engine.abilitiesUsed[entry.color] &&
+          !engine.abilitiesUsed[entry.color].includes('second')) {
+        engine.abilitiesUsed[entry.color].push('second');
+      }
+      return true;
+    }
+    if (entry.ability) {
+      return engine.validateAbility(entry.ability, entry.args || null, entry.color);
+    }
+    const from = typeof entry.from === 'string'
+      ? ChessEngine.fromAlgebraic(entry.from)
+      : entry.from;
+    const to = typeof entry.to === 'string'
+      ? ChessEngine.fromAlgebraic(entry.to)
+      : entry.to;
+    if (!from || !to || from.row == null || from.col == null || to.row == null || to.col == null) {
+      return null;
+    }
+    return engine.makeMove(from.row, from.col, to.row, to.col, entry.promotion || null);
+  }
+
   undoMove() {
     if (this.gameMode === 'online') {
       this.showToast('Undo is disabled in competitive PvP');
@@ -3514,10 +3553,11 @@ class App {
 
     const targetHistory = this.engine.moveHistory.slice(0, this.engine.moveHistory.length - movesToPop);
 
-    // Replay history on fresh engine
+    // Replay history on fresh engine. Ability entries must be replayed too, or
+    // Freeze/Shield/Second Chance state would drift from the real timeline.
     const freshEngine = new ChessEngine();
     for (const m of targetHistory) {
-      freshEngine.makeMove(m.from.row, m.from.col, m.to.row, m.to.col, m.promotion || null);
+      this.applyHistoryEntry(freshEngine, m);
     }
 
     this.engine = freshEngine;

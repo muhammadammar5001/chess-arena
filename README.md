@@ -71,7 +71,7 @@ The sync endpoint treats a strictly larger client total as newer offline progres
 ```bash
 npm start   # production server
 npm run dev # server with file watching
-npm test    # chess engine + economy tests (24 total)
+npm test    # chess engine + economy tests (26 total)
 ```
 
 ## Project structure

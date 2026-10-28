@@ -22,6 +22,10 @@ class ChessEngine {
     this.fullMoveNumber = 1;
     this.positionHistory = [];
     this.stateHistory = [];
+    // Number of turns that have been fully completed. Timed ability effects
+    // use this instead of moveHistory.length so instant abilities and undo do
+    // not consume Freeze/Shield duration.
+    this.completedTurns = 0;
     this.gameOver = false;
     this.gameResult = null;
     this.kingPositions = { white: { row: 7, col: 4 }, black: { row: 0, col: 4 } };
@@ -63,8 +67,11 @@ class ChessEngine {
     if (this.gameOver) return false;
 
     if (abilityId === 'freeze') {
-      const piece = this.getPiece(args.row, args.col);
-      piece.frozenUntilMoveCount = this.moveHistory.length + 3;
+      const piece = args && this.getPiece(args.row, args.col);
+      if (!piece || piece.color === color || piece.type === 'king') return false;
+      // The target stays frozen through the owner's next completed turn.
+      // The +2 is: current turn completion, then the target owner's turn.
+      piece.frozenUntilTurn = this.completedTurns + 2;
       this.moveHistory.push({ notation: 'USE_FREEZE', color: color, ability: 'freeze', args: args });
       if (this.abilitiesUsed && this.abilitiesUsed[color]) this.abilitiesUsed[color].push('freeze');
       const historyBackup = this.stateHistory; this.stateHistory = []; const stateSnapshot = JSON.stringify(this); this.stateHistory = historyBackup; this.stateHistory.push(stateSnapshot);
@@ -74,6 +81,7 @@ class ChessEngine {
     if (abilityId === 'swap') {
       const p1 = this.board[args.row1][args.col1];
       const p2 = this.board[args.row2][args.col2];
+      if (this.isPieceFrozen(args.row1, args.col1) || this.isPieceFrozen(args.row2, args.col2)) return false;
       this.board[args.row1][args.col1] = p2;
       this.board[args.row2][args.col2] = p1;
       
@@ -94,6 +102,7 @@ class ChessEngine {
       // Swap consumes turn
       this.currentTurn = this.currentTurn === 'white' ? 'black' : 'white';
       if (this.currentTurn === 'white') this.fullMoveNumber++;
+      this.completedTurns++;
       this.enPassantTarget = null; // Fix: clear en passant state so opponent doesn't inherit it
       const historyBackup = this.stateHistory; this.stateHistory = []; const stateSnapshot = JSON.stringify(this); this.stateHistory = historyBackup; this.stateHistory.push(stateSnapshot);
       return true;
@@ -122,7 +131,9 @@ class ChessEngine {
       if (!piece || piece.color !== color) return false;
       if (piece.type === 'king' && this.isCheckmate(color)) return false;
 
-      piece.shieldedUntilMoveCount = this.moveHistory.length + 3;
+      // Shield survives the opponent's next completed turn. Instant abilities
+      // and Second Chance do not advance this counter.
+      piece.shieldedUntilTurn = this.completedTurns + 2;
       this.moveHistory.push({ notation: 'USE_DIVINE_SHIELD', color: color, ability: 'shield', args: args });
       if (this.abilitiesUsed && this.abilitiesUsed[color]) this.abilitiesUsed[color].push('shield');
       const historyBackup = this.stateHistory; this.stateHistory = []; const stateSnapshot = JSON.stringify(this); this.stateHistory = historyBackup; this.stateHistory.push(stateSnapshot);
@@ -132,6 +143,7 @@ class ChessEngine {
     if (abilityId === 'jump') {
       const piece = this.getPiece(args.fromRow, args.fromCol);
       if (!piece || piece.color !== color) return false;
+      if (this.isPieceFrozen(args.fromRow, args.fromCol)) return false;
 
       const dir = color === 'white' ? -1 : 1;
       const dRow = args.toRow - args.fromRow;
@@ -179,6 +191,7 @@ class ChessEngine {
       if (this.abilitiesUsed && this.abilitiesUsed[color]) this.abilitiesUsed[color].push('jump');
       this.currentTurn = this.currentTurn === 'white' ? 'black' : 'white';
       if (this.currentTurn === 'white') this.fullMoveNumber++;
+      this.completedTurns++;
       this.enPassantTarget = null;
       const historyBackup = this.stateHistory; this.stateHistory = []; const stateSnapshot = JSON.stringify(this); this.stateHistory = historyBackup; this.stateHistory.push(stateSnapshot);
       return true;
@@ -204,14 +217,14 @@ class ChessEngine {
 
   isPieceFrozen(row, col) {
     const piece = this.getPiece(row, col);
-    if (!piece || !piece.frozenUntilMoveCount) return false;
-    return this.moveHistory.length < piece.frozenUntilMoveCount;
+    if (!piece || !piece.frozenUntilTurn) return false;
+    return this.completedTurns < piece.frozenUntilTurn;
   }
 
   isPieceShielded(row, col) {
     const piece = this.getPiece(row, col);
-    if (!piece || !piece.shieldedUntilMoveCount) return false;
-    return this.moveHistory.length < piece.shieldedUntilMoveCount;
+    if (!piece || !piece.shieldedUntilTurn) return false;
+    return this.completedTurns < piece.shieldedUntilTurn;
   }
 
   getPseudoLegalMoves(row, col) {
@@ -648,6 +661,7 @@ class ChessEngine {
     const prevTurn = this.currentTurn;
     this.currentTurn = this.currentTurn === 'white' ? 'black' : 'white';
     if (prevTurn === 'black') this.fullMoveNumber++;
+    this.completedTurns++;
 
     // Generate notation
     moveData.notation = this.generateNotation(moveData, move);
@@ -835,6 +849,7 @@ class ChessEngine {
     };
     copy.positionHistory = [...this.positionHistory];
     copy.moveHistory = [...this.moveHistory];
+    copy.completedTurns = this.completedTurns;
     copy.gameOver = this.gameOver;
     copy.gameResult = this.gameResult ? { ...this.gameResult } : null;
     return copy;

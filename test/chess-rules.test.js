@@ -199,4 +199,68 @@ console.log("--- RUNNING CHESS ENGINE CHARACTERIZATION TESTS ---");
   console.log("✔ Divine Shield on king / checkmate helper verified");
 }
 
-console.log("--- ALL 12 CHARACTERIZATION TESTS PASSED SUCCESSFULLY! ---");
+// Test 13: Turn-based Freeze timing survives Second Chance
+{
+  const engine = new ChessEngine();
+  assert.strictEqual(
+    engine.validateAbility("freeze", { row: 1, col: 4 }, "white"),
+    true,
+    "Freeze should apply to the black e-pawn"
+  );
+
+  engine.makeMove(6, 4, 4, 4); // White completes a turn.
+  assert.strictEqual(engine.isPieceFrozen(1, 4), true, "Frozen piece stays frozen on Black's turn");
+  assert.strictEqual(
+    engine.validateAbility("swap", { row1: 1, col1: 4, row2: 1, col2: 0 }, "black"),
+    false,
+    "A frozen piece cannot be moved with Tactical Swap"
+  );
+  engine.board[2][4] = { type: "pawn", color: "black" };
+  assert.strictEqual(
+    engine.validateAbility("jump", { fromRow: 1, fromCol: 4, toRow: 3, toCol: 4 }, "black"),
+    false,
+    "A frozen piece cannot use Pegasus Jump"
+  );
+
+  engine.makeMove(1, 0, 2, 0); // Black completes a turn with a different piece.
+  assert.strictEqual(engine.isPieceFrozen(1, 4), false, "Freeze expires after the owner completes a turn");
+
+  assert.strictEqual(engine.validateAbility("second", null, "black"), true, "Black can rewind its completed move");
+  assert.strictEqual(engine.currentTurn, "black", "Second Chance restores Black's turn");
+  assert.strictEqual(engine.isPieceFrozen(1, 4), true, "Undo restores the turn-based Freeze state");
+  assert.strictEqual(engine.getLegalMoves(1, 4).length, 0, "Frozen piece is still locked after undo");
+  assert.strictEqual(engine.makeMove(1, 4, 3, 4, null, true), null, "Strict redo cannot move the frozen piece");
+
+  const clone = engine.clone();
+  assert.strictEqual(clone.completedTurns, engine.completedTurns, "AI clone keeps completedTurns");
+  assert.strictEqual(clone.isPieceFrozen(1, 4), true, "AI clone keeps the freeze active");
+
+  engine.makeMove(1, 0, 2, 0); // Redo another move.
+  assert.strictEqual(engine.isPieceFrozen(1, 4), false, "Freeze expires only after the redo turn completes");
+  console.log("\u2714 Turn-based Freeze + Second Chance interaction verified");
+}
+
+// Test 14: Turn-based Shield timing ignores instant abilities and undo
+{
+  const engine = new ChessEngine();
+  assert.strictEqual(engine.validateAbility("shield", { row: 6, col: 4 }, "white"), true);
+
+  // Instant abilities must not consume the shield duration.
+  assert.strictEqual(engine.validateAbility("freeze", { row: 1, col: 4 }, "white"), true);
+  assert.strictEqual(engine.isPieceShielded(6, 4), true, "Instant ability must not expire the shield");
+
+  engine.makeMove(6, 0, 5, 0); // White completes a turn.
+  assert.strictEqual(engine.isPieceShielded(6, 4), true, "Shield stays active on the opponent's turn");
+
+  assert.strictEqual(engine.validateAbility("freeze", { row: 6, col: 3 }, "black"), true);
+  assert.strictEqual(engine.isPieceShielded(6, 4), true, "Opponent instant ability must not expire the shield");
+
+  engine.makeMove(1, 0, 2, 0); // Black completes a turn.
+  assert.strictEqual(engine.isPieceShielded(6, 4), false, "Shield expires after the opponent completes a turn");
+
+  assert.strictEqual(engine.validateAbility("second", null, "black"), true);
+  assert.strictEqual(engine.isPieceShielded(6, 4), true, "Undo restores the Shield state for the redo turn");
+  console.log("\u2714 Turn-based Shield + instant ability + Second Chance verified");
+}
+
+console.log("--- ALL 14 CHARACTERIZATION TESTS PASSED SUCCESSFULLY! ---");
