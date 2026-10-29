@@ -286,25 +286,25 @@ class MultiplayerClient {
     }
   }
 
-  createRoom(timerMinutes = null, mode = 'standard', abilities = []) {
-    this.send({ type: 'create_room', timer: timerMinutes, mode: mode, abilities: abilities });
+  createRoom(timerMinutes = null, mode = 'standard', abilities = [], avatarId = null) {
+    this.send({ type: 'create_room', timer: timerMinutes, mode: mode, abilities: abilities, avatarId: avatarId });
   }
 
   checkRoom(roomCode) {
     this.send({ type: 'check_room', roomCode: roomCode.toUpperCase() });
   }
 
-  joinRoom(roomCode, abilities = []) {
+  joinRoom(roomCode, abilities = [], avatarId = null) {
     this.roomCode = roomCode.toUpperCase();
-    this.send({ type: 'join_room', roomCode: this.roomCode, abilities: abilities });
+    this.send({ type: 'join_room', roomCode: this.roomCode, abilities: abilities, avatarId: avatarId });
   }
 
   sendChatMessage(text) {
     this.send({ type: 'chat_message', text: text });
   }
 
-  findMatch(timerMinutes = null, mode = 'standard', abilities = []) {
-    this.send({ type: 'find_match', timer: timerMinutes, mode: mode, abilities: abilities });
+  findMatch(timerMinutes = null, mode = 'standard', abilities = [], avatarId = null) {
+    this.send({ type: 'find_match', timer: timerMinutes, mode: mode, abilities: abilities, avatarId: avatarId });
   }
 
   cancelMatch() {

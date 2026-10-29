@@ -14,6 +14,14 @@ const PLAYER_AVATARS = Array.from({ length: 18 }, (_, index) => {
   };
 });
 
+// Preload all avatar portraits in memory to prevent roulette image flickers
+if (typeof window !== 'undefined' && Array.isArray(PLAYER_AVATARS)) {
+  PLAYER_AVATARS.forEach((av) => {
+    const img = new Image();
+    img.src = av.src;
+  });
+}
+
 class App {
   constructor() {
     this.engine = null;
@@ -1428,7 +1436,7 @@ class App {
 
     try {
       await this.multiplayer.connect();
-      this.multiplayer.findMatch(timerValue, this.matchType, this.matchType === 'tactical' ? (this.selectedAbilities || ['swap', 'freeze']) : []);
+      this.multiplayer.findMatch(timerValue, this.matchType, this.matchType === 'tactical' ? (this.selectedAbilities || ['swap', 'freeze']) : [], this.avatarId);
     } catch {
       if (this.slotInterval) clearInterval(this.slotInterval);
       if (this.statusInterval) clearInterval(this.statusInterval);
@@ -1453,7 +1461,7 @@ class App {
       await this.multiplayer.connect();
       const timerValue = 10;
       this.timerMinutes = timerValue;
-      this.multiplayer.createRoom(timerValue, this.matchType, this.matchType === 'tactical' ? (this.selectedAbilities || ['swap', 'freeze']) : []);
+      this.multiplayer.createRoom(timerValue, this.matchType, this.matchType === 'tactical' ? (this.selectedAbilities || ['swap', 'freeze']) : [], this.avatarId);
     } catch {
       this.showToast('Failed to connect to server');
     }

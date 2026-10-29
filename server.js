@@ -388,7 +388,8 @@ function getSocketProfile(ws) {
   const rawRating = user && user.elo != null ? user.elo : (ws && ws.playerRating);
   const rating = Math.min(4000, Math.max(100, safeInt(rawRating, 1200)));
   const level = Math.min(999, Math.max(1, safeInt(ws && ws.playerLevel, 1)));
-  return { username, rating, level };
+  const avatarId = (ws && ws.avatarId) ? ws.avatarId : 'pfp-01';
+  return { username, rating, level, avatarId };
 }
 
 function broadcastToRoom(room, data) {
@@ -412,13 +413,13 @@ function handleMessage(ws, data) {
       handleLeavePrivateRoom(ws, data);
       break;
     case 'create_room':
-        createRoom(ws, data.timer, data.mode, data.abilities);
+        createRoom(ws, data.timer, data.mode, data.abilities, data.avatarId);
       break;
     case 'join_room':
-        joinRoom(ws, data.roomCode, data.abilities);
+        joinRoom(ws, data.roomCode, data.abilities, data.avatarId);
       break;
     case 'find_match':
-        handleFindMatch(ws, data.mode, data.abilities);
+        handleFindMatch(ws, data.mode, data.abilities, data.avatarId);
       break;
     case 'cancel_match':
       handleCancelMatch(ws);
@@ -476,7 +477,8 @@ function handleLeavePrivateRoom(ws, data) {
   }
 }
 
-function createRoom(ws, timerMinutes, mode = 'standard', abilities = []) {
+function createRoom(ws, timerMinutes, mode = 'standard', abilities = [], avatarId = null) {
+  if (avatarId) ws.avatarId = avatarId;
   const roomCode = generateRoomCode();
   const gameId = uuidv4();
   // Private rooms always use the standard 10-minute clock.
@@ -548,7 +550,8 @@ function handleCheckRoom(ws, roomCode) {
   });
 }
 
-function joinRoom(ws, roomCode, abilities = []) {
+function joinRoom(ws, roomCode, abilities = [], avatarId = null) {
+  if (avatarId) ws.avatarId = avatarId;
   const code = roomCode.toUpperCase();
   const room = rooms.get(code);
 
@@ -608,14 +611,15 @@ function joinRoom(ws, roomCode, abilities = []) {
   console.log(`Player joined room ${code}`);
 }
 
-function handleFindMatch(ws, mode = 'standard', abilities = []) {
+function handleFindMatch(ws, mode = 'standard', abilities = [], avatarId = null) {
+  if (avatarId) ws.avatarId = avatarId;
   const existingIdx = matchmakingQueue.findIndex(p => p.ws === ws);
   if (existingIdx !== -1) return;
 
   const opponentIdx = matchmakingQueue.findIndex(p => p.mode === mode && p.ws.readyState === 1);
 
   if (opponentIdx === -1) {
-    matchmakingQueue.push({ ws, mode: mode, abilities: abilities });
+    matchmakingQueue.push({ ws, mode: mode, abilities: abilities, avatarId: avatarId });
     sendJSON(ws, { type: 'waiting_for_match' });
     console.log(`Player ${ws.id} entered matchmaking queue`);
     return;
@@ -623,7 +627,7 @@ function handleFindMatch(ws, mode = 'standard', abilities = []) {
 
   const opponentEntry = matchmakingQueue.splice(opponentIdx, 1)[0];
   const opponentWs = opponentEntry.ws;
-
+  if (opponentEntry.avatarId) opponentWs.avatarId = opponentEntry.avatarId;
   if (opponentWs.readyState !== 1) {
     handleFindMatch(ws, mode, abilities);
     return;

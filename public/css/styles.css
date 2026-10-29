@@ -777,7 +777,7 @@ body {
   border-radius: 50%;
   overflow: hidden;
   border: 3px solid var(--gray-500);
-  background: #0a0a14;
+  background: #20120B;
   position: relative;
   box-shadow: 0 0 0 4px rgba(255,255,255,0.05), inset 0 0 20px rgba(0,0,0,0.6);
 }
