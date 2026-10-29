@@ -207,6 +207,10 @@ app.get('/api/status', (req, res) => {
 
 const rooms = new Map();
 const matchmakingQueue = [];
+const DISCONNECT_FORFEIT_MS = Math.max(
+  1000,
+  Number(process.env.DISCONNECT_FORFEIT_MS) || 60000
+);
 // Fallback standings when MongoDB is unavailable or briefly disconnected.
 const memoryProfiles = new Map();
 
@@ -249,6 +253,30 @@ setInterval(() => {
   for (const [code, room] of rooms) {
     if (!room.timers || !room.lastMoveTime || room.engine.gameOver) continue;
     if (!room.players.white || !room.players.black) continue;
+
+    // 0. Disconnect grace period. This is independent of whose turn it is so
+    // the connected player is not forced to keep moving while waiting.
+    if (room.disconnectedAt) {
+      for (const color of ['white', 'black']) {
+        const disconnectedSince = room.disconnectedAt[color];
+        if (!disconnectedSince || now - disconnectedSince < DISCONNECT_FORFEIT_MS) continue;
+
+        const disconnectedPlayer = room.players[color];
+        if (disconnectedPlayer && disconnectedPlayer.readyState === 1) {
+          room.disconnectedAt[color] = null;
+          continue;
+        }
+
+        const opponentColor = color === 'white' ? 'black' : 'white';
+        const opponent = room.players[opponentColor];
+        if (opponent && opponent.readyState === 1) {
+          console.log(`[Disconnect] ${color} abandoned room ${code}; awarding win to ${opponentColor}`);
+          finishGame(room, 'abandonment', opponentColor);
+          break;
+        }
+      }
+      if (room.engine.gameOver) continue;
+    }
 
     const currentTurn = room.engine.currentTurn;
     const timers = getTimersAt(room, currentTurn, now);
@@ -500,6 +528,7 @@ function createRoom(ws, timerMinutes, mode = 'standard', abilities = [], avatarI
     lastMoveTime: null,
     lastActivity: Date.now(),
     rematchRequested: null,
+    disconnectedAt: { white: null, black: null },
     mode: mode
   };
 
@@ -656,6 +685,7 @@ function handleFindMatch(ws, mode = 'standard', abilities = [], avatarId = null)
     lastMoveTime: Date.now(),
     lastActivity: Date.now(),
     rematchRequested: null,
+    disconnectedAt: { white: null, black: null },
     mode: mode
   };
 
@@ -836,6 +866,9 @@ function handleRematchAccept(ws) {
   room.engine = new ChessEngine();
   room.gameId = uuidv4();
   room.lastMoveTime = Date.now();
+  room.moveStartTime = Date.now();
+  room.afkStrikes = { white: 0, black: 0 };
+  room.disconnectedAt = { white: null, black: null };
   room.rematchRequested = null;
 
   if (room.timers && room.timer) {
@@ -875,6 +908,8 @@ function handleReconnect(ws, data) {
   room.players[color] = ws;
   ws.roomCode = data.roomCode;
   ws.playerColor = color;
+  room.lastActivity = Date.now();
+  if (room.disconnectedAt) room.disconnectedAt[color] = null;
 
   const opponentColor = color === 'white' ? 'black' : 'white';
   const opponent = room.players[opponentColor];
@@ -942,14 +977,30 @@ function handleDisconnect(ws) {
     return;
   }
 
+  if (!ws.playerColor) return;
+
+  // A finished result should stay stable while players view the recap or
+  // negotiate a rematch; only an active game starts the forfeit countdown.
+  if (room.engine && room.engine.gameOver) {
+    console.log(`Player disconnected after game over in room ${ws.roomCode}`);
+    return;
+  }
+
+  if (!room.disconnectedAt) room.disconnectedAt = { white: null, black: null };
+  room.disconnectedAt[ws.playerColor] = Date.now();
+  room.lastActivity = Date.now();
+
   const opponentColor = ws.playerColor === 'white' ? 'black' : 'white';
   const opponent = room.players[opponentColor];
 
   if (opponent && opponent.readyState === 1) {
-    sendJSON(opponent, { type: 'opponent_disconnected' });
+    sendJSON(opponent, {
+      type: 'opponent_disconnected',
+      forfeitInMs: DISCONNECT_FORFEIT_MS
+    });
   }
 
-  console.log(`Player disconnected from room ${ws.roomCode}`);
+  console.log(`Player disconnected from room ${ws.roomCode}; forfeit in ${DISCONNECT_FORFEIT_MS}ms`);
 }
 
 // ─── Start Server ───────────────────────────────────────────────────

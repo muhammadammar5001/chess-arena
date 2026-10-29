@@ -218,7 +218,7 @@ class MultiplayerClient {
         break;
 
       case 'opponent_disconnected':
-        if (this.onOpponentDisconnected) this.onOpponentDisconnected();
+        if (this.onOpponentDisconnected) this.onOpponentDisconnected(data);
         break;
 
       case 'opponent_reconnected':

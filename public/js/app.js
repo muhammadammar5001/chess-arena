@@ -1744,8 +1744,8 @@ class App {
       }
     };
 
-    mp.onOpponentDisconnected = () => {
-      this.showConnectionStatus('disconnected');
+    mp.onOpponentDisconnected = (data) => {
+      this.showConnectionStatus('disconnected', data && data.forfeitInMs);
       this.showToast('Opponent disconnected');
     };
 
@@ -1926,6 +1926,7 @@ class App {
 
     mp.onGameOver = (reason, winner) => {
       this.hideModal('modal-afk-warning');
+      this.hideConnectionStatus();
       if (this.engine) {
         this.engine.gameOver = true;
         this.engine.gameResult = { winner, reason };
@@ -4776,16 +4777,56 @@ class App {
 
   // --- Connection Status -----------------------------
 
-  showConnectionStatus(status) {
+  showConnectionStatus(status, forfeitInMs) {
     const el = document.getElementById('connection-status');
+    if (!el) return;
+    this.stopOpponentDisconnectCountdown();
     el.classList.remove('hidden', 'connected', 'reconnecting', 'disconnected');
     el.classList.add(status);
-    el.querySelector('.status-text').textContent =
-      status === 'reconnecting' ? 'Reconnecting...' : 'Opponent disconnected';
+
+    const textEl = el.querySelector('.status-text');
+    if (!textEl) return;
+    if (status === 'reconnecting') {
+      textEl.textContent = 'Reconnecting...';
+    } else if (status === 'disconnected' && Number(forfeitInMs) > 0) {
+      this.startOpponentDisconnectCountdown(Number(forfeitInMs), textEl);
+    } else if (status === 'disconnected') {
+      textEl.textContent = 'Connection lost';
+    } else {
+      textEl.textContent = 'Connected';
+    }
+  }
+
+  startOpponentDisconnectCountdown(ms, textEl) {
+    let remaining = Math.ceil(ms / 1000);
+    const render = () => {
+      textEl.textContent = remaining > 0
+        ? `Opponent disconnected - forfeit in ${remaining}s`
+        : 'Opponent disconnected - finishing...';
+      remaining -= 1;
+    };
+
+    render();
+    this.opponentDisconnectInterval = setInterval(() => {
+      if (remaining < 0) {
+        this.stopOpponentDisconnectCountdown();
+        return;
+      }
+      render();
+    }, 1000);
+  }
+
+  stopOpponentDisconnectCountdown() {
+    if (this.opponentDisconnectInterval) {
+      clearInterval(this.opponentDisconnectInterval);
+      this.opponentDisconnectInterval = null;
+    }
   }
 
   hideConnectionStatus() {
-    document.getElementById('connection-status').classList.add('hidden');
+    this.stopOpponentDisconnectCountdown();
+    const el = document.getElementById('connection-status');
+    if (el) el.classList.add('hidden');
   }
 
   // --- Modals ----------------------------------------
