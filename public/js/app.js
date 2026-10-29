@@ -1904,7 +1904,7 @@ class App {
         }
       }
 
-      this.moveTimeLeft = 60000;
+      this.moveTimeLeft = 45000;
       if (Number.isFinite(data.white) && Number.isFinite(data.black)) {
         this.timers.white = data.white;
         this.timers.black = data.black;
@@ -1916,7 +1916,7 @@ class App {
       if (data.passedBy === this.playerColor) {
         this.showToast('You ran out of time! Turn passed to opponent.');
       } else {
-        this.showToast('Opponent was AFK for 60s! Turn passed to you.');
+        this.showToast('Opponent was inactive for 45s! Turn passed to you.');
         this.playSound('your-turn');
       }
     };
@@ -3098,7 +3098,7 @@ class App {
         turnBadge.classList.toggle('low-time', moveSecs !== null && moveSecs <= 10);
       } else {
         turnBadge.classList.remove('your-turn');
-        turnBadge.textContent = `Opponent's Turn${secStr}`;
+        turnBadge.textContent = isOnlinePvP ? `Opponent is thinking...${secStr}` : `Opponent's Turn`;
         turnBadge.classList.remove('low-time');
       }
     }
@@ -3133,7 +3133,7 @@ class App {
         turnBadge.classList.toggle('low-time', moveSecs !== null && moveSecs <= 10);
       } else {
         turnBadge.classList.remove('your-turn');
-        turnBadge.textContent = `Opponent's Turn${secStr}`;
+        turnBadge.textContent = isOnlinePvP ? `Opponent is thinking...${secStr}` : `Opponent's Turn`;
         turnBadge.classList.remove('low-time');
       }
     }

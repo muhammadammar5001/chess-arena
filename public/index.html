@@ -1265,6 +1265,13 @@
           <h3>🎮 Controls</h3>
           <p>Tap a piece to select it, then tap a highlighted square to move.</p>
         </div>
+
+        <div class="howto-section">
+          <h3>⏱️ Match Timers &amp; Fair Play</h3>
+          <p><strong>10-Minute Clock:</strong> Total match time per player.</p>
+          <p><strong>45-Second Move Timer:</strong> You have 45 seconds to make each move. While your opponent considers their move, <em>"Opponent is thinking..."</em> with their countdown is displayed.</p>
+          <p><strong>Inactivity (AFK) Rules:</strong> Missing a move within 45s passes your turn to the opponent with an AFK Warning (1st Strike). Missing a 2nd time results in an automatic forfeit loss.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -1525,7 +1532,7 @@
         </div>
         <h3 style="margin-bottom: 8px; color: #FFD54F; font-family: 'Cinzel', Georgia, serif; font-size: 20px;">Inactivity Warning!</h3>
         <p class="screen-desc" id="afk-warning-msg" style="margin-bottom: 18px; line-height: 1.45; font-size: 13.5px; color: #FDF7EC;">
-          You missed your move within 60 seconds. Your turn was passed to your opponent! If you miss again, you will forfeit the match.
+          You missed your move within 45 seconds. Your turn was passed to your opponent! If you miss again, you will forfeit the match.
         </p>
         <button type="button" class="btn-shop-action" onclick="app.hideModal('modal-afk-warning')" style="width: 100%; min-height: 40px; font-weight: 800; background: linear-gradient(180deg, #F8DA78 0%, #E4B33C 48%, #C99700 100%); color: #20120B; border: 1.5px solid #FFE58A; border-radius: 10px; cursor: pointer;">
           I'm Back (Continue Game)

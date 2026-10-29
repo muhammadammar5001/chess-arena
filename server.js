@@ -265,7 +265,7 @@ setInterval(() => {
     if (!room.moveStartTime) room.moveStartTime = room.lastMoveTime || now;
     if (!room.afkStrikes) room.afkStrikes = { white: 0, black: 0 };
 
-    const moveLimit = 60000;
+    const moveLimit = 45000;
     const elapsedMove = Math.max(0, now - room.moveStartTime);
     const moveTimeLeft = Math.max(0, moveLimit - elapsedMove);
 
@@ -292,7 +292,7 @@ setInterval(() => {
             type: 'afk_warning',
             strikes: 1,
             maxStrikes: 2,
-            message: 'You missed your move within 60 seconds. Your turn was passed to your opponent! If you miss again, you will forfeit the match.'
+            message: 'You missed your move within 45 seconds. Your turn was passed to your opponent! If you miss again, you will forfeit the match.'
           });
         }
 
@@ -755,7 +755,7 @@ function handleMove(ws, data) {
       type: 'timer_sync',
       white: room.timers.white,
       black: room.timers.black,
-      moveTimeLeft: 60000,
+      moveTimeLeft: 45000,
       activeTurn: room.engine.currentTurn
     });
   }
@@ -899,7 +899,7 @@ function handleReconnect(ws, data) {
     moves: moveList,
     abilitiesUsed: room.engine.abilitiesUsed,
     timers: getTimersAt(room, room.engine.currentTurn, Date.now()),
-    moveTimeLeft: Math.max(0, 60000 - (Date.now() - (room.moveStartTime || room.lastMoveTime || Date.now())))
+    moveTimeLeft: Math.max(0, 45000 - (Date.now() - (room.moveStartTime || room.lastMoveTime || Date.now())))
   });
 
   console.log('Player ' + color + ' reconnected to room ' + data.roomCode);
@@ -1362,7 +1362,7 @@ function handleUseAbility(ws, data) {
           type: 'timer_sync',
           white: room.timers.white,
           black: room.timers.black,
-          moveTimeLeft: 60000,
+          moveTimeLeft: 45000,
           activeTurn: room.engine.currentTurn
         });
       }
