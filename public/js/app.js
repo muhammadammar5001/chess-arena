@@ -684,6 +684,8 @@ class App {
   }
 
   init() {
+    // Attempt immediate background music on page load
+    try { this.startBgMusic(); } catch(e) {}
     if (!this.playerId) {
       this.playerId = localStorage.getItem('chessarena_player_id') || this.createGuestId();
       localStorage.setItem('chessarena_player_id', this.playerId);
@@ -760,18 +762,24 @@ class App {
       this.lastTap = now;
     }, { passive: false });
 
-    // -- Start ambient music on first user gesture (browser requires it) ------
+    // -- Start ambient music on page load or immediate first user gesture --
+    try {
+      this.startBgMusic();
+    } catch(e) {}
+
     const startMusicOnFirstGesture = () => {
-      document.removeEventListener('click',     startMusicOnFirstGesture, true);
+      document.removeEventListener('click',      startMusicOnFirstGesture, true);
       document.removeEventListener('touchstart', startMusicOnFirstGesture, true);
-      document.removeEventListener('keydown',   startMusicOnFirstGesture, true);
-      if (this.musicEnabled && !this.bgMusicRunning) {
+      document.removeEventListener('pointerdown', startMusicOnFirstGesture, true);
+      document.removeEventListener('keydown',    startMusicOnFirstGesture, true);
+      if (this.musicEnabled && (!this.bgMusicRunning || (this.bgAudio && this.bgAudio.paused))) {
         this.startBgMusic();
       }
     };
-    document.addEventListener('click',      startMusicOnFirstGesture, { capture: true, once: true });
-    document.addEventListener('touchstart', startMusicOnFirstGesture, { capture: true, once: true });
-    document.addEventListener('keydown',    startMusicOnFirstGesture, { capture: true, once: true });
+    document.addEventListener('click',       startMusicOnFirstGesture, { capture: true, once: true });
+    document.addEventListener('touchstart',  startMusicOnFirstGesture, { capture: true, once: true, passive: true });
+    document.addEventListener('pointerdown', startMusicOnFirstGesture, { capture: true, once: true });
+    document.addEventListener('keydown',     startMusicOnFirstGesture, { capture: true, once: true });
 
     // PlayGama lifecycle: apply the initial audio/pause state and react to
     // later host changes (tab switches, ads, platform mute/pause).
@@ -806,8 +814,7 @@ class App {
       } catch (e) { /* ignore */ }
       return;
     }
-    const gameActive = document.getElementById('screen-game')?.classList.contains('active');
-    if (!options.initial && gameActive && this.musicEnabled && !this.platformPaused && !this.bgMusicRunning) {
+    if (!options.initial && this.musicEnabled && !this.platformPaused && (!this.bgMusicRunning || (this.bgAudio && this.bgAudio.paused))) {
       this.startBgMusic();
     }
   }
@@ -827,10 +834,9 @@ class App {
       } catch (e) { /* ignore */ }
     } else {
       this.lastMoveTime = Date.now();
-      const gameActive = document.getElementById('screen-game')?.classList.contains('active');
-      if (!options.initial && gameActive && this.musicEnabled && !this.platformAudioMuted && !this.bgMusicRunning) {
-        this.startBgMusic();
-      }
+      if (!options.initial && this.musicEnabled && !this.platformAudioMuted && (!this.bgMusicRunning || (this.bgAudio && this.bgAudio.paused))) {
+      this.startBgMusic();
+    }
     }
   }
 
@@ -3314,7 +3320,6 @@ class App {
 
 
   showGameOver() {
-    this.stopBgMusic();
     this.stopTimerTick();
     this.postGameBreak = true;
     const result = (this.engine && this.engine.gameResult) ? this.engine.gameResult : { winner: null, reason: 'completed' };
@@ -4530,7 +4535,10 @@ class App {
   async goHome(showPostGameAd = false) {
     if (showPostGameAd) await this.maybeShowPostGameInterstitial();
     else this.postGameBreak = false;
-    this.stopBgMusic();
+    // Keep background music running smoothly in home lobby
+    if (this.musicEnabled && (!this.bgMusicRunning || (this.bgAudio && this.bgAudio.paused))) {
+      this.startBgMusic();
+    }
     if (this.matchmakingTimeout) {
       clearTimeout(this.matchmakingTimeout);
       this.matchmakingTimeout = null;
