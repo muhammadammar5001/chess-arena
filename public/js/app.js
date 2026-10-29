@@ -35,6 +35,13 @@ class App {
     this.pendingJoinData = null;
     this.soundMuted = false;
     this.musicEnabled = true;
+    try {
+      const savedSettings = JSON.parse(localStorage.getItem('owl_settings') || 'null');
+      if (savedSettings && typeof savedSettings === 'object') {
+        if (typeof savedSettings.soundMuted === 'boolean') this.soundMuted = savedSettings.soundMuted;
+        if (typeof savedSettings.musicEnabled === 'boolean') this.musicEnabled = savedSettings.musicEnabled;
+      }
+    } catch (e) {}
     this.musicVolume = parseFloat(localStorage.getItem('chessarena_music_volume') || '0.25');
     this.bgMusicRunning = false;
     this.bgMusicNodes = [];
@@ -685,8 +692,6 @@ class App {
   }
 
   init() {
-    // Attempt immediate background music on page load
-    try { this.startBgMusic(); } catch(e) {}
     if (!this.playerId) {
       this.playerId = localStorage.getItem('chessarena_player_id') || this.createGuestId();
       localStorage.setItem('chessarena_player_id', this.playerId);
@@ -763,24 +768,11 @@ class App {
       this.lastTap = now;
     }, { passive: false });
 
-    // -- Start ambient music on page load or immediate first user gesture --
-    try {
-      this.startBgMusic();
-    } catch(e) {}
-
-    const startMusicOnFirstGesture = () => {
-      document.removeEventListener('click',      startMusicOnFirstGesture, true);
-      document.removeEventListener('touchstart', startMusicOnFirstGesture, true);
-      document.removeEventListener('pointerdown', startMusicOnFirstGesture, true);
-      document.removeEventListener('keydown',    startMusicOnFirstGesture, true);
-      if (this.musicEnabled && (!this.bgMusicRunning || (this.bgAudio && this.bgAudio.paused))) {
-        this.startBgMusic();
-      }
-    };
-    document.addEventListener('click',       startMusicOnFirstGesture, { capture: true, once: true });
-    document.addEventListener('touchstart',  startMusicOnFirstGesture, { capture: true, once: true, passive: true });
-    document.addEventListener('pointerdown', startMusicOnFirstGesture, { capture: true, once: true });
-    document.addEventListener('keydown',     startMusicOnFirstGesture, { capture: true, once: true });
+    // -- Start ambient music on page load or on user gesture --
+    if (this.musicEnabled) {
+      try { this.startBgMusic(); } catch(e) {}
+      this.setupAudioAutoplayUnlock();
+    }
 
     // PlayGama lifecycle: apply the initial audio/pause state and react to
     // later host changes (tab switches, ads, platform mute/pause).
@@ -3339,9 +3331,56 @@ class App {
   //  BACKGROUND MUSIC (Web Audio, procedural)
   // ------------------------------------------
 
-  startBgMusic() {
+  setupAudioAutoplayUnlock() {
     if (!this.musicEnabled || this.platformAudioMuted || this.platformPaused) return;
-    if (this.bgMusicRunning && this.bgAudio && !this.bgAudio.paused) return;
+
+    if (this._audioUnlockCleanup) {
+      this._audioUnlockCleanup();
+      this._audioUnlockCleanup = null;
+    }
+
+    const events = ['click', 'touchend', 'pointerup', 'keydown'];
+    const tryUnlock = () => {
+      if (!this.musicEnabled || this.platformAudioMuted || this.platformPaused) {
+        cleanup();
+        return;
+      }
+
+      if (this.bgAudio && !this.bgAudio.paused) {
+        cleanup();
+        return;
+      }
+
+      const p = this.startBgMusic();
+      if (p && typeof p.then === 'function') {
+        p.then(() => {
+          if (this.bgAudio && !this.bgAudio.paused) {
+            cleanup();
+          }
+        }).catch(() => {
+          // Keep listeners attached so subsequent user taps will unlock playback
+        });
+      } else if (this.bgAudio && !this.bgAudio.paused) {
+        cleanup();
+      }
+    };
+
+    const cleanup = () => {
+      events.forEach(evt => {
+        document.removeEventListener(evt, tryUnlock, true);
+      });
+      this._audioUnlockCleanup = null;
+    };
+
+    this._audioUnlockCleanup = cleanup;
+    events.forEach(evt => {
+      document.addEventListener(evt, tryUnlock, { capture: true, passive: true });
+    });
+  }
+
+  startBgMusic() {
+    if (!this.musicEnabled || this.platformAudioMuted || this.platformPaused) return null;
+    if (this.bgMusicRunning && this.bgAudio && !this.bgAudio.paused) return null;
 
     if (!this.bgAudio) {
       try {
@@ -3350,19 +3389,25 @@ class App {
         this.bgAudio.volume = (typeof this.musicVolume === 'number') ? this.musicVolume : 0.25;
       } catch (e) {
         console.warn('Audio element creation error:', e);
-        return;
+        return null;
       }
     }
 
     this.bgAudio.volume = (typeof this.musicVolume === 'number') ? this.musicVolume : 0.25;
     this.bgMusicRunning = true;
-    const playPromise = this.bgAudio.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(err => {
-        // Autoplay policy prevented playback until user interaction
-        this.bgMusicRunning = false;
-      });
+    try {
+      const playPromise = this.bgAudio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(err => {
+          // Autoplay policy prevented playback until user interaction
+          this.bgMusicRunning = false;
+        });
+        return playPromise;
+      }
+    } catch (e) {
+      this.bgMusicRunning = false;
     }
+    return null;
   }
 
   stopBgMusic() {
@@ -3379,8 +3424,13 @@ class App {
     this.musicEnabled = !this.musicEnabled;
     if (this.musicEnabled) {
       this.startBgMusic();
+      this.setupAudioAutoplayUnlock();
     } else {
       this.stopBgMusic();
+      if (this._audioUnlockCleanup) {
+        this._audioUnlockCleanup();
+        this._audioUnlockCleanup = null;
+      }
     }
     this.syncSettingsUI();
     this.saveEconomyState();
@@ -5396,6 +5446,13 @@ class App {
         if (settings && typeof settings === 'object') {
           this.soundMuted = settings.soundMuted === true;
           this.musicEnabled = settings.musicEnabled !== false;
+          if (!this.musicEnabled) {
+            this.stopBgMusic();
+            if (this._audioUnlockCleanup) {
+              this._audioUnlockCleanup();
+              this._audioUnlockCleanup = null;
+            }
+          }
         }
       } catch (e) { /* ignore */ }
 
