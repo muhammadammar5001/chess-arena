@@ -869,82 +869,125 @@
   <!-- --------------- FULL PROFILE SCREEN --------------- -->
   <div id="screen-profile" class="screen">
     <div class="profile-page-shell">
-      <div class="screen-header-back">
-        <div class="screen-header-left">
-          <button class="back-circle-btn" onclick="app.goHome()" title="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-          <div class="header-title-block">
-            <h2 class="header-page-title">Profile</h2>
-          </div>
-        </div>
-        <button class="btn-settings" onclick="app.showModal('modal-settings')" title="Settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
+      <!-- 1. Header Bar: Circular back button, centered gold "PROFILE", circular settings button -->
+      <div class="profile-top-bar">
+        <button class="profile-nav-circle-btn back-circle-btn" onclick="app.goHome()" title="Back">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <h2 class="profile-screen-title">PROFILE</h2>
+        <button class="profile-nav-circle-btn btn-settings" onclick="app.showModal('modal-settings')" title="Settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
       </div>
 
-      <div class="profile-hero-card"
-        style="display: flex; flex-direction: row; align-items: center; justify-content: flex-start; text-align: left; gap: 20px; margin: 10px 0 24px 0; padding: 0 10px;">
-        <div class="profile-hero-avatar-wrap"
-          style="width: 80px; height: 80px; margin: 0; flex-shrink: 0; position: relative;">
-          <img id="profile-hero-avatar" src="/assets/avatar-default.svg" alt="Player" class="profile-hero-avatar"
-            style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #20120B; object-fit: cover; background: #24140B;">
-          <button type="button" id="profile-avatar-edit-btn" class="profile-avatar-edit-btn"
-            onclick="app.openAvatarPicker()" title="Change avatar" aria-label="Change avatar">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <!-- 2. Profile Hero Card (Double Gold Border) -->
+      <div class="profile-hero-card gold-framed-box">
+        <div class="profile-hero-avatar-wrap">
+          <div class="profile-avatar-circle">
+            <svg id="profile-knight-fallback" class="profile-knight-svg" viewBox="0 0 64 64" fill="none">
+              <path d="M44 54H20C19 54 18 53 18 52C18 50 19 48 21 47C22 46.5 24 46 25 45C22 41 20 37 19.5 32C19 28 20 24 22 21C22.5 20 22 18.5 21 18C19.5 17 18 16 17 14.5C16 13 16 11 17 9.5C18 8 20 7 22 7C24.5 7 26.5 8.5 27.5 10.5C28.5 10 30 9.5 32 9.5C36 9.5 40 11.5 43 15C46 18.5 47 23 46.5 27C46 31 43.5 35 40 37C42 41 43.5 45 44 49C44.5 52 43.5 54 44 54Z" fill="#F5D36C"/>
+              <circle cx="28" cy="17" r="2.5" fill="#1C1008"/>
+              <path d="M23 25C25 26 28 26.5 31 26" stroke="#1C1008" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <img id="profile-hero-avatar" src="/assets/avatar-default.svg" alt="Player" class="profile-hero-avatar-img" style="display:none;" onload="this.style.display='block'; document.getElementById('profile-knight-fallback').style.display='none';">
+          </div>
+          <button type="button" id="profile-avatar-edit-btn" class="profile-avatar-edit-btn" onclick="app.openAvatarPicker ? app.openAvatarPicker() : null" title="Change avatar" aria-label="Change avatar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 20h9"></path>
               <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
             </svg>
           </button>
         </div>
-        <div style="display: flex; flex-direction: column; justify-content: center; flex: 1;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <h3 id="profile-hero-name" class="profile-hero-name" style="margin: 0; font-size: 24px; font-weight: 800; color: #20120B;">
-              Player</h3>
-            <span onclick="app.handleAuthRequireUsername(app.playerId, true)"
-              style="cursor: pointer; font-size: 16px; opacity: 0.7; margin-left: 8px;" title="Edit Username"><svg
-                width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round" style="color: #F5D36C; margin-bottom: -3px;">
+
+        <div class="profile-hero-details">
+          <div class="profile-username-header">
+            <h3 id="profile-hero-name" class="profile-hero-name">AANN</h3>
+            <button class="profile-edit-pencil-btn" onclick="app.handleAuthRequireUsername ? (app.playerId ? app.handleAuthRequireUsername(app.playerId, true) : app.handleAuthRequireUsername(app.walletAddress)) : null" title="Edit Username">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 20h9"></path>
                 <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-              </svg></span>
+              </svg>
+            </button>
+            <span id="profile-wallet-address" style="display: none;"></span>
+            <button id="btn-disconnect-wallet" onclick="app.disconnectWallet ? app.disconnectWallet() : null" style="display: none;"></button>
           </div>
-          <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 4px;">
-            <span class="profile-hero-level" style="font-size: 14px; color: #FFD54F; font-weight: 700; margin: 0;">Lvl
-              <span id="profile-hero-level">1</span></span>
-            <span id="profile-rank-badge" style="font-size: 11px; font-weight: 800; letter-spacing: 0.4px; color: #20120B; background: #F5D36C; padding: 2px 8px; border-radius: 9999px;">Unranked</span>
-            <span id="profile-title-badge" class="elo-title-badge" style="display: none;"></span>
+
+          <!-- Badges Row: Level, Rank Number, Tier Title -->
+          <div class="profile-badges-row">
+            <span class="profile-badge badge-lvl">Lvl <span id="profile-hero-level">1</span></span>
+            <span id="profile-rank-badge" class="profile-badge badge-rank-num">#7</span>
+            <span id="profile-title-badge" class="profile-badge badge-tier elo-title-badge">
+              <svg class="tier-shield-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              <span>SILVER KNIGHT</span>
+            </span>
           </div>
-          <div class="profile-xp-meter">
-            <div class="profile-xp-row">
-              <span class="profile-xp-label">XP</span>
-              <span class="profile-xp-value" id="profile-xp-text">0 / 100 XP</span>
+
+          <!-- XP Progression Block -->
+          <div class="profile-xp-block">
+            <div class="profile-xp-labels">
+              <span class="xp-label-title">XP</span>
+              <span class="xp-label-count" id="profile-xp-text">0 / 100 XP</span>
             </div>
-            <div class="profile-xp-track" id="profile-xp-track" role="progressbar" aria-label="Experience progress"
-              aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
-              aria-valuetext="0 of 100 XP toward level 2">
-              <div class="profile-xp-fill" id="profile-xp-fill"></div>
+            <div class="profile-xp-track" id="profile-xp-track">
+              <div class="profile-xp-fill" id="profile-xp-fill" style="width: 0%;"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 4-Stat Metric Box -->
+      <!-- 3. 4-Stat Metric Box: 2x2 Grid with Elegant Gold Borders & Watermarks -->
       <div class="stats-quad-grid">
-        <div class="quad-stat-item">
+        <!-- 1. Rating -->
+        <div class="quad-stat-item gold-framed-box">
+          <svg class="stat-watermark watermark-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
           <span class="quad-stat-num" id="stat-rating">1200</span>
-          <span class="quad-stat-label">Rating</span>
+          <span class="quad-stat-label">RATING</span>
         </div>
-        <div class="quad-stat-item">
+
+        <!-- 2. Wins -->
+        <div class="quad-stat-item gold-framed-box">
+          <svg class="stat-watermark watermark-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+            <path d="M6 9H4a2 2 0 0 1-2-2V5h4m12 4h2a2 2 0 0 0 2-2V5h-4"/>
+            <path d="M6 4h12v6a6 6 0 0 1-12 0V4z"/>
+            <path d="M12 16v5m-4 0h8"/>
+            <line x1="8" y1="2" x2="16" y2="22"/>
+          </svg>
           <span class="quad-stat-num" id="stat-wins">0</span>
-          <span class="quad-stat-label">Wins</span>
+          <span class="quad-stat-label">WINS</span>
         </div>
-        <div class="quad-stat-item">
+
+        <!-- 3. Losses -->
+        <div class="quad-stat-item gold-framed-box">
+          <svg class="stat-watermark watermark-swords" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <line x1="4" y1="4" x2="20" y2="20"/>
+            <line x1="20" y1="4" x2="4" y2="20"/>
+          </svg>
           <span class="quad-stat-num" id="stat-losses">0</span>
-          <span class="quad-stat-label">Losses</span>
+          <span class="quad-stat-label">LOSSES</span>
         </div>
-        <div class="quad-stat-item">
+
+        <!-- 4. Win Rate -->
+        <div class="quad-stat-item gold-framed-box">
+          <svg class="stat-watermark watermark-wreath" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+            <path d="M6 20C3 16 3 9 7 4M18 20c3-4 3-11-1-16"/>
+            <path d="M3 13c3-2 5 0 5 0m-5-5c3-2 5 0 5 0m16 5c-3-2-5 0-5 0m5-5c-3-2-5 0-5 0"/>
+            <circle cx="12" cy="18" r="2"/>
+          </svg>
           <span class="quad-stat-num" id="stat-winrate">0%</span>
-          <span class="quad-stat-label">Win Rate</span>
+          <span class="quad-stat-label">WIN RATE</span>
         </div>
       </div>
+      
 
       <nav class="fantasy-bottom-nav">
         <div class="nav-active-glow"></div>

@@ -3568,3 +3568,325 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 }
 
 
+
+
+/* ==========================================================================
+   ELEGANT BROWN & GOLD PROFILE SECTION OVERHAUL (Reference Design)
+   Eliminates all blank space, exact double gold frames, watermarks, 2x2 grid
+   ========================================================================== */
+#screen-profile {
+  background: linear-gradient(180deg, #1C0F08 0%, #110803 100%) !important;
+  color: #FDF7EC !important;
+  min-height: 100vh !important;
+  box-sizing: border-box !important;
+}
+
+.profile-page-shell {
+  max-width: 580px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  padding: 16px 16px 140px 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
+/* 1. Header Bar */
+.profile-top-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 4px 4px 18px 4px !important;
+}
+
+.profile-screen-title {
+  font-family: 'Cinzel', 'Georgia', serif !important;
+  font-size: 24px !important;
+  font-weight: 800 !important;
+  color: #F5D36C !important;
+  letter-spacing: 3px !important;
+  margin: 0 !important;
+  text-align: center !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 0 16px rgba(245, 211, 108, 0.25) !important;
+}
+
+.profile-nav-circle-btn {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(145deg, #2A170C, #180C05) !important;
+  border: 1.5px solid rgba(201, 151, 0, 0.5) !important;
+  color: #F5D36C !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  transition: all 0.2s ease !important;
+}
+
+.profile-nav-circle-btn:hover {
+  border-color: #F5D36C !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(201, 151, 0, 0.25) !important;
+}
+
+/* 2. Double-Line Gold Frame Container (Reference Signature) */
+.gold-framed-box {
+  position: relative !important;
+  border: 1.5px solid #C99700 !important;
+  border-radius: 18px !important;
+  background: linear-gradient(160deg, #27150B 0%, #160A04 100%) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 235, 196, 0.18) !important;
+  box-sizing: border-box !important;
+}
+
+.gold-framed-box::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 5px !important;
+  border: 1px solid rgba(201, 151, 0, 0.38) !important;
+  border-radius: 13px !important;
+  pointer-events: none !important;
+}
+
+/* Profile Hero Card */
+.profile-hero-card {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 20px !important;
+  padding: 22px 20px !important;
+  margin-bottom: 16px !important;
+}
+
+.profile-hero-avatar-wrap {
+  position: relative !important;
+  flex-shrink: 0 !important;
+}
+
+.profile-avatar-circle {
+  width: 92px !important;
+  height: 92px !important;
+  border-radius: 50% !important;
+  border: 3px solid #C99700 !important;
+  box-shadow: 0 0 0 3px rgba(201, 151, 0, 0.25), 0 8px 20px rgba(0, 0, 0, 0.7) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: radial-gradient(circle at 35% 35%, #3B2011 0%, #130702 100%) !important;
+  overflow: hidden !important;
+}
+
+.profile-hero-avatar-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+.profile-knight-svg {
+  width: 60px !important;
+  height: 60px !important;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6)) !important;
+}
+
+.profile-avatar-edit-btn {
+  position: absolute !important;
+  right: -2px !important;
+  bottom: -2px !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background: #C99700 !important;
+  color: #170B05 !important;
+  border: 2px solid #1C0F08 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6) !important;
+}
+
+.profile-hero-details {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+.profile-username-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.profile-hero-name {
+  font-family: 'Cinzel', 'Georgia', serif !important;
+  font-size: 26px !important;
+  font-weight: 800 !important;
+  color: #F5D36C !important;
+  margin: 0 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 1px !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.profile-edit-pencil-btn {
+  background: transparent !important;
+  border: none !important;
+  color: #F5D36C !important;
+  cursor: pointer !important;
+  padding: 2px !important;
+  display: flex !important;
+  align-items: center !important;
+  opacity: 0.85 !important;
+  transition: opacity 0.2s ease !important;
+}
+
+.profile-edit-pencil-btn:hover {
+  opacity: 1 !important;
+  transform: scale(1.1) !important;
+}
+
+/* Badges Row */
+.profile-badges-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 8px 0 12px 0 !important;
+  flex-wrap: wrap !important;
+}
+
+.profile-badge {
+  font-family: 'Cinzel', 'Georgia', serif !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.badge-lvl {
+  font-size: 13px !important;
+  color: #F5D36C !important;
+  border: 1.5px solid #C99700 !important;
+  background: rgba(30, 16, 8, 0.65) !important;
+  padding: 4px 10px !important;
+  border-radius: 8px !important;
+}
+
+.badge-rank-num {
+  font-size: 13px !important;
+  color: #170B05 !important;
+  background: #C99700 !important;
+  padding: 4px 10px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+}
+
+.badge-tier {
+  font-size: 11px !important;
+  color: #F0F2F5 !important;
+  background: linear-gradient(135deg, #4A4E57 0%, #292C33 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  padding: 4px 10px !important;
+  border-radius: 8px !important;
+  letter-spacing: 0.8px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* XP Progression */
+.profile-xp-block {
+  margin-top: 2px !important;
+}
+
+.profile-xp-labels {
+  display: flex !important;
+  justify-content: space-between !important;
+  font-family: 'Cinzel', 'Georgia', serif !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #BA976D !important;
+  margin-bottom: 6px !important;
+  letter-spacing: 0.5px !important;
+}
+
+.profile-xp-track {
+  width: 100% !important;
+  height: 8px !important;
+  background: #100602 !important;
+  border: 1px solid rgba(201, 151, 0, 0.35) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.profile-xp-fill,
+.profile-xp-bar-fill {
+  height: 100% !important;
+  background: linear-gradient(90deg, #C99700 0%, #F5D36C 100%) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 0 10px rgba(245, 211, 108, 0.5) !important;
+  transition: width 0.4s ease !important;
+}
+
+/* 3. 2x2 Stats Quad Grid (Reference Layout - Eliminates Blank Space) */
+.stats-quad-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 14px !important;
+  margin: 8px 0 24px 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.quad-stat-item {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 145px !important;
+  padding: 24px 16px 20px 16px !important;
+  overflow: hidden !important;
+  text-align: center !important;
+}
+
+.quad-stat-num {
+  font-family: 'Cinzel', 'Georgia', serif !important;
+  font-size: clamp(34px, 6vw, 44px) !important;
+  font-weight: 800 !important;
+  color: #F5D36C !important;
+  line-height: 1.1 !important;
+  margin-bottom: 6px !important;
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.85) !important;
+  z-index: 2 !important;
+}
+
+.quad-stat-label {
+  font-family: 'Cinzel', 'Georgia', serif !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  color: #E0BA68 !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+  z-index: 2 !important;
+}
+
+.stat-watermark {
+  position: absolute !important;
+  right: 12px !important;
+  bottom: 10px !important;
+  width: 78px !important;
+  height: 78px !important;
+  color: #F5D36C !important;
+  opacity: 0.16 !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+  transform: rotate(-4deg) !important;
+}

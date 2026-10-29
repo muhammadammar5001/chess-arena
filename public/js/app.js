@@ -377,20 +377,111 @@ class App {
     badge.title = `${title.name} · ${title.min}+ Elo (your rating: ${Math.floor(Number(rating) || 0)})`;
   }
 
+  isOwnLeaderboardPlayer(player) {
+    if (!player || !this.cloudProfile || !this.cloudProfile.username) return false;
+    if (this.cloudProfile.playerId && player.playerId) {
+      return String(this.cloudProfile.playerId) === String(player.playerId);
+    }
+    return String(player.username || '').toLowerCase() === String(this.cloudProfile.username).toLowerCase();
+  }
+
+  getLeaderboardSelfEntry() {
+    const profile = this.cloudProfile;
+    if (!profile || !profile.username) return null;
+
+    const row = (this.leaderboardTopPlayers || []).find((player) => this.isOwnLeaderboardPlayer(player));
+    if (row) return row;
+
+    const rank = Math.floor(Number(profile.rank) || 0);
+    if (rank <= 0) return null;
+
+    const stats = profile.stats || {};
+    return {
+      rank,
+      playerId: profile.playerId || null,
+      username: profile.username,
+      rating: Number(profile.rating) || 1200,
+      wins: Math.max(0, Number(stats.wins) || 0),
+      losses: Math.max(0, Number(stats.losses) || 0)
+    };
+  }
+
+  escapeLeaderboardHtml(value) {
+    return String(value).replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch]));
+  }
+
+  buildLeaderboardPinnedCard(entry) {
+    const rank = Math.max(1, Math.floor(Number(entry.rank) || 0));
+    const total = Math.max(0, Number(this.leaderboardTotalPlayers) || 0);
+    const name = this.escapeLeaderboardHtml(entry.username || 'Player');
+    const rating = Number(entry.rating != null ? entry.rating : entry.elo) || 1200;
+    const wins = Math.max(0, Number(entry.wins) || 0);
+    const losses = Math.max(0, Number(entry.losses) || 0);
+    const titleBadge = this.getEloTitleBadgeHtml(rating);
+    const totalLabel = total > 0 ? `<small>of ${total}</small>` : '';
+
+    return `<div class="leaderboard-pinned-rank-badge" aria-hidden="true">
+        <span class="leaderboard-pinned-rank-number">#${rank}</span>
+        ${totalLabel}
+      </div>
+      <div class="leaderboard-pinned-rank-body">
+        <div class="leaderboard-pinned-rank-name">
+          <span class="leaderboard-pinned-rank-player">${name}</span>
+          ${titleBadge}
+          <span class="leaderboard-pinned-you">YOU</span>
+        </div>
+        <div class="leaderboard-pinned-rank-meta">Rating: <strong>${rating}</strong><span class="leaderboard-pinned-rank-dot">·</span>${wins}W / ${losses}L</div>
+      </div>`;
+  }
+
+  hideLeaderboardPinnedCard(pinned) {
+    if (!pinned) return;
+    pinned.classList.add('hidden');
+    pinned.innerHTML = '';
+    pinned.removeAttribute('aria-label');
+  }
+
   renderLeaderboardMyRank() {
     const el = document.getElementById('leaderboard-my-rank');
-    if (!el) return;
-    if (!this.cloudProfile || !this.cloudProfile.username) {
-      el.textContent = 'Enter a player name to join the standings';
+    const pinned = document.getElementById('leaderboard-pinned-rank');
+    const profile = this.cloudProfile;
+
+    if (!profile || !profile.username) {
+      if (el) {
+        el.style.display = '';
+        el.textContent = 'Enter a player name to join the standings';
+      }
+      this.hideLeaderboardPinnedCard(pinned);
       return;
     }
-    const rank = Number(this.cloudProfile.rank);
-    const total = Number(this.leaderboardTotalPlayers);
-    if (rank > 0) {
-      el.textContent = `Your rank: #${rank}${total > 0 ? ' of ' + total : ''}`;
-    } else {
-      el.textContent = 'Unranked — finish a match to enter the standings';
+
+    const self = this.getLeaderboardSelfEntry();
+    const rank = self ? Math.max(0, Math.floor(Number(self.rank) || 0)) : 0;
+    if (!rank) {
+      if (el) {
+        el.style.display = '';
+        el.textContent = 'Unranked — finish a match to enter the standings';
+      }
+      this.hideLeaderboardPinnedCard(pinned);
+      return;
     }
+
+    if (el) {
+      el.style.display = 'none';
+      el.textContent = '';
+    }
+
+    if (!pinned) return;
+    pinned.innerHTML = this.buildLeaderboardPinnedCard(self);
+    pinned.classList.remove('hidden');
+    const total = Math.max(0, Number(this.leaderboardTotalPlayers) || 0);
+    const rating = Number(self.rating != null ? self.rating : self.elo) || 1200;
+    pinned.setAttribute(
+      'aria-label',
+      `Your rank: #${rank}${total > 0 ? ' of ' + total : ''}, ${self.username}, rating ${rating}`
+    );
   }
 
   async ensureProfileReady() {
