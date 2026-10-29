@@ -3486,11 +3486,11 @@ class App {
     const heroImg = document.getElementById('victory-hero-img');
     if (heroImg) {
       if (isPlayerWin) {
-        heroImg.src = '/assets/victory.svg';
+        heroImg.src = '/assets/victory.jpg';
       } else if (isDraw) {
-        heroImg.src = '/assets/draw.svg';
+        heroImg.src = '/assets/draw.jpg';
       } else {
-        heroImg.src = '/assets/defeat.svg';
+        heroImg.src = '/assets/defeat.jpg';
       }
     }
 
