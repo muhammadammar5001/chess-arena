@@ -35,6 +35,7 @@ class App {
     this.pendingJoinData = null;
     this.soundMuted = false;
     this.musicEnabled = true;
+    this.musicVolume = parseFloat(localStorage.getItem('chessarena_music_volume') || '0.25');
     this.bgMusicRunning = false;
     this.bgMusicNodes = [];
     this.bgMusicGain = null;
@@ -3278,14 +3279,14 @@ class App {
       try {
         this.bgAudio = new Audio('/assets/audio/Chess-Arena-BGM.mp3');
         this.bgAudio.loop = true;
-        this.bgAudio.volume = 0.25; // 25% pleasant ambient volume
+        this.bgAudio.volume = (typeof this.musicVolume === 'number') ? this.musicVolume : 0.25;
       } catch (e) {
         console.warn('Audio element creation error:', e);
         return;
       }
     }
 
-    this.bgAudio.volume = 0.25;
+    this.bgAudio.volume = (typeof this.musicVolume === 'number') ? this.musicVolume : 0.25;
     this.bgMusicRunning = true;
     const playPromise = this.bgAudio.play();
     if (playPromise !== undefined) {
@@ -3316,6 +3317,26 @@ class App {
     this.syncSettingsUI();
     this.saveEconomyState();
     this.showToast(this.musicEnabled ? 'Music enabled' : 'Music muted');
+  }
+
+  setMusicVolume(value) {
+    const volNum = Math.max(0, Math.min(100, parseInt(value, 10) || 0));
+    this.musicVolume = volNum / 100;
+    try {
+      localStorage.setItem('chessarena_music_volume', String(this.musicVolume));
+    } catch(e) {}
+
+    if (this.bgAudio) {
+      this.bgAudio.volume = this.musicVolume;
+    }
+
+    if (volNum === 0 && this.musicEnabled) {
+      this.toggleMusic();
+    } else if (volNum > 0 && !this.musicEnabled) {
+      this.toggleMusic();
+    } else {
+      this.syncSettingsUI();
+    }
   }
 
 
@@ -4664,6 +4685,20 @@ class App {
       musicBtn.setAttribute('aria-label', `Background music ${musicOn ? 'on' : 'off'}`);
       const musicLabel = musicBtn.querySelector('.setting-switch-label');
       if (musicLabel) musicLabel.textContent = musicOn ? 'On' : 'Off';
+    }
+
+    const volumeSlider = document.getElementById('input-music-volume');
+    const volumeLabel = document.getElementById('music-volume-label');
+    const currentVol = (typeof this.musicVolume === 'number') ? this.musicVolume : 0.25;
+    const volPct = Math.round(currentVol * 100);
+    if (volumeSlider) {
+      volumeSlider.value = volPct;
+      volumeSlider.disabled = !musicOn;
+      volumeSlider.style.opacity = musicOn ? '1' : '0.4';
+    }
+    if (volumeLabel) {
+      volumeLabel.textContent = musicOn ? `${volPct}%` : 'Muted';
+      volumeLabel.style.color = musicOn ? '#FFD54F' : '#8C6538';
     }
   }
 

@@ -4284,3 +4284,49 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
     inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) !important;
 }
+
+
+/* ==========================================================================
+   SETTINGS MODAL - MUSIC VOLUME SLIDER (GOLD & WALNUT)
+   ========================================================================== */
+.settings-volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100% !important;
+  height: 6px !important;
+  background: #170C06 !important;
+  border: 1px solid #5A351D !important;
+  border-radius: 999px !important;
+  outline: none !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8) !important;
+  cursor: pointer !important;
+  margin: 4px 0 2px 0 !important;
+}
+
+.settings-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(180deg, #FFF3B0 0%, #FFD54F 50%, #C99700 100%) !important;
+  border: 1.5px solid #FFE58A !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7), 0 0 6px rgba(255, 213, 79, 0.6) !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.settings-volume-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.85), 0 0 10px rgba(255, 213, 79, 0.9) !important;
+}
+
+.settings-volume-slider::-moz-range-thumb {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(180deg, #FFF3B0 0%, #FFD54F 50%, #C99700 100%) !important;
+  border: 1.5px solid #FFE58A !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7), 0 0 6px rgba(255, 213, 79, 0.6) !important;
+  cursor: pointer !important;
+}

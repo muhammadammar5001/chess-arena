@@ -1429,6 +1429,26 @@
               <span class="setting-switch-track"><span class="setting-switch-thumb"></span></span>
             </button>
           </div>
+
+            <!-- Music Volume Slider -->
+            <div class="setting-item setting-item-volume" style="flex-direction: column; align-items: stretch; gap: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div class="setting-icon" aria-hidden="true" style="width: 28px; height: 28px; flex: 0 0 28px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 15px; height: 15px;">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                  </div>
+                  <span class="setting-title" style="font-size: 13px;">Music Volume</span>
+                </div>
+                <span id="music-volume-label" style="font-family: var(--font-serif); font-size: 13px; font-weight: 800; color: #FFD54F;">25%</span>
+              </div>
+              <input type="range" id="input-music-volume" min="0" max="100" value="25"
+                oninput="app.setMusicVolume(this.value)"
+                aria-label="Background music volume"
+                class="settings-volume-slider">
+            </div>
         </div>
       </div>
 
