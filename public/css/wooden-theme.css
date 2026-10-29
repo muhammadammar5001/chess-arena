@@ -3886,52 +3886,76 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   z-index: 2 !important;
 }
 
-.stat-watermark {
-  position: absolute !important;
-  right: 8px !important;
-  bottom: 6px !important;
-  width: 68px !important;
-  height: 68px !important;
-  color: #F5D36C !important;
-  opacity: 0.22 !important;
-  pointer-events: none !important;
-  z-index: 1 !important;
+/* Custom profile stat artwork: icon on the left, value and label on the right. */
+.quad-stat-item {
+  display: grid !important;
+  grid-template-columns: 46px auto !important;
+  grid-template-rows: auto auto !important;
+  align-content: center !important;
+  align-items: center !important;
+  justify-content: center !important;
+  justify-items: start !important;
+  column-gap: 12px !important;
+  row-gap: 1px !important;
+  min-height: 86px !important;
+  max-height: 105px !important;
+  padding: 10px 14px !important;
+  text-align: left !important;
 }
 
-.stat-watermark.watermark-rating {
-  right: auto !important;
-  left: 8px !important;
-  width: 68px !important;
-  height: 68px !important;
+.stat-icon-shell {
+  grid-row: 1 / span 2 !important;
+  width: 46px !important;
+  height: 46px !important;
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 auto !important;
+  border-radius: 14px !important;
+  background: linear-gradient(180deg, rgba(245, 211, 108, 0.18), rgba(0, 0, 0, 0.12)) !important;
+  border: 1px solid rgba(224, 186, 104, 0.46) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 2px 8px rgba(0, 0, 0, 0.28) !important;
 }
 
-.stat-watermark.watermark-rating path {
-  stroke: #F5D36C !important;
-  stroke-width: 5px !important;
-  stroke-linejoin: round !important;
-  paint-order: stroke fill !important;
+.stat-icon {
+  width: 27px !important;
+  height: 27px !important;
+  display: block !important;
+  background-color: #F5D36C !important;
+  -webkit-mask: var(--stat-icon) center / contain no-repeat !important;
+  mask: var(--stat-icon) center / contain no-repeat !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45)) !important;
 }
 
-.stat-watermark.watermark-wins {
-  width: 64px !important;
-  height: 72px !important;
+.stat-icon-rating {
+  --stat-icon: url('/assets/icons/Elo-Rating-icon.svg');
 }
 
-.stat-watermark.watermark-losses {
-  right: auto !important;
-  left: 8px !important;
-  width: 68px !important;
-  height: 72px !important;
+.stat-icon-wins {
+  --stat-icon: url('/assets/icons/Wins-Icon.svg');
 }
 
-.stat-watermark.watermark-winrate {
-  width: 74px !important;
-  height: 64px !important;
+.stat-icon-losses {
+  --stat-icon: url('/assets/icons/Losses-icon.svg');
 }
 
-.stat-watermark.watermark-winrate path[fill="none"] {
-  stroke: #F5D36C !important;
-  stroke-width: 4px !important;
+.stat-icon-winrate {
+  --stat-icon: url('/assets/icons/Win-Rate-icon.svg');
+}
+
+.quad-stat-item .quad-stat-num {
+  grid-column: 2 !important;
+  margin: 0 !important;
+  font-size: 24px !important;
+  line-height: 1.05 !important;
+  text-align: left !important;
+}
+
+.quad-stat-item .quad-stat-label {
+  grid-column: 2 !important;
+  margin-top: 0 !important;
+  font-size: 10.5px !important;
+  line-height: 1.2 !important;
+  text-align: left !important;
 }
 /* Centered page headings for Rankings and Shop */
 #screen-leaderboard .screen-header-back,
@@ -4329,4 +4353,166 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   border: 1.5px solid #FFE58A !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7), 0 0 6px rgba(255, 213, 79, 0.6) !important;
   cursor: pointer !important;
+}
+
+/* --- Compact match result screen ------------------------------------------ */
+#screen-victory .victory-shell {
+  width: 100% !important;
+  max-width: 560px !important;
+  min-height: 100dvh !important;
+  height: auto !important;
+  margin: 0 auto !important;
+  padding: 12px 18px 16px 18px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+}
+
+#screen-victory .victory-hero-wrap {
+  margin: 0 !important;
+  gap: 0 !important;
+}
+
+#screen-victory .victory-crowned-hero {
+  width: 120px !important;
+  height: 120px !important;
+  margin-bottom: 6px !important;
+  border-radius: 18px !important;
+  border-width: 2px !important;
+  box-shadow: 0 0 24px rgba(202, 166, 116, 0.28), 0 8px 18px rgba(0, 0, 0, 0.42) !important;
+}
+
+#screen-victory .victory-heading {
+  font-size: 26px !important;
+  line-height: 1.05 !important;
+  letter-spacing: 1.6px !important;
+}
+
+#screen-victory .victory-subheading {
+  margin-top: 2px !important;
+  font-size: 12px !important;
+  line-height: 1.2 !important;
+}
+
+#screen-victory .victory-recap-card {
+  margin: 0 !important;
+  padding: 12px 18px !important;
+  border-radius: 18px !important;
+  border-width: 2px !important;
+  box-shadow: 0 10px 24px rgba(32, 18, 11, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.12) !important;
+}
+
+#screen-victory .match-vs-score-row {
+  margin-bottom: 8px !important;
+  padding-bottom: 8px !important;
+}
+
+#screen-victory .recap-player-col {
+  width: 82px !important;
+  gap: 3px !important;
+}
+
+#screen-victory .recap-player-avatar {
+  width: 44px !important;
+  height: 44px !important;
+}
+
+#screen-victory .recap-player-col span:nth-child(2) {
+  font-size: 12px !important;
+  line-height: 1.15 !important;
+}
+
+#screen-victory .recap-player-col span:nth-child(3) {
+  font-size: 10px !important;
+  line-height: 1 !important;
+}
+
+#screen-victory .recap-score-display {
+  font-size: 28px !important;
+  letter-spacing: 3px !important;
+}
+
+#screen-victory .recap-meta-list {
+  gap: 2px !important;
+}
+
+#screen-victory .recap-meta-row {
+  padding: 4px 0 !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+}
+
+#screen-victory .victory-actions {
+  gap: 8px !important;
+}
+
+#screen-victory .victory-actions > button {
+  margin: 0 !important;
+  min-height: 44px !important;
+  padding: 10px 18px !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  box-sizing: border-box !important;
+}
+
+#screen-victory .victory-actions .btn-secondary-pill {
+  padding: 10px 18px !important;
+  font-size: 14px !important;
+}
+
+@media (max-width: 767px) {
+  #screen-victory .victory-shell {
+    padding: 10px 14px 14px 14px !important;
+  }
+
+  #screen-victory .victory-crowned-hero {
+    width: 112px !important;
+    height: 112px !important;
+  }
+}
+
+@media (max-height: 520px) {
+  #screen-victory .victory-shell {
+    justify-content: flex-start !important;
+    padding-top: 8px !important;
+  }
+}
+
+@media (max-height: 700px) {
+  #screen-victory .victory-crowned-hero {
+    width: 92px !important;
+    height: 92px !important;
+    margin-bottom: 4px !important;
+  }
+
+  #screen-victory .victory-heading {
+    font-size: 22px !important;
+  }
+
+  #screen-victory .victory-subheading {
+    font-size: 11px !important;
+  }
+
+  #screen-victory .victory-recap-card {
+    padding: 10px 14px !important;
+  }
+
+  #screen-victory .recap-player-avatar {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  #screen-victory .recap-meta-row {
+    padding: 3px 0 !important;
+    font-size: 12px !important;
+  }
+
+  #screen-victory .victory-actions > button {
+    min-height: 40px !important;
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+  }
 }
