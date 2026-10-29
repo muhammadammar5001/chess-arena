@@ -1199,7 +1199,39 @@ server.listen(PORT, () => {
   console.log('\n  Chess Arena is running!');
   console.log(`  ➜ Local:   http://localhost:${PORT}`);
   console.log(`  ➜ Network: http://0.0.0.0:${PORT}\n`);
+  initKeepAlive();
 });
+
+// ─── Render Self-Ping Keep-Alive Bot ─────────────────────────────────────────
+// Pings /health every 10 minutes so Render free instances don't spin down / sleep.
+function initKeepAlive() {
+  const pingUrl = process.env.PING_URL || process.env.RENDER_EXTERNAL_URL
+    ? `${(process.env.PING_URL || process.env.RENDER_EXTERNAL_URL).replace(/\/+$/, '')}/health`
+    : 'https://chess-arena-262t.onrender.com/health';
+
+  const PING_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+
+  // Initial delay of 2 minutes before starting pings
+  setTimeout(() => {
+    setInterval(async () => {
+      try {
+        const res = await fetch(pingUrl, {
+          method: 'GET',
+          headers: { 'User-Agent': 'ChessArena-KeepAlive-Bot/1.0' }
+        });
+        if (res.ok) {
+          console.log(`[KeepAlive] Ping successful to ${pingUrl} (status: ${res.status})`);
+        } else {
+          console.warn(`[KeepAlive] Ping response: ${res.status}`);
+        }
+      } catch (err) {
+        console.warn(`[KeepAlive] Ping failed: ${err.message}`);
+      }
+    }, PING_INTERVAL_MS);
+    console.log(`[KeepAlive] Auto-ping bot active for ${pingUrl} (every 10m)`);
+  }, 2 * 60 * 1000);
+}
+
 
 
 
