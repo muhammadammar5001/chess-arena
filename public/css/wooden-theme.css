@@ -4247,68 +4247,41 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 
 
 /* ==========================================================================
-   EQUIPPED SHOP ITEM CARD - LUXURY GOLD THEME (MATCHES LEADERBOARD "YOU" CARD)
+   EQUIPPED SHOP ACTION BUTTON - RADIANT GOLD (LIKE LEADERBOARD "YOU" CARD)
+   Keeps the card background identical to before, making only the action button gold.
    ========================================================================== */
 .shop-item-card.equipped {
-  background:
-    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.48), transparent 36%),
-    linear-gradient(135deg, #F7DE82 0%, #D9B23C 46%, #B7891D 100%) !important;
-  border: 2px solid #FFF0A8 !important;
-  border-radius: 14px !important;
+  border-color: #F5D36C !important;
   box-shadow:
-    0 10px 26px rgba(0, 0, 0, 0.58),
-    0 0 0 1px rgba(70, 45, 10, 0.48),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
-  color: #20120B !important;
+    0 8px 22px rgba(0, 0, 0, 0.45),
+    0 0 16px rgba(245, 211, 108, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
-.shop-item-card.equipped::before {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent) !important;
-}
-
-/* Card title & text in dark walnut contrast on gold */
-.shop-item-card.equipped .shop-item-name {
-  color: #20120B !important;
-  font-weight: 800 !important;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45) !important;
-}
-
-/* Equipped top ribbon */
+/* Gold Equipped Ribbon */
 .shop-item-card.equipped .shop-equip-ribbon {
-  background: #20120B !important;
-  border: 1px solid rgba(245, 211, 108, 0.55) !important;
-  color: #F5D36C !important;
-  font-weight: 800 !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
-}
-
-/* Starter / Level tags inside equipped card */
-.shop-item-card.equipped .shop-item-level {
-  background: rgba(32, 18, 11, 0.12) !important;
-  border-color: rgba(32, 18, 11, 0.35) !important;
+  background: linear-gradient(135deg, #F7DE82 0%, #D9B23C 100%) !important;
+  border: 1px solid #FFF0A8 !important;
   color: #20120B !important;
   font-weight: 800 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
 }
 
-.shop-item-card.equipped .shop-item-level.is-starter {
-  background: rgba(32, 18, 11, 0.15) !important;
-  border-color: rgba(32, 18, 11, 0.4) !important;
-  color: #20120B !important;
-}
-
-/* Preview thumbnail frame in equipped gold card */
-.shop-item-card.equipped .shop-card-preview {
-  border: 2px solid #20120B !important;
-  box-shadow: 0 4px 12px rgba(32, 18, 11, 0.25) !important;
-}
-
-/* Action button inside equipped card - dark walnut & gold highlight */
+/* Gold Equipped Action Button */
+.btn-shop-action.equipped,
 .shop-item-card.equipped .btn-shop-action.equipped {
-  background: #20120B !important;
-  border: 1.5px solid #F5D36C !important;
-  color: #F5D36C !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.55), transparent 40%),
+    linear-gradient(135deg, #F7DE82 0%, #D9B23C 46%, #B7891D 100%) !important;
+  border: 1.5px solid #FFF0A8 !important;
+  color: #20120B !important;
   font-family: 'Cinzel', 'Georgia', serif !important;
   font-weight: 800 !important;
-  letter-spacing: 0.6px !important;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  letter-spacing: 0.8px !important;
+  cursor: default !important;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.45),
+    0 0 10px rgba(245, 211, 108, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) !important;
 }
