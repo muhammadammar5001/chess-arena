@@ -4204,3 +4204,43 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
     padding: 10px 14px !important;
   }
 }
+
+
+/* ==========================================================================
+   SHOP MOBILE EXPANSION - WIDER CONTAINER & CARDS FOR ANDROID / PHONES
+   ========================================================================== */
+#screen-shop .shop-shell {
+  width: 100% !important;
+  max-width: 620px !important;
+  margin: 0 auto !important;
+  padding: 16px 12px 160px 12px !important;
+  box-sizing: border-box !important;
+}
+
+#screen-shop .shop-shell-inner {
+  width: 100% !important;
+  max-width: 580px !important;
+  margin: 0 auto !important;
+  padding: 0 4px 160px 4px !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 800px) {
+  #screen-shop .shop-shell {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 12px 10px 150px 10px !important;
+  }
+
+  #screen-shop .shop-shell-inner {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 2px 150px 2px !important;
+  }
+
+  #screen-shop .shop-shelf {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 14px 12px !important;
+  }
+}
