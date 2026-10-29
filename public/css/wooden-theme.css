@@ -4244,3 +4244,71 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
     padding: 14px 12px !important;
   }
 }
+
+
+/* ==========================================================================
+   EQUIPPED SHOP ITEM CARD - LUXURY GOLD THEME (MATCHES LEADERBOARD "YOU" CARD)
+   ========================================================================== */
+.shop-item-card.equipped {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.48), transparent 36%),
+    linear-gradient(135deg, #F7DE82 0%, #D9B23C 46%, #B7891D 100%) !important;
+  border: 2px solid #FFF0A8 !important;
+  border-radius: 14px !important;
+  box-shadow:
+    0 10px 26px rgba(0, 0, 0, 0.58),
+    0 0 0 1px rgba(70, 45, 10, 0.48),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+  color: #20120B !important;
+}
+
+.shop-item-card.equipped::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent) !important;
+}
+
+/* Card title & text in dark walnut contrast on gold */
+.shop-item-card.equipped .shop-item-name {
+  color: #20120B !important;
+  font-weight: 800 !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+}
+
+/* Equipped top ribbon */
+.shop-item-card.equipped .shop-equip-ribbon {
+  background: #20120B !important;
+  border: 1px solid rgba(245, 211, 108, 0.55) !important;
+  color: #F5D36C !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Starter / Level tags inside equipped card */
+.shop-item-card.equipped .shop-item-level {
+  background: rgba(32, 18, 11, 0.12) !important;
+  border-color: rgba(32, 18, 11, 0.35) !important;
+  color: #20120B !important;
+  font-weight: 800 !important;
+}
+
+.shop-item-card.equipped .shop-item-level.is-starter {
+  background: rgba(32, 18, 11, 0.15) !important;
+  border-color: rgba(32, 18, 11, 0.4) !important;
+  color: #20120B !important;
+}
+
+/* Preview thumbnail frame in equipped gold card */
+.shop-item-card.equipped .shop-card-preview {
+  border: 2px solid #20120B !important;
+  box-shadow: 0 4px 12px rgba(32, 18, 11, 0.25) !important;
+}
+
+/* Action button inside equipped card - dark walnut & gold highlight */
+.shop-item-card.equipped .btn-shop-action.equipped {
+  background: #20120B !important;
+  border: 1.5px solid #F5D36C !important;
+  color: #F5D36C !important;
+  font-family: 'Cinzel', 'Georgia', serif !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.6px !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
