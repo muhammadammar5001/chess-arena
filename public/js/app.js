@@ -1755,6 +1755,9 @@ class App {
       this.gameMode = 'online';
       this.playerColor = data.color;
       this.boardFlipped = data.color === 'black';
+      if (data.abilities && this.multiplayer) {
+        this.multiplayer.abilities = data.abilities;
+      }
       this.engine = new ChessEngine();
         this.lastMove = null;
         if (!this.gameStartTime) this.gameStartTime = Date.now();
@@ -1948,6 +1951,13 @@ class App {
       setTimeout(() => this.startBgMusic(), 500);
       this.playerColor = color;
       this.boardFlipped = color === 'black';
+      if (this.multiplayer && this.multiplayer.abilities) {
+        const previousAbilities = this.multiplayer.abilities;
+        this.multiplayer.abilities = {
+          self: Array.isArray(previousAbilities.opponent) ? previousAbilities.opponent : [],
+          opponent: Array.isArray(previousAbilities.self) ? previousAbilities.self : []
+        };
+      }
       this.engine = new ChessEngine();
         this.lastMove = null;
         if (!this.gameStartTime) this.gameStartTime = Date.now();
@@ -1958,6 +1968,8 @@ class App {
         this.timers.black = this.timerMinutes * 60 * 1000;
       }
 
+      this.setupAbilitiesUI();
+      this.renderOpponentSkills(this.multiplayer && this.multiplayer.abilities ? this.multiplayer.abilities.opponent : []);
       this.renderBoard();
       this.updatePlayerBars();
       this.clearMoveHistory();
@@ -2078,6 +2090,38 @@ class App {
     apply('top', opponentMeta);
   }
 
+  renderOpponentSkills(abilities = []) {
+    const container = document.getElementById('top-player-skills');
+    const opponentPill = document.getElementById('player-opp-tag');
+    if (!container) return;
+
+    const skillIcons = {
+      swap: { src: '/assets/Asset 42.png', label: 'Tactical Swap' },
+      freeze: { src: '/assets/Asset 43.png', label: 'Piece Freeze' },
+      second: { src: '/assets/Asset 44.png', label: 'Second Chance' },
+      shield: { src: '/assets/Asset 45.png', label: 'Divine Shield' },
+      jump: { src: '/assets/Asset 46.png', label: 'Pegasus Jump' }
+    };
+
+    const equipped = (Array.isArray(abilities) ? abilities : [])
+      .map(id => id === 'undo' ? 'second' : id)
+      .filter((id, index, all) => skillIcons[id] && all.indexOf(id) === index)
+      .slice(0, 2);
+
+    container.innerHTML = equipped.map(id => {
+      const skill = skillIcons[id];
+      return `<span class="ingame-opponent-skill" title="Equipped: ${skill.label}" aria-label="Equipped: ${skill.label}"><img src="${skill.src}" alt=""></span>`;
+    }).join('');
+    container.classList.toggle('is-empty', equipped.length === 0);
+    container.setAttribute(
+      'aria-label',
+      equipped.length
+        ? `Opponent equipped skills: ${equipped.map(id => skillIcons[id].label).join(', ')}`
+        : 'Opponent has no equipped skills'
+    );
+    if (opponentPill) opponentPill.classList.toggle('has-opponent-skills', equipped.length > 0);
+  }
+
     setupGameUI(playerName, opponentName, isOnline, playerMeta = null, opponentMeta = null) {
     const localSelf = this.getGameHeaderSelfMeta(playerName);
     const selfMeta = this.normalizeGameHeaderMeta(
@@ -2102,6 +2146,10 @@ class App {
     );
 
     this.renderGameHeader(selfMeta, normalizedOpponent);
+    const opponentAbilities = (this.gameMode === 'online' && this.multiplayer && this.multiplayer.abilities)
+      ? this.multiplayer.abilities.opponent
+      : [];
+    this.renderOpponentSkills(opponentAbilities);
     this.applyAvatarToUI();
 
     const topAvatar = document.getElementById('top-player-avatar');

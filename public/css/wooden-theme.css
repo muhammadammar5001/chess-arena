@@ -4481,6 +4481,65 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   }
 }
 
+/* Opponent's equipped skills in the in-game header */
+.ingame-opponent-skills {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  flex: 0 0 auto !important;
+  margin-left: 1px !important;
+}
+
+.ingame-opponent-skills.is-empty {
+  display: none !important;
+}
+
+.ingame-opponent-skill {
+  width: 18px !important;
+  height: 18px !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  overflow: hidden !important;
+  border-radius: 50% !important;
+  background: #2A170B !important;
+  border: 1.5px solid #C99700 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+}
+
+.ingame-opponent-skill img {
+  width: 13px !important;
+  height: 13px !important;
+  display: block !important;
+  object-fit: contain !important;
+}
+
+#player-opp-tag.has-opponent-skills .ingame-player-name-text {
+  max-width: min(20vw, 110px) !important;
+}
+
+@media (max-width: 360px) {
+  .ingame-opponent-skill {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .ingame-opponent-skill img {
+    width: 11px !important;
+    height: 11px !important;
+  }
+
+  .ingame-opponent-skills {
+    gap: 2px !important;
+  }
+
+  #player-opp-tag.has-opponent-skills .ingame-player-name-text {
+    max-width: 14vw !important;
+  }
+}
+
 @media (max-height: 700px) {
   #screen-victory .victory-crowned-hero {
     width: 92px !important;
