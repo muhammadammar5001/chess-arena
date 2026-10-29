@@ -4258,30 +4258,29 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
     inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Gold Equipped Ribbon */
+/* Remove top equipped ribbon completely as requested */
+.shop-equip-ribbon,
 .shop-item-card.equipped .shop-equip-ribbon {
-  background: linear-gradient(135deg, #F7DE82 0%, #D9B23C 100%) !important;
-  border: 1px solid #FFF0A8 !important;
-  color: #20120B !important;
-  font-weight: 800 !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) !important;
+  display: none !important;
 }
 
-/* Gold Equipped Action Button */
+/* Gold Equipped Action Button with bold black typography */
 .btn-shop-action.equipped,
 .shop-item-card.equipped .btn-shop-action.equipped {
   background:
     radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.55), transparent 40%),
     linear-gradient(135deg, #F7DE82 0%, #D9B23C 46%, #B7891D 100%) !important;
   border: 1.5px solid #FFF0A8 !important;
-  color: #20120B !important;
+  color: #000000 !important;
   font-family: 'Cinzel', 'Georgia', serif !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.8px !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
   cursor: default !important;
   box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.45),
     0 0 10px rgba(245, 211, 108, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) !important;
 }
