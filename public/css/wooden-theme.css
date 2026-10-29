@@ -3575,78 +3575,79 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
    Eliminates all blank space, exact double gold frames, watermarks, 2x2 grid
    ========================================================================== */
 #screen-profile {
-  background: linear-gradient(180deg, #1C0F08 0%, #110803 100%) !important;
-  color: #FDF7EC !important;
+  background: #FBF2E9 !important;
+  color: #20120B !important;
   min-height: 100vh !important;
   box-sizing: border-box !important;
 }
 
 .profile-page-shell {
-  max-width: 580px !important;
+  max-width: 480px !important;
   width: 100% !important;
   margin: 0 auto !important;
-  padding: 16px 16px 140px 16px !important;
+  padding: 12px 14px 140px 14px !important;
   display: flex !important;
   flex-direction: column !important;
   box-sizing: border-box !important;
+  background: #FBF2E9 !important;
 }
 
-/* 1. Header Bar */
+/* 1. Header Bar - Title is deep rich brown as requested */
 .profile-top-bar {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  padding: 4px 4px 18px 4px !important;
+  padding: 4px 2px 14px 2px !important;
 }
 
 .profile-screen-title {
   font-family: 'Cinzel', 'Georgia', serif !important;
-  font-size: 24px !important;
+  font-size: 22px !important;
   font-weight: 800 !important;
-  color: #F5D36C !important;
+  color: #20120B !important; /* Deep rich brown */
   letter-spacing: 3px !important;
   margin: 0 !important;
   text-align: center !important;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 0 16px rgba(245, 211, 108, 0.25) !important;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.6) !important;
 }
 
 .profile-nav-circle-btn {
-  width: 44px !important;
-  height: 44px !important;
+  width: 40px !important;
+  height: 40px !important;
   border-radius: 50% !important;
   background: linear-gradient(145deg, #2A170C, #180C05) !important;
-  border: 1.5px solid rgba(201, 151, 0, 0.5) !important;
+  border: 1.5px solid #C99700 !important;
   color: #F5D36C !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 12px rgba(32, 18, 11, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
   transition: all 0.2s ease !important;
 }
 
 .profile-nav-circle-btn:hover {
   border-color: #F5D36C !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 6px 16px rgba(201, 151, 0, 0.25) !important;
+  box-shadow: 0 6px 14px rgba(201, 151, 0, 0.3) !important;
 }
 
 /* 2. Double-Line Gold Frame Container (Reference Signature) */
 .gold-framed-box {
   position: relative !important;
   border: 1.5px solid #C99700 !important;
-  border-radius: 18px !important;
+  border-radius: 16px !important;
   background: linear-gradient(160deg, #27150B 0%, #160A04 100%) !important;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 235, 196, 0.18) !important;
+  box-shadow: 0 8px 24px rgba(32, 18, 11, 0.4), inset 0 1px 0 rgba(255, 235, 196, 0.18) !important;
   box-sizing: border-box !important;
 }
 
 .gold-framed-box::before {
   content: "" !important;
   position: absolute !important;
-  inset: 5px !important;
+  inset: 4px !important;
   border: 1px solid rgba(201, 151, 0, 0.38) !important;
-  border-radius: 13px !important;
+  border-radius: 12px !important;
   pointer-events: none !important;
 }
 
@@ -3655,9 +3656,9 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  gap: 20px !important;
-  padding: 22px 20px !important;
-  margin-bottom: 16px !important;
+  gap: 16px !important;
+  padding: 16px 16px !important;
+  margin-bottom: 12px !important;
 }
 
 .profile-hero-avatar-wrap {
@@ -3666,11 +3667,11 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 }
 
 .profile-avatar-circle {
-  width: 92px !important;
-  height: 92px !important;
+  width: 82px !important;
+  height: 82px !important;
   border-radius: 50% !important;
   border: 3px solid #C99700 !important;
-  box-shadow: 0 0 0 3px rgba(201, 151, 0, 0.25), 0 8px 20px rgba(0, 0, 0, 0.7) !important;
+  box-shadow: 0 0 0 3px rgba(201, 151, 0, 0.25), 0 6px 16px rgba(0, 0, 0, 0.6) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -3685,17 +3686,17 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 }
 
 .profile-knight-svg {
-  width: 60px !important;
-  height: 60px !important;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6)) !important;
+  width: 52px !important;
+  height: 52px !important;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.6)) !important;
 }
 
 .profile-avatar-edit-btn {
   position: absolute !important;
   right: -2px !important;
   bottom: -2px !important;
-  width: 28px !important;
-  height: 28px !important;
+  width: 26px !important;
+  height: 26px !important;
   border-radius: 50% !important;
   background: #C99700 !important;
   color: #170B05 !important;
@@ -3718,17 +3719,17 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 .profile-username-header {
   display: flex !important;
   align-items: center !important;
-  gap: 10px !important;
+  gap: 8px !important;
 }
 
 .profile-hero-name {
   font-family: 'Cinzel', 'Georgia', serif !important;
-  font-size: 26px !important;
+  font-size: 23px !important;
   font-weight: 800 !important;
   color: #F5D36C !important;
   margin: 0 !important;
   line-height: 1.2 !important;
-  letter-spacing: 1px !important;
+  letter-spacing: 0.8px !important;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8) !important;
   white-space: nowrap !important;
   overflow: hidden !important;
@@ -3756,8 +3757,8 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 .profile-badges-row {
   display: flex !important;
   align-items: center !important;
-  gap: 8px !important;
-  margin: 8px 0 12px 0 !important;
+  gap: 6px !important;
+  margin: 6px 0 10px 0 !important;
   flex-wrap: wrap !important;
 }
 
@@ -3767,36 +3768,36 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   line-height: 1 !important;
   display: inline-flex !important;
   align-items: center !important;
-  gap: 6px !important;
+  gap: 5px !important;
 }
 
 .badge-lvl {
-  font-size: 13px !important;
+  font-size: 12px !important;
   color: #F5D36C !important;
   border: 1.5px solid #C99700 !important;
   background: rgba(30, 16, 8, 0.65) !important;
-  padding: 4px 10px !important;
-  border-radius: 8px !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
 }
 
 .badge-rank-num {
-  font-size: 13px !important;
+  font-size: 12px !important;
   color: #170B05 !important;
   background: #C99700 !important;
-  padding: 4px 10px !important;
-  border-radius: 8px !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4) !important;
 }
 
 .badge-tier {
-  font-size: 11px !important;
+  font-size: 10.5px !important;
   color: #F0F2F5 !important;
   background: linear-gradient(135deg, #4A4E57 0%, #292C33 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.28) !important;
-  padding: 4px 10px !important;
-  border-radius: 8px !important;
-  letter-spacing: 0.8px !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  letter-spacing: 0.6px !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4) !important;
 }
 
 /* XP Progression */
@@ -3808,19 +3809,19 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   display: flex !important;
   justify-content: space-between !important;
   font-family: 'Cinzel', 'Georgia', serif !important;
-  font-size: 11px !important;
+  font-size: 10.5px !important;
   font-weight: 700 !important;
   color: #BA976D !important;
-  margin-bottom: 6px !important;
+  margin-bottom: 5px !important;
   letter-spacing: 0.5px !important;
 }
 
 .profile-xp-track {
   width: 100% !important;
-  height: 8px !important;
+  height: 7px !important;
   background: #100602 !important;
   border: 1px solid rgba(201, 151, 0, 0.35) !important;
-  border-radius: 8px !important;
+  border-radius: 6px !important;
   overflow: hidden !important;
 }
 
@@ -3828,17 +3829,17 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 .profile-xp-bar-fill {
   height: 100% !important;
   background: linear-gradient(90deg, #C99700 0%, #F5D36C 100%) !important;
-  border-radius: 8px !important;
-  box-shadow: 0 0 10px rgba(245, 211, 108, 0.5) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 0 8px rgba(245, 211, 108, 0.5) !important;
   transition: width 0.4s ease !important;
 }
 
-/* 3. 2x2 Stats Quad Grid (Reference Layout - Eliminates Blank Space) */
+/* 3. 2x2 Stats Quad Grid - Compact, Fixed Sizing & Typography */
 .stats-quad-grid {
   display: grid !important;
   grid-template-columns: repeat(2, 1fr) !important;
-  gap: 14px !important;
-  margin: 8px 0 24px 0 !important;
+  gap: 10px !important;
+  margin: 6px 0 18px 0 !important;
   padding: 0 !important;
   background: transparent !important;
   border: none !important;
@@ -3851,41 +3852,48 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  min-height: 145px !important;
-  padding: 24px 16px 20px 16px !important;
+  min-height: 86px !important;
+  max-height: 105px !important;
+  padding: 12px 10px 10px 10px !important;
   overflow: hidden !important;
   text-align: center !important;
+  border-radius: 14px !important;
+}
+
+.quad-stat-item.gold-framed-box::before {
+  inset: 4px !important;
+  border-radius: 10px !important;
 }
 
 .quad-stat-num {
   font-family: 'Cinzel', 'Georgia', serif !important;
-  font-size: clamp(34px, 6vw, 44px) !important;
+  font-size: 24px !important;
   font-weight: 800 !important;
   color: #F5D36C !important;
   line-height: 1.1 !important;
-  margin-bottom: 6px !important;
-  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.85) !important;
+  margin-bottom: 3px !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85) !important;
   z-index: 2 !important;
 }
 
 .quad-stat-label {
   font-family: 'Cinzel', 'Georgia', serif !important;
-  font-size: 12px !important;
+  font-size: 10.5px !important;
   font-weight: 800 !important;
   color: #E0BA68 !important;
-  letter-spacing: 2px !important;
+  letter-spacing: 1.5px !important;
   text-transform: uppercase !important;
   z-index: 2 !important;
 }
 
 .stat-watermark {
   position: absolute !important;
-  right: 12px !important;
-  bottom: 10px !important;
-  width: 78px !important;
-  height: 78px !important;
+  right: 8px !important;
+  bottom: 6px !important;
+  width: 44px !important;
+  height: 44px !important;
   color: #F5D36C !important;
-  opacity: 0.16 !important;
+  opacity: 0.14 !important;
   pointer-events: none !important;
   z-index: 1 !important;
   transform: rotate(-4deg) !important;
