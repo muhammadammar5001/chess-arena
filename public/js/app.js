@@ -3266,99 +3266,37 @@ class App {
 
   startBgMusic() {
     if (!this.musicEnabled || this.platformAudioMuted || this.platformPaused) return;
-    if (this.bgMusicRunning) return;
+    if (this.bgMusicRunning && this.bgAudio && !this.bgAudio.paused) return;
 
-    // Ensure AudioContext (user-gesture already happened by game start)
-    if (!this.audioCtx) {
+    if (!this.bgAudio) {
       try {
-        this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      } catch(e) { return; }
+        this.bgAudio = new Audio('/assets/audio/Chess-Arena-BGM.mp3');
+        this.bgAudio.loop = true;
+        this.bgAudio.volume = 0.25; // 25% pleasant ambient volume
+      } catch (e) {
+        console.warn('Audio element creation error:', e);
+        return;
+      }
     }
-    const ctx = this.audioCtx;
-    if (ctx.state === 'suspended') ctx.resume();
+
+    this.bgAudio.volume = 0.25;
     this.bgMusicRunning = true;
-
-    // Master gain — fade in slowly
-    const master = ctx.createGain();
-    master.gain.setValueAtTime(0, ctx.currentTime);
-    master.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 6);
-    master.connect(ctx.destination);
-    this.bgMusicGain = master;
-
-    // Reverb impulse
-    const conv = ctx.createConvolver();
-    const irLen = ctx.sampleRate * 2.5;
-    const ir = ctx.createBuffer(2, irLen, ctx.sampleRate);
-    for (let ch = 0; ch < 2; ch++) {
-      const d = ir.getChannelData(ch);
-      for (let i = 0; i < irLen; i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/irLen, 2.5);
-    }
-    conv.buffer = ir;
-    conv.connect(master);
-
-    const dry = ctx.createGain(); dry.gain.value = 0.5; dry.connect(master);
-    const wet = ctx.createGain(); wet.gain.value = 0.5; wet.connect(conv);
-    const out = (g) => { g.connect(dry); g.connect(wet); };
-
-    // Drone layer: A1 + E2
-    [[55.0, 0.15], [82.41, 0.10]].forEach(([freq, vol]) => {
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = 'sine'; o.frequency.value = freq; g.gain.value = vol;
-      o.connect(g); out(g); o.start();
-      this.bgMusicNodes.push(o);
-    });
-
-    // LFO tremolo
-    const lfo = ctx.createOscillator(), lg = ctx.createGain();
-    lfo.frequency.value = 0.15; lg.gain.value = 0.03;
-    lfo.connect(lg); lg.connect(dry.gain); lfo.start();
-    this.bgMusicNodes.push(lfo);
-
-    // Shimmer harmonics
-    [440, 659.25, 880, 1318.5].forEach((freq, i) => {
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = 'sine'; o.frequency.value = freq; g.gain.value = 0.006 - i * 0.001;
-      o.connect(g); out(g); o.start();
-      this.bgMusicNodes.push(o);
-    });
-
-    // Sparse pentatonic melody (A minor pent)
-    const scale = [220, 261.63, 293.66, 329.63, 392, 440, 523.25, 587.33, 659.25];
-    const playNote = (t, freq, dur) => {
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = 'triangle'; o.frequency.value = freq;
-      g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(0.04, t + 0.12);
-      g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-      o.connect(g); out(g); o.start(t); o.stop(t + dur + 0.05);
-    };
-    const schedulePhrase = (t0) => {
-      if (!this.bgMusicRunning) return;
-      [0, 4, 7, 3, 5, 2, 6].forEach((idx, beat) => {
-        if (beat % 2 !== 0) return;
-        playNote(t0 + beat * 1.3, scale[idx % scale.length], 2.2);
+    const playPromise = this.bgAudio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(err => {
+        // Autoplay policy prevented playback until user interaction
+        this.bgMusicRunning = false;
       });
-      this._melodyTimer = setTimeout(() => schedulePhrase(ctx.currentTime + 0.05), 8800);
-    };
-    this._melodyStart = setTimeout(() => schedulePhrase(ctx.currentTime + 0.05), 3000);
+    }
   }
 
   stopBgMusic() {
     this.bgMusicRunning = false;
-    clearTimeout(this._melodyTimer);
-    clearTimeout(this._melodyStart);
-    if (this.bgMusicGain && this.audioCtx) {
-      const ctx = this.audioCtx;
-      this.bgMusicGain.gain.cancelScheduledValues(ctx.currentTime);
-      this.bgMusicGain.gain.setValueAtTime(this.bgMusicGain.gain.value, ctx.currentTime);
-      this.bgMusicGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.5);
-      setTimeout(() => {
-        this.bgMusicNodes.forEach(n => { try { n.stop(); } catch(e){} });
-        this.bgMusicNodes = []; this.bgMusicGain = null;
-      }, 1600);
-    } else {
-      this.bgMusicNodes.forEach(n => { try { n.stop(); } catch(e){} });
-      this.bgMusicNodes = []; this.bgMusicGain = null;
+    if (this.bgAudio) {
+      try {
+        this.bgAudio.pause();
+        this.bgAudio.currentTime = 0;
+      } catch (e) {}
     }
   }
 
