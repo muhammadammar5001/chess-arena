@@ -2092,7 +2092,6 @@ class App {
 
   renderOpponentSkills(abilities = []) {
     const container = document.getElementById('top-player-skills');
-    const opponentPill = document.getElementById('player-opp-tag');
     if (!container) return;
 
     const skillIcons = {
@@ -2119,7 +2118,6 @@ class App {
         ? `Opponent equipped skills: ${equipped.map(id => skillIcons[id].label).join(', ')}`
         : 'Opponent has no equipped skills'
     );
-    if (opponentPill) opponentPill.classList.toggle('has-opponent-skills', equipped.length > 0);
   }
 
     setupGameUI(playerName, opponentName, isOnline, playerMeta = null, opponentMeta = null) {

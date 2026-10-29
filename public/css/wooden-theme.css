@@ -4485,9 +4485,10 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 .ingame-opponent-skills {
   display: inline-flex !important;
   align-items: center !important;
+  align-self: flex-end !important;
   gap: 3px !important;
   flex: 0 0 auto !important;
-  margin-left: 1px !important;
+  margin-top: 3px !important;
 }
 
 .ingame-opponent-skills.is-empty {
@@ -4516,10 +4517,6 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   object-fit: contain !important;
 }
 
-#player-opp-tag.has-opponent-skills .ingame-player-name-text {
-  max-width: min(20vw, 110px) !important;
-}
-
 @media (max-width: 360px) {
   .ingame-opponent-skill {
     width: 16px !important;
@@ -4533,10 +4530,6 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 
   .ingame-opponent-skills {
     gap: 2px !important;
-  }
-
-  #player-opp-tag.has-opponent-skills .ingame-player-name-text {
-    max-width: 14vw !important;
   }
 }
 
