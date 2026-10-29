@@ -3899,28 +3899,32 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   }
   
   .stat-watermark.watermark-rating {
-    width: 68px !important;
-    height: 68px !important;
-  }
+      right: auto !important;
+      left: 8px !important;
+      width: 68px !important;
+      height: 68px !important;
+    }
+  
+    .stat-watermark.watermark-rating path {
+      stroke: #F5D36C !important;
+      stroke-width: 5px !important;
+      stroke-linejoin: round !important;
+      paint-order: stroke fill !important;
+    }
+    
+    .stat-watermark.watermark-wins {
+      width: 64px !important;
+      height: 72px !important;
+    }
+    
+    .stat-watermark.watermark-losses {
+      right: auto !important;
+      left: 8px !important;
+      width: 68px !important;
+      height: 72px !important;
+    }
 
-  .stat-watermark.watermark-rating path {
-    stroke: #F5D36C !important;
-    stroke-width: 5px !important;
-    stroke-linejoin: round !important;
-    paint-order: stroke fill !important;
-  }
-  
-  .stat-watermark.watermark-wins {
-    width: 64px !important;
-    height: 72px !important;
-  }
-  
-  .stat-watermark.watermark-losses {
-    width: 68px !important;
-    height: 72px !important;
-  }
-  
-  .stat-watermark.watermark-winrate {
+    .stat-watermark.watermark-winrate {
     width: 74px !important;
     height: 64px !important;
   }
