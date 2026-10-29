@@ -3888,15 +3888,39 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 
 .stat-watermark {
   position: absolute !important;
-  right: 8px !important;
-  bottom: 6px !important;
-  width: 44px !important;
-  height: 44px !important;
+  right: 10px !important;
+  bottom: 8px !important;
+  width: 50px !important;
+  height: 50px !important;
   color: #F5D36C !important;
-  opacity: 0.14 !important;
+  opacity: 0.20 !important;
   pointer-events: none !important;
   z-index: 1 !important;
-  transform: rotate(-4deg) !important;
+}
+
+.stat-watermark.watermark-rating {
+  width: 48px !important;
+  height: 48px !important;
+}
+
+.stat-watermark.watermark-wins {
+  width: 44px !important;
+  height: 50px !important;
+}
+
+.stat-watermark.watermark-losses {
+  width: 48px !important;
+  height: 50px !important;
+}
+
+.stat-watermark.watermark-winrate {
+  width: 52px !important;
+  height: 46px !important;
+}
+
+.stat-watermark.watermark-winrate path[fill="none"] {
+  stroke: #F5D36C !important;
+  stroke-width: 3.5px !important;
 }
 
 /* Centered page headings for Rankings and Shop */
