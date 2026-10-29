@@ -1722,10 +1722,13 @@ class App {
       }
     };
 
-    mp.onTimerSync = (white, black) => {
+    mp.onTimerSync = (white, black, moveTimeLeft, activeTurn) => {
       if (Number.isFinite(white) && Number.isFinite(black)) {
         this.timers.white = white;
         this.timers.black = black;
+      }
+      if (Number.isFinite(moveTimeLeft)) {
+        this.moveTimeLeft = moveTimeLeft;
       }
       this.lastMoveTime = Date.now();
       this.updateTimerDisplay();
@@ -1878,7 +1881,48 @@ class App {
       }
     };
 
+        mp.onAfkWarning = (data) => {
+      const msgEl = document.getElementById('afk-warning-msg');
+      if (msgEl && data && data.message) {
+        msgEl.textContent = data.message;
+      }
+      this.showModal('modal-afk-warning');
+      this.playSound('defeat');
+    };
+
+    mp.onTurnPassed = (data) => {
+      this.selectedSquare = null;
+      this.validMoves = [];
+      this.isPieceTargeting = false;
+      this.targetingAbility = null;
+
+      if (this.engine && this.engine.currentTurn !== data.newTurn) {
+        if (typeof this.engine.passTurn === 'function') {
+          this.engine.passTurn(data.reason || 'afk_pass');
+        } else {
+          this.engine.currentTurn = data.newTurn;
+        }
+      }
+
+      this.moveTimeLeft = 60000;
+      if (Number.isFinite(data.white) && Number.isFinite(data.black)) {
+        this.timers.white = data.white;
+        this.timers.black = data.black;
+      }
+
+      this.renderBoard();
+      this.updatePlayerBars();
+
+      if (data.passedBy === this.playerColor) {
+        this.showToast('You ran out of time! Turn passed to opponent.');
+      } else {
+        this.showToast('Opponent was AFK for 60s! Turn passed to you.');
+        this.playSound('your-turn');
+      }
+    };
+
     mp.onGameOver = (reason, winner) => {
+      this.hideModal('modal-afk-warning');
       if (this.engine) {
         this.engine.gameOver = true;
         this.engine.gameResult = { winner, reason };
@@ -2989,6 +3033,9 @@ class App {
       this.lastMoveTime = now;
 
       const currentTurn = this.engine.currentTurn;
+      if (Number.isFinite(this.moveTimeLeft)) {
+        this.moveTimeLeft = Math.max(0, this.moveTimeLeft - elapsed);
+      }
       if (this.timers[currentTurn] !== null) {
         this.timers[currentTurn] = Math.max(0, this.timers[currentTurn] - elapsed);
 
@@ -3039,6 +3086,22 @@ class App {
     // Low time warning (under 30 seconds)
     topTimer.classList.toggle('low-time', this.timers[topColor] !== null && this.timers[topColor] < 30000);
     bottomTimer.classList.toggle('low-time', this.timers[bottomColor] !== null && this.timers[bottomColor] < 30000);
+
+    const turnBadge = document.getElementById('turn-status-badge');
+    if (turnBadge && this.engine) {
+      const isOnlinePvP = this.gameMode === 'online';
+      const moveSecs = (isOnlinePvP && Number.isFinite(this.moveTimeLeft)) ? Math.ceil(this.moveTimeLeft / 1000) : null;
+      const secStr = moveSecs !== null ? ` (${moveSecs}s)` : '';
+      if (this.isMyTurn) {
+        turnBadge.classList.add('your-turn');
+        turnBadge.textContent = `Your Turn${secStr}`;
+        turnBadge.classList.toggle('low-time', moveSecs !== null && moveSecs <= 10);
+      } else {
+        turnBadge.classList.remove('your-turn');
+        turnBadge.textContent = `Opponent's Turn${secStr}`;
+        turnBadge.classList.remove('low-time');
+      }
+    }
   }
 
   // --- Player Bars -----------------------------------
@@ -3061,12 +3124,17 @@ class App {
     // Update in-game Turn Status Badge
     const turnBadge = document.getElementById('turn-status-badge');
     if (turnBadge && this.engine) {
+      const isOnlinePvP = this.gameMode === 'online';
+      const moveSecs = (isOnlinePvP && Number.isFinite(this.moveTimeLeft)) ? Math.ceil(this.moveTimeLeft / 1000) : null;
+      const secStr = moveSecs !== null ? ` (${moveSecs}s)` : '';
       if (this.isMyTurn) {
         turnBadge.classList.add('your-turn');
-        turnBadge.textContent = 'Your Turn';
+        turnBadge.textContent = `Your Turn${secStr}`;
+        turnBadge.classList.toggle('low-time', moveSecs !== null && moveSecs <= 10);
       } else {
         turnBadge.classList.remove('your-turn');
-        turnBadge.textContent = "Opponent's Turn";
+        turnBadge.textContent = `Opponent's Turn${secStr}`;
+        turnBadge.classList.remove('low-time');
       }
     }
 
@@ -3400,6 +3468,8 @@ class App {
       'checkmate': 'Checkmate',
       'stalemate': 'Stalemate',
       'timeout': 'on Time',
+      'abandonment': 'by Inactivity / Abandonment',
+      'afk_forfeit': 'by Inactivity / Forfeit',
       'resignation': 'by Resignation',
       'draw agreement': 'by Agreement',
       'draw agreed': 'by Agreement',

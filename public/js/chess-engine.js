@@ -858,6 +858,21 @@ class ChessEngine {
   /**
    * Convert position to algebraic notation.
    */
+  passTurn(reason = 'afk_pass') {
+    if (this.gameOver) return false;
+    const prevTurn = this.currentTurn;
+    this.currentTurn = this.currentTurn === 'white' ? 'black' : 'white';
+    if (prevTurn === 'black') this.fullMoveNumber++;
+    this.completedTurns++;
+    this.enPassantTarget = null;
+    this.moveHistory.push({
+      notation: 'PASS',
+      color: prevTurn,
+      reason: reason
+    });
+    return true;
+  }
+
   static toAlgebraic(row, col) {
     return 'abcdefgh'[col] + (8 - row);
   }

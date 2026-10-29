@@ -24,6 +24,8 @@ class MultiplayerClient {
     this.onOpponentDisconnected = null;
     this.onOpponentReconnected = null;
     this.onGameOver = null;
+    this.onAfkWarning = null;
+    this.onTurnPassed = null;
     this.onGameReconnect = null;
     this.onDrawOffered = null;
     this.onStatsUpdate = null;
@@ -256,8 +258,16 @@ class MultiplayerClient {
         if (this.onRematchAccepted) this.onRematchAccepted(data.color);
         break;
 
-      case 'timer_sync':
-        if (this.onTimerSync) this.onTimerSync(data.white, data.black);
+              case 'afk_warning':
+          if (this.onAfkWarning) this.onAfkWarning(data);
+          break;
+
+        case 'turn_passed':
+          if (this.onTurnPassed) this.onTurnPassed(data);
+          break;
+
+        case 'timer_sync':
+        if (this.onTimerSync) this.onTimerSync(data.white, data.black, data.moveTimeLeft, data.activeTurn);
         break;
 
       case 'chat_message':

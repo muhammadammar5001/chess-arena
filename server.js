@@ -253,6 +253,7 @@ setInterval(() => {
     const currentTurn = room.engine.currentTurn;
     const timers = getTimersAt(room, currentTurn, now);
 
+    // 1. Total 10-minute clock expiration
     if (timers[currentTurn] <= 0) {
       room.timers[currentTurn] = 0;
       const winner = currentTurn === 'white' ? 'black' : 'white';
@@ -260,10 +261,75 @@ setInterval(() => {
       continue;
     }
 
+    // 2. Per-move 60-second timer & 2-strike inactivity check
+    if (!room.moveStartTime) room.moveStartTime = room.lastMoveTime || now;
+    if (!room.afkStrikes) room.afkStrikes = { white: 0, black: 0 };
+
+    const moveLimit = 60000;
+    const elapsedMove = Math.max(0, now - room.moveStartTime);
+    const moveTimeLeft = Math.max(0, moveLimit - elapsedMove);
+
+    if (elapsedMove >= moveLimit) {
+      room.afkStrikes[currentTurn] = (room.afkStrikes[currentTurn] || 0) + 1;
+      const strikeCount = room.afkStrikes[currentTurn];
+
+      // Deduct elapsed time from player's total match clock
+      const elapsedMatch = Math.max(0, now - room.lastMoveTime);
+      room.timers[currentTurn] = Math.max(0, room.timers[currentTurn] - elapsedMatch);
+      room.lastMoveTime = now;
+      room.moveStartTime = now;
+
+      if (strikeCount === 1) {
+        // Strike 1: Pass turn to opponent & send AFK warning modal to inactive player
+        const inactiveColor = currentTurn;
+        const activeColor = currentTurn === 'white' ? 'black' : 'white';
+
+        room.engine.passTurn('afk_pass');
+
+        const inactiveSocket = room.players[inactiveColor];
+        if (inactiveSocket && inactiveSocket.readyState === 1) {
+          sendJSON(inactiveSocket, {
+            type: 'afk_warning',
+            strikes: 1,
+            maxStrikes: 2,
+            message: 'You missed your move within 60 seconds. Your turn was passed to your opponent! If you miss again, you will forfeit the match.'
+          });
+        }
+
+        broadcastToRoom(room, {
+          type: 'turn_passed',
+          passedBy: inactiveColor,
+          newTurn: activeColor,
+          reason: 'afk_timeout',
+          strikes: 1,
+          white: room.timers.white,
+          black: room.timers.black,
+          moveTimeLeft: moveLimit
+        });
+
+        broadcastToRoom(room, {
+          type: 'timer_sync',
+          white: room.timers.white,
+          black: room.timers.black,
+          moveTimeLeft: moveLimit,
+          activeTurn: activeColor,
+          serverTime: now
+        });
+        continue;
+      } else {
+        // Strike >= 2: Auto-forfeit on inactivity, opponent wins
+        const winner = currentTurn === 'white' ? 'black' : 'white';
+        finishGame(room, 'abandonment', winner);
+        continue;
+      }
+    }
+
     broadcastToRoom(room, {
       type: 'timer_sync',
       white: timers.white,
       black: timers.black,
+      moveTimeLeft: moveTimeLeft,
+      activeTurn: currentTurn,
       serverTime: now
     });
   }
@@ -427,6 +493,8 @@ function createRoom(ws, timerMinutes, mode = 'standard', abilities = []) {
       white: roomTimerMinutes * 60 * 1000,
       black: roomTimerMinutes * 60 * 1000
     },
+    moveStartTime: null,
+    afkStrikes: { white: 0, black: 0 },
     lastMoveTime: null,
     lastActivity: Date.now(),
     rematchRequested: null,
@@ -497,6 +565,8 @@ function joinRoom(ws, roomCode, abilities = []) {
   room.players.black = ws;
   room.lastActivity = Date.now();
   room.lastMoveTime = Date.now();
+  room.moveStartTime = Date.now();
+  room.afkStrikes = { white: 0, black: 0 };
   ws.roomCode = code;
   ws.playerColor = 'black';
   room.abilities.black = room.mode === 'tactical' ? abilities : [];
@@ -577,6 +647,8 @@ function handleFindMatch(ws, mode = 'standard', abilities = []) {
       white: timerMinutes * 60 * 1000,
       black: timerMinutes * 60 * 1000
     },
+    moveStartTime: Date.now(),
+    afkStrikes: { white: 0, black: 0 },
     lastMoveTime: Date.now(),
     lastActivity: Date.now(),
     rematchRequested: null,
@@ -668,6 +740,7 @@ function handleMove(ws, data) {
   }
 
   room.lastMoveTime = Date.now();
+  room.moveStartTime = Date.now();
 
   // Send move to both players
   broadcastToRoom(room, {
@@ -681,7 +754,9 @@ function handleMove(ws, data) {
     broadcastToRoom(room, {
       type: 'timer_sync',
       white: room.timers.white,
-      black: room.timers.black
+      black: room.timers.black,
+      moveTimeLeft: 60000,
+      activeTurn: room.engine.currentTurn
     });
   }
 
@@ -823,7 +898,8 @@ function handleReconnect(ws, data) {
     timerMinutes: room.timer ? room.timer / 60000 : null,
     moves: moveList,
     abilitiesUsed: room.engine.abilitiesUsed,
-    timers: getTimersAt(room, room.engine.currentTurn, Date.now())
+    timers: getTimersAt(room, room.engine.currentTurn, Date.now()),
+    moveTimeLeft: Math.max(0, 60000 - (Date.now() - (room.moveStartTime || room.lastMoveTime || Date.now())))
   });
 
   console.log('Player ' + color + ' reconnected to room ' + data.roomCode);
@@ -1270,6 +1346,7 @@ function handleUseAbility(ws, data) {
         }
       }
       room.lastMoveTime = Date.now();
+      room.moveStartTime = Date.now();
     }
 
     broadcastToRoom(room, {
@@ -1284,7 +1361,9 @@ function handleUseAbility(ws, data) {
         broadcastToRoom(room, {
           type: 'timer_sync',
           white: room.timers.white,
-          black: room.timers.black
+          black: room.timers.black,
+          moveTimeLeft: 60000,
+          activeTurn: room.engine.currentTurn
         });
       }
 

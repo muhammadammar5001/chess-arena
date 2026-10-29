@@ -4374,3 +4374,15 @@ div.game-layout-wrapper {
     display: none !important;
   }
 }
+
+.turn-status-badge.low-time {
+  color: #EF4444 !important;
+  background: rgba(239, 68, 68, 0.18) !important;
+  border: 1px solid rgba(239, 68, 68, 0.5) !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+  animation: pulse-low-time 1s infinite alternate;
+}
+@keyframes pulse-low-time {
+  0% { transform: scale(1); opacity: 0.9; }
+  100% { transform: scale(1.04); opacity: 1; }
+}
