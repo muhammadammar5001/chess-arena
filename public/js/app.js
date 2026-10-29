@@ -1667,6 +1667,7 @@ class App {
 
     
       mp.onAbilityUsed = (ability, args, color) => {
+        if (color === this.playerColor) this.pendingAbilityCharge = null;
         if (this.engine.validateAbility(ability, args, color)) {
             let abilityName = ability;
             if (ability === 'second') abilityName = 'Second Chance';
@@ -1923,6 +1924,10 @@ class App {
     };
 
     mp.onError = (message) => {
+      if (this.pendingAbilityCharge) {
+        this.restoreSkillCharge(this.pendingAbilityCharge);
+        this.pendingAbilityCharge = null;
+      }
       this.showToast(message);
     };
 
@@ -2221,6 +2226,13 @@ class App {
 
     if (abilityId === 'second') {
       if (this.gameMode === 'online') {
+        const lastMove = this.engine.moveHistory[this.engine.moveHistory.length - 1];
+        const lastMoveColor = lastMove ? (lastMove.color || (lastMove.piece && lastMove.piece.color)) : null;
+        if (lastMoveColor !== this.playerColor) {
+          this.showToast('Can only undo immediately after your own move!');
+          return;
+        }
+        this.pendingAbilityCharge = 'second';
         this.markAbilityUsed('second');
         this.multiplayer.send({ type: 'use_ability', ability: 'second' });
         this.showToast('Second Chance used!');
@@ -2421,8 +2433,9 @@ class App {
                 return;
             }
             if (this.gameMode === 'online') {
-                this.markAbilityUsed('shield');
-                this.multiplayer.send({ type: 'use_ability', ability: 'shield', args: { row, col } });
+                this.pendingAbilityCharge = 'shield';
+                  this.markAbilityUsed('shield');
+                  this.multiplayer.send({ type: 'use_ability', ability: 'shield', args: { row, col } });
                 this.showToast('🛡️ Divine Shield sent!');
             } else {
                 const ok = this.engine.validateAbility('shield', { row, col }, this.playerColor);
@@ -2464,8 +2477,9 @@ class App {
                 if (target) {
                     const jumpArgs = { fromRow: this.jumpPiece.fromRow, fromCol: this.jumpPiece.fromCol, toRow: row, toCol: col };
                     if (this.gameMode === 'online') {
-                        this.markAbilityUsed('jump');
-                        this.multiplayer.send({ type: 'use_ability', ability: 'jump', args: jumpArgs });
+                        this.pendingAbilityCharge = 'jump';
+                          this.markAbilityUsed('jump');
+                          this.multiplayer.send({ type: 'use_ability', ability: 'jump', args: jumpArgs });
                         this.showToast('🪽 Pegasus Jump sent!');
                     } else {
                         const ok = this.engine.validateAbility('jump', jumpArgs, this.playerColor);
@@ -2520,8 +2534,9 @@ class App {
                 return;
             }
             if (this.gameMode === 'online') {
-                this.markAbilityUsed('freeze');
-                this.multiplayer.send({ type: 'use_ability', ability: 'freeze', args: { row, col } });
+                this.pendingAbilityCharge = 'freeze';
+                  this.markAbilityUsed('freeze');
+                  this.multiplayer.send({ type: 'use_ability', ability: 'freeze', args: { row, col } });
                 this.showToast('❄️ Freeze sent!');
             } else {
                 const ok = this.engine.validateAbility('freeze', { row, col }, this.playerColor);
@@ -2585,10 +2600,11 @@ class App {
                 
                 const swapArgs = { row1, col1, row2, col2 };
                 if (this.gameMode === 'online') {
-                    this.markAbilityUsed('swap');
-                    this.multiplayer.send({
-                        type: 'use_ability',
-                        ability: 'swap',
+                    this.pendingAbilityCharge = 'swap';
+                      this.markAbilityUsed('swap');
+                      this.multiplayer.send({
+                          type: 'use_ability',
+                          ability: 'swap',
                         args: swapArgs
                     });
                     this.showToast('🔄 Tactical Swap sent!');
@@ -2921,10 +2937,11 @@ class App {
       this.pendingSwapPromotion = null;
       const swapArgs = { row1, col1, row2, col2, promotion: type };
       if (this.gameMode === 'online') {
-        this.markAbilityUsed('swap');
-        this.multiplayer.send({
-          type: 'use_ability',
-          ability: 'swap',
+        this.pendingAbilityCharge = 'swap';
+                      this.markAbilityUsed('swap');
+                      this.multiplayer.send({
+                          type: 'use_ability',
+                          ability: 'swap',
           args: swapArgs
         });
       } else {
@@ -5548,6 +5565,21 @@ class App {
     this.skillCharges[id] = Math.max(0, cur - 1);
     this.saveEconomyState();
     this.syncAbilitiesUI();
+    return this.skillCharges[id];
+  }
+
+  restoreSkillCharge(abilityId) {
+    const id = abilityId === 'undo' ? 'second' : abilityId;
+    if (!this.skillCharges) this.skillCharges = {};
+    const max = window.ECONOMY_CONFIG?.skills?.maxCharges || 5;
+    const cur = this.skillCharges[id] || 0;
+    this.skillCharges[id] = Math.min(max, cur + 1);
+    if (this.abilitiesActivatedThisMatch) {
+      this.abilitiesActivatedThisMatch.delete(id);
+    }
+    this.saveEconomyState();
+    this.syncAbilitiesUI();
+    if (this.engine && !this.engine.gameOver) this.setupAbilitiesUI();
     return this.skillCharges[id];
   }
 
