@@ -65,8 +65,8 @@ const ECONOMY_CONFIG = {
 
   boards: [
     { id: 'classic-oak', name: 'Classic Oak', reqLevel: 1, cost: 0, isDefault: true },
-    { id: 'ember', name: 'Emberwood', reqLevel: 3, cost: 1200 },
-    { id: 'moonlit', name: 'Moonlit Grove', reqLevel: 6, cost: 2500 },
+    { id: 'ember', name: 'Emberwood', reqLevel: 2, cost: 1000 },
+    { id: 'moonlit', name: 'Moonlit Grove', reqLevel: 5, cost: 2500 },
     { id: 'sakura', name: 'Sakurawood', reqLevel: 9, cost: 4000 },
     { id: 'walnut-maple', name: 'Walnut & Maple', reqLevel: 12, cost: 6000 },
     { id: 'ebony-ivory', name: 'Royal Ebony & Ivory', reqLevel: 15, cost: 9000 }

@@ -41,7 +41,8 @@
 
       <!-- Top Profile & Settings Header -->
       <header class="fantasy-header">
-        <button type="button" class="fantasy-profile" onclick="app.showProfileScreen()" aria-label="Open player profile">
+        <button type="button" class="fantasy-profile" onclick="app.showProfileScreen()"
+          aria-label="Open player profile">
           <div class="fantasy-avatar-wrapper">
             <img src="/assets/avatar-default.svg" alt="Player" class="fantasy-avatar-img">
             <span class="fantasy-avatar-badge" aria-hidden="true">&#10003;</span>
@@ -53,11 +54,13 @@
         </button>
 
         <div class="fantasy-header-actions">
-          <button type="button" class="fantasy-coin-chip" onclick="app.showProfileScreen()" id="btn-coin-chip" title="Your Coins">
+          <button type="button" class="fantasy-coin-chip" onclick="app.showProfileScreen()" id="btn-coin-chip"
+            title="Your Coins">
             <span class="coin-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" focusable="false">
                 <circle cx="12" cy="12" r="8.6" stroke="currentColor" stroke-width="1.5" opacity="0.55"></circle>
-                <path d="M12 6.8l1.55 3.14 3.47.5-2.51 2.45.59 3.46L12 14.72l-3.1 1.63.59-3.46-2.51-2.45 3.47-.5z" fill="currentColor"></path>
+                <path d="M12 6.8l1.55 3.14 3.47.5-2.51 2.45.59 3.46L12 14.72l-3.1 1.63.59-3.46-2.51-2.45 3.47-.5z"
+                  fill="currentColor"></path>
               </svg>
             </span>
             <span class="coin-balance" id="home-coin-balance">1,000 Coins</span>
@@ -79,11 +82,13 @@
         <!-- Hero Artwork Card -->
         <section class="fantasy-hero-card" aria-label="Chess Arena artwork">
           <div class="fantasy-hero-banner">
-            <img src="/assets/chess-arena-hero-wide.jpg" alt="Chess Arena wooden chessboard with a knight and pawn" class="hero-art-img">
+            <img src="/assets/chess-arena-hero-wide.jpg" alt="Chess Arena wooden chessboard with a knight and pawn"
+              class="hero-art-img">
           </div>
           <div class="fantasy-title-block">
             <p class="home-hero-kicker">Tactical Grandmaster Arena</p>
-            <p class="fantasy-brand-tagline">PLAY <span aria-hidden="true">•</span> COMPETE <span aria-hidden="true">•</span> CONQUER</p>
+            <p class="fantasy-brand-tagline">PLAY <span aria-hidden="true">•</span> COMPETE <span
+                aria-hidden="true">•</span> CONQUER</p>
           </div>
         </section>
 
@@ -135,8 +140,8 @@
           <div class="fantasy-menu-list home-quick-actions">
             <button class="fantasy-menu-card home-quick-card" onclick="app.showShopScreen()" title="Shop Items">
               <span class="home-quick-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                  stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                  stroke-linejoin="round" focusable="false">
                   <path d="M3 3h2l2.4 11.2a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L21.5 7H6.2" />
                   <path d="M9.5 11h9" />
                   <circle cx="9" cy="20" r="1.4" />
@@ -152,11 +157,13 @@
             <button class="fantasy-menu-card home-quick-card" onclick="app.showLuckyWheelModal()"
               title="Lucky Tavern Wheel">
               <span class="home-quick-icon home-quick-icon--lucky" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-                  stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                  stroke-linejoin="round" focusable="false">
                   <circle cx="12" cy="12" r="8.2"></circle>
                   <circle cx="12" cy="12" r="2.1"></circle>
-                  <path d="M12 3.8v4.1M12 16.1v4.1M3.8 12h4.1M16.1 12h4.1M6.2 6.2l2.9 2.9M14.9 14.9l2.9 2.9M17.8 6.2l-2.9 2.9M9.1 14.9l-2.9 2.9"></path>
+                  <path
+                    d="M12 3.8v4.1M12 16.1v4.1M3.8 12h4.1M16.1 12h4.1M6.2 6.2l2.9 2.9M14.9 14.9l2.9 2.9M17.8 6.2l-2.9 2.9M9.1 14.9l-2.9 2.9">
+                  </path>
                 </svg>
               </span>
               <span class="home-quick-copy">
@@ -167,8 +174,7 @@
           </div>
 
           <!-- Current Rank -->
-          <button type="button" class="home-rank-card" onclick="app.showLeaderboardScreen()"
-            aria-label="Open rankings">
+          <button type="button" class="home-rank-card" onclick="app.showLeaderboardScreen()" aria-label="Open rankings">
             <span class="home-rank-crest" aria-hidden="true">&#9822;</span>
             <span class="home-rank-copy">
               <span class="home-rank-eyebrow">Current Rank</span>
@@ -238,7 +244,11 @@
     <div class="screen-inner">
       <div class="screen-header-back">
         <div class="screen-header-left">
-          <button class="back-circle-btn" onclick="app.showMatchmakingScreen()" title="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <button class="back-circle-btn" onclick="app.showMatchmakingScreen()" title="Back"><svg width="18" height="18"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg></button>
           <div class="header-title-block">
             <h2 class="header-page-title">Choose Difficulty</h2>
             <span class="header-page-subtitle">Select your opponent's strength</span>
@@ -284,7 +294,11 @@
     <div class="screen-inner">
       <div class="screen-header-back">
         <div class="screen-header-left">
-          <button class="back-circle-btn" onclick="app.showMatchmakingScreen()" title="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <button class="back-circle-btn" onclick="app.showMatchmakingScreen()" title="Back"><svg width="18" height="18"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg></button>
           <div class="header-title-block">
             <h2 class="header-page-title">Custom Room</h2>
             <span class="header-page-subtitle">Create a private room or join via 6-letter code</span>
@@ -358,7 +372,11 @@
     <div class="screen-inner">
       <div class="screen-header-back">
         <div class="screen-header-left">
-          <button class="back-circle-btn" onclick="app.goHome()" title="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <button class="back-circle-btn" onclick="app.goHome()" title="Back"><svg width="18" height="18"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg></button>
           <div class="header-title-block">
             <h2 class="header-page-title">Play Now</h2>
             <span class="header-page-subtitle">Choose how you want to play</span>
@@ -372,7 +390,8 @@
         <button class="play-mode-card" onclick="app.findMatch()">
           <div class="play-mode-icon-box"
             style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
-            <img src="/assets/1x/Asset_39.svg" width="26" height="26" alt="Random Match" style="object-fit: contain; display: block;">
+            <img src="/assets/1x/Asset_39.svg" width="26" height="26" alt="Random Match"
+              style="object-fit: contain; display: block;">
           </div>
           <div class="play-mode-text">
             <span class="play-mode-title">Random Match</span>
@@ -444,7 +463,10 @@
 
       <!-- Back button -->
       <button class="back-circle-btn" onclick="app.cancelWaiting()"
-        style="align-self: flex-start; margin-bottom: 12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+        style="align-self: flex-start; margin-bottom: 12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6" />
+        </svg></button>
       <h2 id="waiting-title" class="screen-title" style="margin-bottom: 4px;">Finding opponent...</h2>
       <p id="waiting-subtitle" class="screen-desc" style="margin-bottom: 24px;">Searching for the best match for you</p>
 
@@ -541,7 +563,8 @@
                 <span class="ingame-player-rating" id="top-player-rating">1200 Elo</span>
                 <span class="ingame-player-title" id="top-player-title"></span>
               </span>
-              <span class="ingame-opponent-skills is-empty" id="top-player-skills" aria-label="Opponent equipped skills"></span>
+              <span class="ingame-opponent-skills is-empty" id="top-player-skills"
+                aria-label="Opponent equipped skills"></span>
             </div>
             <div class="avatar-chat-wrapper">
               <img src="/assets/avatar-default.svg" alt="Opponent" class="ingame-player-avatar" id="top-player-avatar">
@@ -583,59 +606,59 @@
               <stop offset="0.75" stop-color="#70492c" />
               <stop offset="1" stop-color="#4c2f1c" />
             </linearGradient>
-                      <!-- Emberwood pieces -->
+            <!-- Emberwood pieces -->
             <linearGradient id="emberLight" x1="0.05" y1="0" x2="0.88" y2="1">
-              <stop offset="0" stop-color="#f9e5c3"/>
-              <stop offset="0.34" stop-color="#efc794"/>
-              <stop offset="0.7" stop-color="#d89d64"/>
-              <stop offset="1" stop-color="#b66f3c"/>
+              <stop offset="0" stop-color="#f9e5c3" />
+              <stop offset="0.34" stop-color="#efc794" />
+              <stop offset="0.7" stop-color="#d89d64" />
+              <stop offset="1" stop-color="#b66f3c" />
             </linearGradient>
             <linearGradient id="emberDark" x1="0" y1="0" x2="0.82" y2="1">
-              <stop offset="0" stop-color="#6a4030"/>
-              <stop offset="0.4" stop-color="#4a281d"/>
-              <stop offset="0.76" stop-color="#2a140e"/>
-              <stop offset="1" stop-color="#160907"/>
+              <stop offset="0" stop-color="#6a4030" />
+              <stop offset="0.4" stop-color="#4a281d" />
+              <stop offset="0.76" stop-color="#2a140e" />
+              <stop offset="1" stop-color="#160907" />
             </linearGradient>
 
             <!-- Moonlit Grove pieces -->
             <linearGradient id="moonPearl" x1="0.05" y1="0" x2="0.88" y2="1">
-              <stop offset="0" stop-color="#f4f9fc"/>
-              <stop offset="0.35" stop-color="#d8e8ef"/>
-              <stop offset="0.72" stop-color="#acc9d6"/>
-              <stop offset="1" stop-color="#7d9fb1"/>
+              <stop offset="0" stop-color="#f4f9fc" />
+              <stop offset="0.35" stop-color="#d8e8ef" />
+              <stop offset="0.72" stop-color="#acc9d6" />
+              <stop offset="1" stop-color="#7d9fb1" />
             </linearGradient>
             <linearGradient id="moonMidnight" x1="0" y1="0" x2="0.82" y2="1">
-              <stop offset="0" stop-color="#496881"/>
-              <stop offset="0.4" stop-color="#314e69"/>
-              <stop offset="0.76" stop-color="#1c354b"/>
-              <stop offset="1" stop-color="#0b1c2b"/>
+              <stop offset="0" stop-color="#496881" />
+              <stop offset="0.4" stop-color="#314e69" />
+              <stop offset="0.76" stop-color="#1c354b" />
+              <stop offset="1" stop-color="#0b1c2b" />
             </linearGradient>
 
             <!-- Sakurawood pieces -->
             <linearGradient id="sakuraPorcelain" x1="0.05" y1="0" x2="0.88" y2="1">
-              <stop offset="0" stop-color="#fffaf4"/>
-              <stop offset="0.35" stop-color="#f7e2e0"/>
-              <stop offset="0.72" stop-color="#e7b8bc"/>
-              <stop offset="1" stop-color="#ce8e9b"/>
+              <stop offset="0" stop-color="#fffaf4" />
+              <stop offset="0.35" stop-color="#f7e2e0" />
+              <stop offset="0.72" stop-color="#e7b8bc" />
+              <stop offset="1" stop-color="#ce8e9b" />
             </linearGradient>
             <linearGradient id="sakuraRosewood" x1="0" y1="0" x2="0.82" y2="1">
-              <stop offset="0" stop-color="#8a4a5f"/>
-              <stop offset="0.4" stop-color="#682f43"/>
-              <stop offset="0.76" stop-color="#471c2d"/>
-              <stop offset="1" stop-color="#2b0e1a"/>
+              <stop offset="0" stop-color="#8a4a5f" />
+              <stop offset="0.4" stop-color="#682f43" />
+              <stop offset="0.76" stop-color="#471c2d" />
+              <stop offset="1" stop-color="#2b0e1a" />
             </linearGradient>
             <!-- Royal Ebony & Ivory pieces -->
             <linearGradient id="ebonyIvoryLight" x1="0.05" y1="0" x2="0.88" y2="1">
-              <stop offset="0" stop-color="#ffffff"/>
-              <stop offset="0.32" stop-color="#f5f3ec"/>
-              <stop offset="0.7" stop-color="#e2ded4"/>
-              <stop offset="1" stop-color="#cac4b6"/>
+              <stop offset="0" stop-color="#ffffff" />
+              <stop offset="0.32" stop-color="#f5f3ec" />
+              <stop offset="0.7" stop-color="#e2ded4" />
+              <stop offset="1" stop-color="#cac4b6" />
             </linearGradient>
             <linearGradient id="ebonyIvoryDark" x1="0.05" y1="0" x2="0.82" y2="1">
-              <stop offset="0" stop-color="#8a9099"/>
-              <stop offset="0.36" stop-color="#6f747d"/>
-              <stop offset="0.72" stop-color="#555961"/>
-              <stop offset="1" stop-color="#40434a"/>
+              <stop offset="0" stop-color="#8a9099" />
+              <stop offset="0.36" stop-color="#6f747d" />
+              <stop offset="0.72" stop-color="#555961" />
+              <stop offset="1" stop-color="#40434a" />
             </linearGradient>
           </defs>
         </svg>
@@ -669,27 +692,50 @@
           </button>
           <button class="btn-game-pill" id="btn-ingame-undo" onclick="app.undoMove()" title="Undo Last Move (50 Coins)">
             <span class="btn-icon" style="display: inline-flex; align-items: center; justify-content: center;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 7v6h6" />
+                <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
+              </svg>
             </span>
-            <span class="btn-label" id="btn-ingame-undo-label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">Undo
-              <span class="undo-cost-badge" style="color: #FFD54F; font-size: 11px; font-weight: 700;">🪙50</span></span>
+            <span class="btn-label" id="btn-ingame-undo-label"
+              style="display: flex; align-items: center; justify-content: center; gap: 4px;">Undo
+              <span class="undo-cost-badge"
+                style="color: #FFD54F; font-size: 11px; font-weight: 700;">🪙50</span></span>
           </button>
-          <button class="btn-game-pill" id="btn-ingame-hint" onclick="app.getHint()" title="Get a Hint (AI only)" style="display: none;">
+          <button class="btn-game-pill" id="btn-ingame-hint" onclick="app.getHint()" title="Get a Hint (AI only)"
+            style="display: none;">
             <span class="btn-icon" style="display: inline-flex; align-items: center; justify-content: center;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2.1V18h6v-1.2c0-.9.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 18h6" />
+                <path d="M10 22h4" />
+                <path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2.1V18h6v-1.2c0-.9.4-1.6 1-2.1A7 7 0 0 0 12 2z" />
+              </svg>
             </span>
-            <span class="btn-label" id="btn-ingame-hint-label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">Hint
+            <span class="btn-label" id="btn-ingame-hint-label"
+              style="display: flex; align-items: center; justify-content: center; gap: 4px;">Hint
               <span style="color: #FFD54F; font-size: 11px; font-weight: 700;">🪙25</span></span>
           </button>
-          <button class="btn-game-pill" id="btn-ingame-draw" style="display: none;" onclick="app.offerDraw()" title="Offer Draw">
+          <button class="btn-game-pill" id="btn-ingame-draw" style="display: none;" onclick="app.offerDraw()"
+            title="Offer Draw">
             <span class="btn-icon" style="display: inline-flex; align-items: center; justify-content: center;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88"/><path d="m18 10 2-2a2 2 0 0 0-3-3l-7 7a2 2 0 0 0 0 3l2 2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="m11 17 2 2a1 1 0 1 0 3-3" />
+                <path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88" />
+                <path d="m18 10 2-2a2 2 0 0 0-3-3l-7 7a2 2 0 0 0 0 3l2 2" />
+              </svg>
             </span>
             <span class="btn-label">Draw</span>
           </button>
           <button class="btn-game-pill" id="btn-ingame-resign" onclick="app.confirmResign()" title="Resign">
             <span class="btn-icon" style="display: inline-flex; align-items: center; justify-content: center;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                <line x1="4" y1="22" x2="4" y2="15" />
+              </svg>
             </span>
             <span class="btn-label">Resign</span>
           </button>
@@ -700,7 +746,12 @@
 
         <div class="game-controls">
 
-          <button id="btn-toggle-chat" class="ctrl-btn mobile-only-flex" onclick="app.toggleChat()" title="Live Chat"><span style="display: inline-flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span></button>
+          <button id="btn-toggle-chat" class="ctrl-btn mobile-only-flex" onclick="app.toggleChat()"
+            title="Live Chat"><span style="display: inline-flex; align-items: center; justify-content: center;"><svg
+                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg></span></button>
         </div>
 
       </div> <!-- end game-container -->
@@ -711,15 +762,24 @@
           style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #5A351D; padding-bottom: 8px; margin-bottom: 12px;">
           <span style="font-family: 'Georgia', serif; font-weight: 700; color: #FFD54F;">Tactile Emotes</span>
           <button class="close-btn mobile-only" onclick="app.toggleChat()"
-            style="background: none; border: none; color: #FFD54F; font-size: 18px; cursor: pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            style="background: none; border: none; color: #FFD54F; font-size: 18px; cursor: pointer;"><svg width="18"
+              height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg></button>
         </div>
         <!-- Preset Emote Medallions -->
         <div class="emote-buttons-grid"
           style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px;">
-          <button class="btn-plank" onclick="app.sendEmote('⚔️ Good luck!')" style="font-size: 12px; padding: 10px;">⚔️ Good luck!</button>
-          <button class="btn-plank" onclick="app.sendEmote('👏 Nice move!')" style="font-size: 12px; padding: 10px;">👏 Nice move!</button>
-          <button class="btn-plank" onclick="app.sendEmote('😅 Oops!')" style="font-size: 12px; padding: 10px;">😅 Oops!</button>
-          <button class="btn-plank" onclick="app.sendEmote('🤝 Good Game!')" style="font-size: 12px; padding: 10px;">🤝 Good Game!</button>
+          <button class="btn-plank" onclick="app.sendEmote('⚔️ Good luck!')" style="font-size: 12px; padding: 10px;">⚔️
+            Good luck!</button>
+          <button class="btn-plank" onclick="app.sendEmote('👏 Nice move!')" style="font-size: 12px; padding: 10px;">👏
+            Nice move!</button>
+          <button class="btn-plank" onclick="app.sendEmote('😅 Oops!')" style="font-size: 12px; padding: 10px;">😅
+            Oops!</button>
+          <button class="btn-plank" onclick="app.sendEmote('🤝 Good Game!')" style="font-size: 12px; padding: 10px;">🤝
+            Good Game!</button>
         </div>
         <div class="chat-messages" id="chat-messages"
           style="max-height: 120px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 8px; border: 1px solid #5A351D; font-size: 12px; color: #EBD2A5;">
@@ -734,7 +794,11 @@
     <div class="abilities-shell">
       <div class="screen-header-back">
         <div class="screen-header-left">
-          <button class="back-circle-btn" onclick="app.goHome()" title="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <button class="back-circle-btn" onclick="app.goHome()" title="Back"><svg width="18" height="18"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg></button>
           <div class="header-title-block">
             <h2 class="header-page-title">Your Abilities</h2>
             <span class="header-page-subtitle">Tactical Mode loadout</span>
@@ -767,30 +831,47 @@
           </div>
         </div>
         <h3 class="abilities-heading"
-          style="font-family: 'Georgia', serif; font-size: 20px; color: #20120B; margin-bottom: 4px;">Choose Your Abilities
+          style="font-family: 'Georgia', serif; font-size: 20px; color: #20120B; margin-bottom: 4px;">Choose Your
+          Abilities
         </h3>
-        <p class="abilities-subheading" style="color: #8C6538; font-size: 13px; font-weight: 700;">Slot 1 is active. Slot 2 unlocks after 3 ads. Each ability is used once per match.</p>
+        <p class="abilities-subheading" style="color: #8C6538; font-size: 13px; font-weight: 700;">Slot 1 is active.
+          Slot 2 unlocks after 3 ads. Each ability is used once per match.</p>
       </div>
 
       <!-- Slot 1 & Slot 2 Loadout Status -->
-        <div id="abilities-slots-container" style="display: flex; justify-content: center; gap: 10px; margin: 12px auto 14px auto; width: 100%; max-width: 290px; box-sizing: border-box;">
-          <div style="flex: 1; min-width: 0; background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%); border: 1.5px solid #C99700; border-radius: 9px; padding: 8px 10px; text-align: center; box-sizing: border-box;">
-            <div style="font-size: 9px; color: #F5D36C; font-weight: 800; letter-spacing: 0.75px; line-height: 1.1;">SLOT 1 · ACTIVE</div>
-            <div id="slot-1-display" style="font-size: 12px; color: #FFF; font-weight: 800; margin-top: 3px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Second Chance</div>
-          </div>
-          <div id="slot-2-box" style="flex: 1; min-width: 0; background: linear-gradient(180deg, #2B160B 0%, #170904 100%); border: 1.5px dashed #8C6538; border-radius: 9px; padding: 8px 10px; text-align: center; position: relative; box-sizing: border-box;">
-            <div id="slot-2-header" style="font-size: 9px; color: #A58463; font-weight: 800; letter-spacing: 0.75px; line-height: 1.1;">SLOT 2 · 0/3</div>
-            <div id="slot-2-content" style="margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 5px;">
-              <button onclick="app.promptUnlockSlot2()" style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; border: none; border-radius: 5px; font-weight: 900; font-size: 9px; padding: 4px 8px; cursor: pointer; box-shadow: 0 1px 0 #8A6500; white-space: nowrap;" title="Watch 3 ads to unlock Slot 2">🎬 Unlock</button>
-              <span style="display: flex; gap: 3px;">
-                <span style="width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: #3A2315; border: 1px solid #8C6538;"></span>
-                <span style="width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: #3A2315; border: 1px solid #8C6538;"></span>
-                <span style="width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: #3A2315; border: 1px solid #8C6538;"></span>
-              </span>
-            </div>
+      <div id="abilities-slots-container"
+        style="display: flex; justify-content: center; gap: 10px; margin: 12px auto 14px auto; width: 100%; max-width: 290px; box-sizing: border-box;">
+        <div
+          style="flex: 1; min-width: 0; background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%); border: 1.5px solid #C99700; border-radius: 9px; padding: 8px 10px; text-align: center; box-sizing: border-box;">
+          <div style="font-size: 9px; color: #F5D36C; font-weight: 800; letter-spacing: 0.75px; line-height: 1.1;">SLOT
+            1 · ACTIVE</div>
+          <div id="slot-1-display"
+            style="font-size: 12px; color: #FFF; font-weight: 800; margin-top: 3px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            Second Chance</div>
+        </div>
+        <div id="slot-2-box"
+          style="flex: 1; min-width: 0; background: linear-gradient(180deg, #2B160B 0%, #170904 100%); border: 1.5px dashed #8C6538; border-radius: 9px; padding: 8px 10px; text-align: center; position: relative; box-sizing: border-box;">
+          <div id="slot-2-header"
+            style="font-size: 9px; color: #A58463; font-weight: 800; letter-spacing: 0.75px; line-height: 1.1;">SLOT 2 ·
+            0/3</div>
+          <div id="slot-2-content"
+            style="margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 5px;">
+            <button onclick="app.promptUnlockSlot2()"
+              style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; border: none; border-radius: 5px; font-weight: 900; font-size: 9px; padding: 4px 8px; cursor: pointer; box-shadow: 0 1px 0 #8A6500; white-space: nowrap;"
+              title="Watch 3 ads to unlock Slot 2">🎬 Unlock</button>
+            <span style="display: flex; gap: 3px;">
+              <span
+                style="width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: #3A2315; border: 1px solid #8C6538;"></span>
+              <span
+                style="width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: #3A2315; border: 1px solid #8C6538;"></span>
+              <span
+                style="width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: #3A2315; border: 1px solid #8C6538;"></span>
+            </span>
           </div>
         </div>
-      <div style="max-width: 360px; margin: 0 auto 14px; padding: 8px 10px; border-radius: 8px; background: rgba(58, 35, 21, 0.08); border: 1px solid rgba(140, 101, 56, 0.35); color: #6B4A2A; font-size: 11px; line-height: 1.4; text-align: center; font-weight: 700;">
+      </div>
+      <div
+        style="max-width: 360px; margin: 0 auto 14px; padding: 8px 10px; border-radius: 8px; background: rgba(58, 35, 21, 0.08); border: 1px solid rgba(140, 101, 56, 0.35); color: #6B4A2A; font-size: 11px; line-height: 1.4; text-align: center; font-weight: 700;">
         Select abilities for your loadout.
       </div>
 
@@ -805,7 +886,10 @@
               <span class="ability-desc">Take back your last move.</span>
             </div>
           </div>
-          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
         </div>
 
         <div class="ability-card" id="ability-card-jump" onclick="app.toggleAbility('jump')">
@@ -818,7 +902,10 @@
               <span class="ability-desc">Vault over one piece to land beyond.</span>
             </div>
           </div>
-          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
         </div>
 
         <div class="ability-card" id="ability-card-freeze" onclick="app.toggleAbility('freeze')">
@@ -831,7 +918,10 @@
               <span class="ability-desc">Freeze an enemy piece for one turn.</span>
             </div>
           </div>
-          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
         </div>
 
         <div class="ability-card" id="ability-card-swap" onclick="app.toggleAbility('swap')">
@@ -844,7 +934,10 @@
               <span class="ability-desc">Swap two of your pieces.</span>
             </div>
           </div>
-          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
         </div>
 
         <div class="ability-card" id="ability-card-shield" onclick="app.toggleAbility('shield')">
@@ -857,7 +950,10 @@
               <span class="ability-desc">Protect one piece for one turn.</span>
             </div>
           </div>
-          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+          <svg class="menu-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
         </div>
       </div>
 
@@ -873,15 +969,19 @@
       <!-- 1. Header Bar: Circular back button, centered gold "PROFILE", circular settings button -->
       <div class="profile-top-bar">
         <button class="profile-nav-circle-btn back-circle-btn" onclick="app.goHome()" title="Back">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"/>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
         <h2 class="profile-screen-title">PROFILE</h2>
         <button class="profile-nav-circle-btn btn-settings" onclick="app.showModal('modal-settings')" title="Settings">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+            </path>
           </svg>
         </button>
       </div>
@@ -891,14 +991,21 @@
         <div class="profile-hero-avatar-wrap">
           <div class="profile-avatar-circle">
             <svg id="profile-knight-fallback" class="profile-knight-svg" viewBox="0 0 64 64" fill="none">
-              <path d="M44 54H20C19 54 18 53 18 52C18 50 19 48 21 47C22 46.5 24 46 25 45C22 41 20 37 19.5 32C19 28 20 24 22 21C22.5 20 22 18.5 21 18C19.5 17 18 16 17 14.5C16 13 16 11 17 9.5C18 8 20 7 22 7C24.5 7 26.5 8.5 27.5 10.5C28.5 10 30 9.5 32 9.5C36 9.5 40 11.5 43 15C46 18.5 47 23 46.5 27C46 31 43.5 35 40 37C42 41 43.5 45 44 49C44.5 52 43.5 54 44 54Z" fill="#F5D36C"/>
-              <circle cx="28" cy="17" r="2.5" fill="#1C1008"/>
-              <path d="M23 25C25 26 28 26.5 31 26" stroke="#1C1008" stroke-width="2" stroke-linecap="round"/>
+              <path
+                d="M44 54H20C19 54 18 53 18 52C18 50 19 48 21 47C22 46.5 24 46 25 45C22 41 20 37 19.5 32C19 28 20 24 22 21C22.5 20 22 18.5 21 18C19.5 17 18 16 17 14.5C16 13 16 11 17 9.5C18 8 20 7 22 7C24.5 7 26.5 8.5 27.5 10.5C28.5 10 30 9.5 32 9.5C36 9.5 40 11.5 43 15C46 18.5 47 23 46.5 27C46 31 43.5 35 40 37C42 41 43.5 45 44 49C44.5 52 43.5 54 44 54Z"
+                fill="#F5D36C" />
+              <circle cx="28" cy="17" r="2.5" fill="#1C1008" />
+              <path d="M23 25C25 26 28 26.5 31 26" stroke="#1C1008" stroke-width="2" stroke-linecap="round" />
             </svg>
-            <img id="profile-hero-avatar" src="/assets/avatar-default.svg" alt="Player" class="profile-hero-avatar-img" style="display:none;" onload="this.style.display='block'; document.getElementById('profile-knight-fallback').style.display='none';">
+            <img id="profile-hero-avatar" src="/assets/avatar-default.svg" alt="Player" class="profile-hero-avatar-img"
+              style="display:none;"
+              onload="this.style.display='block'; document.getElementById('profile-knight-fallback').style.display='none';">
           </div>
-          <button type="button" id="profile-avatar-edit-btn" class="profile-avatar-edit-btn" onclick="app.openAvatarPicker ? app.openAvatarPicker() : null" title="Change avatar" aria-label="Change avatar">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <button type="button" id="profile-avatar-edit-btn" class="profile-avatar-edit-btn"
+            onclick="app.openAvatarPicker ? app.openAvatarPicker() : null" title="Change avatar"
+            aria-label="Change avatar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 20h9"></path>
               <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
             </svg>
@@ -908,14 +1015,18 @@
         <div class="profile-hero-details">
           <div class="profile-username-header">
             <h3 id="profile-hero-name" class="profile-hero-name">AANN</h3>
-            <button class="profile-edit-pencil-btn" onclick="app.handleAuthRequireUsername ? (app.playerId ? app.handleAuthRequireUsername(app.playerId, true) : app.handleAuthRequireUsername(app.walletAddress)) : null" title="Edit Username">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <button class="profile-edit-pencil-btn"
+              onclick="app.handleAuthRequireUsername ? (app.playerId ? app.handleAuthRequireUsername(app.playerId, true) : app.handleAuthRequireUsername(app.walletAddress)) : null"
+              title="Edit Username">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 20h9"></path>
                 <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
               </svg>
             </button>
             <span id="profile-wallet-address" style="display: none;"></span>
-            <button id="btn-disconnect-wallet" onclick="app.disconnectWallet ? app.disconnectWallet() : null" style="display: none;"></button>
+            <button id="btn-disconnect-wallet" onclick="app.disconnectWallet ? app.disconnectWallet() : null"
+              style="display: none;"></button>
           </div>
 
           <!-- Badges Row: Level, Rank Number, Tier Title -->
@@ -923,8 +1034,9 @@
             <span class="profile-badge badge-lvl">Lvl <span id="profile-hero-level">1</span></span>
             <span id="profile-rank-badge" class="profile-badge badge-rank-num">#7</span>
             <span id="profile-title-badge" class="profile-badge badge-tier elo-title-badge">
-              <svg class="tier-shield-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <svg class="tier-shield-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
               <span>SILVER KNIGHT</span>
             </span>
@@ -973,7 +1085,7 @@
           <span class="quad-stat-label">WIN RATE</span>
         </div>
       </div>
-      
+
 
       <nav class="fantasy-bottom-nav">
         <div class="nav-active-glow"></div>
@@ -1013,7 +1125,11 @@
     <div class="shop-shell">
       <div class="screen-header-back">
         <div class="screen-header-left">
-          <button class="back-circle-btn" onclick="app.goHome()" title="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <button class="back-circle-btn" onclick="app.goHome()" title="Back"><svg width="18" height="18"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg></button>
           <div class="header-title-block">
             <h2 class="header-page-title">Shop</h2>
             <span class="header-page-subtitle">Chess Arena Collection</span>
@@ -1028,24 +1144,31 @@
           style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(180deg, #3A2315 0%, #201108 100%); border: 1.5px solid #C99700; border-radius: 12px; padding: 10px 16px; margin-bottom: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">
           <span style="font-family: var(--font-serif); font-weight: 700; color: #FDF7EC;">Your Coins</span>
           <span style="display: flex; align-items: center; gap: 10px;">
-            <span id="shop-coin-balance" style="font-family: var(--font-serif); font-weight: 800; color: #FFD54F; font-size: 16px;">🪙 1,000 Coins</span>
-            <span title="Your player level. It unlocks boards and skills." style="font-size: 11px; font-weight: 800; color: #4ade80; background: rgba(74, 222, 128, 0.12); border: 1px solid rgba(74, 222, 128, 0.4); border-radius: 999px; padding: 3px 8px;">Player Lv <span id="shop-player-level">1</span></span>
+            <span id="shop-coin-balance"
+              style="font-family: var(--font-serif); font-weight: 800; color: #FFD54F; font-size: 16px;">🪙 1,000
+              Coins</span>
+            <span title="Your player level. It unlocks boards and skills."
+              style="font-size: 11px; font-weight: 800; color: #4ade80; background: rgba(74, 222, 128, 0.12); border: 1px solid rgba(74, 222, 128, 0.4); border-radius: 999px; padding: 3px 8px;">Player
+              Lv <span id="shop-player-level">1</span></span>
           </span>
         </div>
 
         <!-- Free Coins: optional rewarded ads -->
-        <div style="background: linear-gradient(180deg, #2B160B 0%, #170904 100%); border: 1.5px dashed #8C6538; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
+        <div
+          style="background: linear-gradient(180deg, #2B160B 0%, #170904 100%); border: 1.5px dashed #8C6538; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
           <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
             <div style="flex: 1 1 190px; min-width: 0;">
               <div style="font-family: var(--font-serif); font-weight: 800; color: #FFD54F;">🪙 Free Coins</div>
-              <div style="font-size: 11px; color: #C9B18F; margin-top: 3px; line-height: 1.35;">Watch an optional ad and the bonus coins are added to your balance.</div>
+              <div style="font-size: 11px; color: #C9B18F; margin-top: 3px; line-height: 1.35;">Watch an optional ad and
+                the bonus coins are added to your balance.</div>
             </div>
             <div style="text-align: right;">
               <button id="shop-gold-vault-btn" onclick="app.claimFreeAdCoins()"
                 style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; border: none; border-radius: 8px; padding: 8px 12px; font-size: 11px; font-weight: 900; cursor: pointer; box-shadow: 0 3px 0 #8A6500; white-space: nowrap;">
                 🎬 Watch Ad · +150 🪙
               </button>
-              <div id="shop-gold-vault-coins" style="font-size: 10px; color: #C9B18F; margin-top: 5px; font-weight: 700;">Today: 0/6 ads</div>
+              <div id="shop-gold-vault-coins"
+                style="font-size: 10px; color: #C9B18F; margin-top: 5px; font-weight: 700;">Today: 0/6 ads</div>
             </div>
           </div>
         </div>
@@ -1081,8 +1204,8 @@
                   <div class="shop-board-preview-grid board-preview-ember"></div>
                 </div>
                 <div class="shop-item-name">Emberwood</div>
-                <div class="shop-item-meta"><span class="shop-item-level">🔒 Lv 3</span></div>
-                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('ember')">Unlock · 1,200 🪙</button>
+                <div class="shop-item-meta"><span class="shop-item-level">🔒 Lv 2</span></div>
+                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('ember')">Unlock · 1,000 🪙</button>
               </article>
 
               <!-- Moonlit Grove Board -->
@@ -1092,7 +1215,7 @@
                   <div class="shop-board-preview-grid board-preview-moonlit"></div>
                 </div>
                 <div class="shop-item-name">Moonlit Grove</div>
-                <div class="shop-item-meta"><span class="shop-item-level">🔒 Lv 6</span></div>
+                <div class="shop-item-meta"><span class="shop-item-level">🔒 Lv 5</span></div>
                 <button class="btn-shop-action" onclick="app.buyOrEquipBoard('moonlit')">Unlock · 2,500 🪙</button>
               </article>
 
@@ -1132,57 +1255,57 @@
           </div>
         </div>
 
-        
-        </div>
 
       </div>
-      <!-- Pinned 4-Tab Bottom Dock -->
-      <nav class="fantasy-bottom-nav">
-        <div class="nav-active-glow"></div>
-        <button class="nav-tab" onclick="app.goHome()">
-          <span class="nav-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-          </span>
-          <span class="nav-label">Home</span>
-        </button>
-        <button class="nav-tab" onclick="app.showLeaderboardScreen()">
-          <span class="nav-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 20v-8M6 20V8M18 20v-4" />
-            </svg>
-          </span>
-          <span class="nav-label">Rankings</span>
-        </button>
-        <button class="nav-tab active" onclick="app.showShopScreen()">
-          <span class="nav-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <path d="M16 10a4 4 0 0 1-8 0" />
-            </svg>
-          </span>
-          <span class="nav-label">Shop</span>
-        </button>
-        <button class="nav-tab nav-profile-btn" onclick="app.showProfileScreen()">
-          <span class="nav-icon">
-            <img src="/assets/avatar-default.svg" class="nav-profile-avatar-img" alt="Profile" style="display:none;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1" />
-            </svg>
-          </span>
-          <span class="nav-label">Profile</span>
-        </button>
-      </nav>
 
     </div>
+    <!-- Pinned 4-Tab Bottom Dock -->
+    <nav class="fantasy-bottom-nav">
+      <div class="nav-active-glow"></div>
+      <button class="nav-tab" onclick="app.goHome()">
+        <span class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+        </span>
+        <span class="nav-label">Home</span>
+      </button>
+      <button class="nav-tab" onclick="app.showLeaderboardScreen()">
+        <span class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20v-8M6 20V8M18 20v-4" />
+          </svg>
+        </span>
+        <span class="nav-label">Rankings</span>
+      </button>
+      <button class="nav-tab active" onclick="app.showShopScreen()">
+        <span class="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
+          </svg>
+        </span>
+        <span class="nav-label">Shop</span>
+      </button>
+      <button class="nav-tab nav-profile-btn" onclick="app.showProfileScreen()">
+        <span class="nav-icon">
+          <img src="/assets/avatar-default.svg" class="nav-profile-avatar-img" alt="Profile" style="display:none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1" />
+          </svg>
+        </span>
+        <span class="nav-label">Profile</span>
+      </button>
+    </nav>
+
+  </div>
   </div>
 
   <!-- --------------- HOW TO PLAY SCREEN --------------- -->
@@ -1190,7 +1313,11 @@
     <div class="screen-inner howto-content">
       <div class="screen-header-back">
         <div class="screen-header-left">
-          <button class="back-circle-btn" onclick="app.showScreen('screen-home')" title="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <button class="back-circle-btn" onclick="app.showScreen('screen-home')" title="Back"><svg width="18"
+              height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg></button>
           <div class="header-title-block">
             <h2 class="header-page-title">How to Play</h2>
           </div>
@@ -1234,8 +1361,10 @@
         <div class="howto-section">
           <h3>⏱️ Match Timers &amp; Fair Play</h3>
           <p><strong>10-Minute Clock:</strong> Total match time per player.</p>
-          <p><strong>45-Second Move Timer:</strong> You have 45 seconds to make each move. While your opponent considers their move, <em>"Opponent is thinking..."</em> with their countdown is displayed.</p>
-          <p><strong>Inactivity (AFK) Rules:</strong> Missing a move within 45s passes your turn to the opponent with an AFK Warning (1st Strike). Missing a 2nd time results in an automatic forfeit loss.</p>
+          <p><strong>45-Second Move Timer:</strong> You have 45 seconds to make each move. While your opponent considers
+            their move, <em>"Opponent is thinking..."</em> with their countdown is displayed.</p>
+          <p><strong>Inactivity (AFK) Rules:</strong> Missing a move within 45s passes your turn to the opponent with an
+            AFK Warning (1st Strike). Missing a 2nd time results in an automatic forfeit loss.</p>
         </div>
       </div>
     </div>
@@ -1376,8 +1505,8 @@
               <span class="setting-title">Sound Effects</span>
               <span class="setting-desc">Moves, captures &amp; alerts</span>
             </div>
-            <button type="button" id="btn-toggle-sound" class="setting-switch is-on" role="switch"
-              aria-checked="true" aria-label="Sound effects on" onclick="app.toggleSound()">
+            <button type="button" id="btn-toggle-sound" class="setting-switch is-on" role="switch" aria-checked="true"
+              aria-label="Sound effects on" onclick="app.toggleSound()">
               <span class="setting-switch-label">On</span>
               <span class="setting-switch-track"><span class="setting-switch-thumb"></span></span>
             </button>
@@ -1395,32 +1524,33 @@
               <span class="setting-title">Background Music</span>
               <span class="setting-desc">Ambient soundtrack</span>
             </div>
-            <button type="button" id="btn-toggle-music" class="setting-switch is-on" role="switch"
-              aria-checked="true" aria-label="Background music on" onclick="app.toggleMusic()">
+            <button type="button" id="btn-toggle-music" class="setting-switch is-on" role="switch" aria-checked="true"
+              aria-label="Background music on" onclick="app.toggleMusic()">
               <span class="setting-switch-label">On</span>
               <span class="setting-switch-track"><span class="setting-switch-thumb"></span></span>
             </button>
           </div>
 
-            <!-- Music Volume Slider -->
-            <div class="setting-item setting-item-volume" style="flex-direction: column; align-items: stretch; gap: 8px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <div class="setting-icon" aria-hidden="true" style="width: 28px; height: 28px; flex: 0 0 28px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 15px; height: 15px;">
-                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                    </svg>
-                  </div>
-                  <span class="setting-title" style="font-size: 13px;">Music Volume</span>
+          <!-- Music Volume Slider -->
+          <div class="setting-item setting-item-volume" style="flex-direction: column; align-items: stretch; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="setting-icon" aria-hidden="true" style="width: 28px; height: 28px; flex: 0 0 28px;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" style="width: 15px; height: 15px;">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  </svg>
                 </div>
-                <span id="music-volume-label" style="font-family: var(--font-serif); font-size: 13px; font-weight: 800; color: #FFD54F;">25%</span>
+                <span class="setting-title" style="font-size: 13px;">Music Volume</span>
               </div>
-              <input type="range" id="input-music-volume" min="0" max="100" value="25"
-                oninput="app.setMusicVolume(this.value)"
-                aria-label="Background music volume"
-                class="settings-volume-slider">
+              <span id="music-volume-label"
+                style="font-family: var(--font-serif); font-size: 13px; font-weight: 800; color: #FFD54F;">25%</span>
             </div>
+            <input type="range" id="input-music-volume" min="0" max="100" value="25"
+              oninput="app.setMusicVolume(this.value)" aria-label="Background music volume"
+              class="settings-volume-slider">
+          </div>
         </div>
       </div>
 
@@ -1487,25 +1617,30 @@
     </div>
   </div>
 
-  
-    <!-- --------------- AFK INACTIVITY WARNING MODAL --------------- -->
-    <div id="modal-afk-warning" class="modal hidden" style="z-index: 10000;">
-      <div class="modal-overlay" onclick="app.hideModal('modal-afk-warning')"></div>
-      <div class="modal-content" style="text-align: center; max-width: 360px; padding: 22px 20px;">
-        <div style="width: 52px; height: 52px; margin: 0 auto 12px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); border: 2px solid #EF4444; display: flex; align-items: center; justify-content: center; color: #EF4444; font-size: 26px;">
-          ⏳
-        </div>
-        <h3 style="margin-bottom: 8px; color: #FFD54F; font-family: 'Cinzel', Georgia, serif; font-size: 20px;">Inactivity Warning!</h3>
-        <p class="screen-desc" id="afk-warning-msg" style="margin-bottom: 18px; line-height: 1.45; font-size: 13.5px; color: #FDF7EC;">
-          You missed your move within 45 seconds. Your turn was passed to your opponent! If you miss again, you will forfeit the match.
-        </p>
-        <button type="button" class="btn-shop-action" onclick="app.hideModal('modal-afk-warning')" style="width: 100%; min-height: 40px; font-weight: 800; background: linear-gradient(180deg, #F8DA78 0%, #E4B33C 48%, #C99700 100%); color: #20120B; border: 1.5px solid #FFE58A; border-radius: 10px; cursor: pointer;">
-          I'm Back (Continue Game)
-        </button>
-      </div>
-    </div>
 
-    <!-- --------------- TOAST --------------- -->
+  <!-- --------------- AFK INACTIVITY WARNING MODAL --------------- -->
+  <div id="modal-afk-warning" class="modal hidden" style="z-index: 10000;">
+    <div class="modal-overlay" onclick="app.hideModal('modal-afk-warning')"></div>
+    <div class="modal-content" style="text-align: center; max-width: 360px; padding: 22px 20px;">
+      <div
+        style="width: 52px; height: 52px; margin: 0 auto 12px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); border: 2px solid #EF4444; display: flex; align-items: center; justify-content: center; color: #EF4444; font-size: 26px;">
+        ⏳
+      </div>
+      <h3 style="margin-bottom: 8px; color: #FFD54F; font-family: 'Cinzel', Georgia, serif; font-size: 20px;">Inactivity
+        Warning!</h3>
+      <p class="screen-desc" id="afk-warning-msg"
+        style="margin-bottom: 18px; line-height: 1.45; font-size: 13.5px; color: #FDF7EC;">
+        You missed your move within 45 seconds. Your turn was passed to your opponent! If you miss again, you will
+        forfeit the match.
+      </p>
+      <button type="button" class="btn-shop-action" onclick="app.hideModal('modal-afk-warning')"
+        style="width: 100%; min-height: 40px; font-weight: 800; background: linear-gradient(180deg, #F8DA78 0%, #E4B33C 48%, #C99700 100%); color: #20120B; border: 1.5px solid #FFE58A; border-radius: 10px; cursor: pointer;">
+        I'm Back (Continue Game)
+      </button>
+    </div>
+  </div>
+
+  <!-- --------------- TOAST --------------- -->
   <div id="toast" class="toast hidden"></div>
 
 
@@ -1514,7 +1649,11 @@
     <div class="screen-inner">
       <div class="screen-header-back">
         <div class="screen-header-left">
-          <button class="back-circle-btn" onclick="app.goHome()" title="Back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <button class="back-circle-btn" onclick="app.goHome()" title="Back"><svg width="18" height="18"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg></button>
           <div class="header-title-block">
             <h2 class="header-page-title">Rankings</h2>
           </div>
@@ -1528,8 +1667,7 @@
         style="width:100%; overflow-y:auto; flex:1; padding: 0 20px 160px 20px; box-sizing:border-box;">
         <!-- JS injects ranking cards here -->
       </div>
-      <div id="leaderboard-pinned-rank" class="leaderboard-pinned-rank hidden" role="status"
-        aria-live="polite"></div>
+      <div id="leaderboard-pinned-rank" class="leaderboard-pinned-rank hidden" role="status" aria-live="polite"></div>
       <!-- Bottom Nav -->
       <nav class="fantasy-bottom-nav">
         <div class="nav-active-glow"></div>
@@ -1589,8 +1727,7 @@
 
           <div class="recap-player-col">
             <div style="position: relative; display: inline-block;">
-              <img id="victory-opp-avatar" src="/assets/avatar-default.svg" alt="Opponent"
-                class="recap-player-avatar">
+              <img id="victory-opp-avatar" src="/assets/avatar-default.svg" alt="Opponent" class="recap-player-avatar">
             </div>
             <span style="font-size: 12px; font-weight: 700; color: #fff;" id="victory-opp-name">Opponent</span>
             <span style="font-size: 10px; color: #94a3b8;" id="victory-opp-rating">1180</span>
@@ -1610,11 +1747,12 @@
             <span class="recap-meta-label">Moves</span>
             <span class="recap-meta-value" id="victory-meta-moves">42</span>
           </div>
-                    <div class="recap-meta-row">
+          <div class="recap-meta-row">
             <span class="recap-meta-label">Coins Earned</span>
-            <span class="recap-meta-value" style="color: #FFD54F; font-weight: 800;" id="victory-meta-coins">+0 🪙</span>
+            <span class="recap-meta-value" style="color: #FFD54F; font-weight: 800;" id="victory-meta-coins">+0
+              🪙</span>
           </div>
-<div class="recap-meta-row">
+          <div class="recap-meta-row">
             <span class="recap-meta-label">Rating Change</span>
             <span class="recap-meta-value highlight-green" id="victory-meta-rating">+25</span>
           </div>
@@ -1622,7 +1760,9 @@
       </div>
 
       <div class="victory-actions">
-                <button id="victory-btn-doubler" class="btn-lime" style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; font-weight: 800; margin-bottom: 8px;" onclick="app.claim3XMatchCoins()">
+        <button id="victory-btn-doubler" class="btn-lime"
+          style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; font-weight: 800; margin-bottom: 8px;"
+          onclick="app.claim3XMatchCoins()">
           <span id="victory-btn-doubler-text">🎬 Watch Ad for 3X Coins (+180 🪙)</span>
         </button>
         <button id="victory-btn-rematch" class="btn-lime" style="margin-bottom: 8px; display: none;"
@@ -1670,25 +1810,43 @@
   <script src="/js/economy-config.js?v=1793065000000"></script>
   <script src="/js/app.js?v=1793317333204"></script>
   <!-- Lucky Tavern Wheel Modal -->
-  <div id="modal-lucky-wheel" class="modal hidden" style="position: fixed; inset: 0; background: rgba(10, 5, 2, 0.88); backdrop-filter: blur(3px); z-index: 99999; display: none; align-items: center; justify-content: center;">
-    <div style="background: radial-gradient(circle at 50% 0%, rgba(201, 151, 0, 0.22), transparent 42%), linear-gradient(180deg, #3A2315 0%, #1A0D06 100%); border: 2px solid #C99700; border-radius: 20px; width: 90%; max-width: 370px; padding: 20px 18px 18px; text-align: center; box-shadow: 0 18px 50px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.12); color: #FDF7EC; position: relative;">
-      <button onclick="app.closeLuckyWheelModal()" style="position: absolute; top: 10px; right: 12px; width: 30px; height: 30px; border-radius: 50%; background: rgba(0,0,0,0.28); border: 1px solid rgba(245, 211, 108, 0.35); color: #F5D36C; font-size: 18px; cursor: pointer;">✕</button>
-      <div style="font-size: 9px; letter-spacing: 2.2px; color: #A58463; font-weight: 900; text-transform: uppercase; margin-bottom: 4px;">Daily Reward</div>
-      <h2 style="font-family: 'Cinzel', serif; font-size: 21px; color: #F5D36C; margin: 0 0 4px 0; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">Lucky Tavern Wheel</h2>
+  <div id="modal-lucky-wheel" class="modal hidden"
+    style="position: fixed; inset: 0; background: rgba(10, 5, 2, 0.88); backdrop-filter: blur(3px); z-index: 99999; display: none; align-items: center; justify-content: center;">
+    <div
+      style="background: radial-gradient(circle at 50% 0%, rgba(201, 151, 0, 0.22), transparent 42%), linear-gradient(180deg, #3A2315 0%, #1A0D06 100%); border: 2px solid #C99700; border-radius: 20px; width: 90%; max-width: 370px; padding: 20px 18px 18px; text-align: center; box-shadow: 0 18px 50px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.12); color: #FDF7EC; position: relative;">
+      <button onclick="app.closeLuckyWheelModal()"
+        style="position: absolute; top: 10px; right: 12px; width: 30px; height: 30px; border-radius: 50%; background: rgba(0,0,0,0.28); border: 1px solid rgba(245, 211, 108, 0.35); color: #F5D36C; font-size: 18px; cursor: pointer;">✕</button>
+      <div
+        style="font-size: 9px; letter-spacing: 2.2px; color: #A58463; font-weight: 900; text-transform: uppercase; margin-bottom: 4px;">
+        Daily Reward</div>
+      <h2
+        style="font-family: 'Cinzel', serif; font-size: 21px; color: #F5D36C; margin: 0 0 4px 0; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
+        Lucky Tavern Wheel</h2>
       <p style="font-size: 11px; color: #D6BD9B; margin: 0 0 10px 0;">1 free spin daily · then up to 3 ad spins</p>
       <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 12px;">
-        <span style="font-size: 9px; font-weight: 800; color: #FFD54F; background: rgba(201,151,0,0.13); border: 1px solid rgba(201,151,0,0.4); border-radius: 999px; padding: 3px 8px;">🪙 Coins</span>
-        <span style="font-size: 9px; font-weight: 800; color: #9EE6FF; background: rgba(80,180,235,0.12); border: 1px solid rgba(80,180,235,0.35); border-radius: 999px; padding: 3px 8px;">⚡ Skill Charges</span>
+        <span
+          style="font-size: 9px; font-weight: 800; color: #FFD54F; background: rgba(201,151,0,0.13); border: 1px solid rgba(201,151,0,0.4); border-radius: 999px; padding: 3px 8px;">🪙
+          Coins</span>
+        <span
+          style="font-size: 9px; font-weight: 800; color: #9EE6FF; background: rgba(80,180,235,0.12); border: 1px solid rgba(80,180,235,0.35); border-radius: 999px; padding: 3px 8px;">⚡
+          Skill Charges</span>
       </div>
       <div style="position: relative; width: 240px; height: 240px; margin: 0 auto 12px auto;">
-        <canvas id="lucky-wheel-canvas" width="240" height="240" style="border-radius: 50%; box-shadow: 0 8px 26px rgba(0,0,0,0.65), 0 0 24px rgba(201, 151, 0, 0.28);"></canvas>
-        <div style="position: absolute; top: -5px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent; border-top: 18px solid #FFD54F; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.85)); z-index: 10;"></div>
+        <canvas id="lucky-wheel-canvas" width="240" height="240"
+          style="border-radius: 50%; box-shadow: 0 8px 26px rgba(0,0,0,0.65), 0 0 24px rgba(201, 151, 0, 0.28);"></canvas>
+        <div
+          style="position: absolute; top: -5px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent; border-top: 18px solid #FFD54F; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.85)); z-index: 10;">
+        </div>
       </div>
-      <div id="lucky-wheel-result" style="min-height: 34px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.22); border: 1px solid rgba(245,211,108,0.18); border-radius: 9px; font-weight: 800; color: #FFD54F; font-size: 12px; margin-bottom: 10px; padding: 5px 8px;">Tap spin to begin 🍀</div>
-      <button id="btn-spin-wheel" onclick="app.spinLuckyWheel()" class="btn-lime" style="font-weight: 900; font-size: 15px; width: 100%; padding: 12px 0; letter-spacing: 0.2px;">
+      <div id="lucky-wheel-result"
+        style="min-height: 34px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.22); border: 1px solid rgba(245,211,108,0.18); border-radius: 9px; font-weight: 800; color: #FFD54F; font-size: 12px; margin-bottom: 10px; padding: 5px 8px;">
+        Tap spin to begin 🍀</div>
+      <button id="btn-spin-wheel" onclick="app.spinLuckyWheel()" class="btn-lime"
+        style="font-weight: 900; font-size: 15px; width: 100%; padding: 12px 0; letter-spacing: 0.2px;">
         <span id="btn-spin-wheel-text">Spin for Free! 🎡</span>
       </button>
-      <p style="font-size: 9px; color: #A58463; line-height: 1.4; margin: 9px 0 0 0;">Skill charges are added to Your Abilities. Equip the skill there, then use it in online PvP.</p>
+      <p style="font-size: 9px; color: #A58463; line-height: 1.4; margin: 9px 0 0 0;">Skill charges are added to Your
+        Abilities. Equip the skill there, then use it in online PvP.</p>
     </div>
   </div>
 </body>
