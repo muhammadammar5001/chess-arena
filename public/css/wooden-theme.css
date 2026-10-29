@@ -3887,225 +3887,46 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 }
 
 .stat-watermark {
-  position: absolute !important;
-  right: 10px !important;
-  bottom: 8px !important;
-  width: 50px !important;
-  height: 50px !important;
-  color: #F5D36C !important;
-  opacity: 0.20 !important;
-  pointer-events: none !important;
-  z-index: 1 !important;
-}
+    position: absolute !important;
+    right: 8px !important;
+    bottom: 6px !important;
+    width: 68px !important;
+    height: 68px !important;
+    color: #F5D36C !important;
+    opacity: 0.22 !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+  }
+  
+  .stat-watermark.watermark-rating {
+    width: 68px !important;
+    height: 68px !important;
+  }
 
-.stat-watermark.watermark-rating {
-  width: 48px !important;
-  height: 48px !important;
-}
-
-.stat-watermark.watermark-wins {
-  width: 44px !important;
-  height: 50px !important;
-}
-
-.stat-watermark.watermark-losses {
-  width: 48px !important;
-  height: 50px !important;
-}
-
-.stat-watermark.watermark-winrate {
-  width: 52px !important;
-  height: 46px !important;
-}
-
-.stat-watermark.watermark-winrate path[fill="none"] {
-  stroke: #F5D36C !important;
-  stroke-width: 3.5px !important;
-}
-
-/* Centered page headings for Rankings and Shop */
-#screen-leaderboard .screen-header-back,
-#screen-shop .screen-header-back {
-  position: relative !important;
-}
-
-#screen-leaderboard .header-title-block,
-#screen-shop .header-title-block {
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  width: max-content !important;
-  max-width: calc(100% - 92px) !important;
-  align-items: center !important;
-  text-align: center !important;
-  pointer-events: none !important;
-}
-
-#screen-leaderboard .header-page-title,
-#screen-shop .header-page-title {
-  margin: 0 !important;
-  text-align: center !important;
-}
-
-#screen-shop .header-page-subtitle {
-  text-align: center !important;
-  display: block !important;
-}
-
-/* Keep the profile shell as wide as the Shop and Rankings sections. */
-#screen-profile .profile-page-shell {
-  max-width: 680px !important;
-}
-
-/* Pinned "YOU" ranking card above the bottom navigation. */
-#screen-leaderboard.has-pinned-rank #leaderboard-list {
-  padding-bottom: 210px !important;
-}
-
-.leaderboard-pinned-rank {
-  position: fixed !important;
-  left: 50% !important;
-  bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important;
-  transform: translateX(-50%) !important;
-  width: min(calc(100% - 40px), 580px) !important;
-  max-width: 580px !important;
-  z-index: 45 !important;
-  display: none;
-  align-items: center !important;
-  gap: 14px !important;
-  padding: 11px 16px !important;
-  box-sizing: border-box !important;
-  border: 2px solid #FFF0A8 !important;
-  border-radius: 16px !important;
-  background:
-    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.48), transparent 36%),
-    linear-gradient(135deg, #F7DE82 0%, #D9B23C 46%, #B7891D 100%) !important;
-  box-shadow:
-    0 10px 26px rgba(0, 0, 0, 0.58),
-    0 0 0 1px rgba(70, 45, 10, 0.48),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
-  color: #20120B !important;
-}
-
-.leaderboard-pinned-rank:not(.hidden) {
-  display: flex;
-}
-
-.leaderboard-pinned-rank.hidden {
-  display: none !important;
-}
-
-.leaderboard-pinned-rank-badge {
-  flex: 0 0 auto !important;
-  min-width: 62px !important;
-  padding-right: 12px !important;
-  border-right: 1px solid rgba(32, 18, 11, 0.28) !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
-}
-
-.leaderboard-pinned-rank-badge::before {
-  content: 'YOUR RANK';
-  margin-bottom: 2px;
-  font-size: 7.5px;
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: 0.9px;
-  color: rgba(32, 18, 11, 0.66);
-}
-
-.leaderboard-pinned-rank-number {
-  font-family: 'Georgia', serif !important;
-  font-size: 24px !important;
-  line-height: 1 !important;
-  font-weight: 900 !important;
-  color: #20120B !important;
-}
-
-.leaderboard-pinned-rank-badge small {
-  margin-top: 2px;
-  font-size: 9px;
-  line-height: 1;
-  font-weight: 800;
-  color: rgba(32, 18, 11, 0.68);
-}
-
-.leaderboard-pinned-rank-body {
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
-}
-
-.leaderboard-pinned-rank-name {
-  display: flex !important;
-  align-items: center !important;
-  flex-wrap: wrap !important;
-  gap: 5px !important;
-  font-family: 'Georgia', serif !important;
-  font-size: 16px !important;
-  line-height: 1.2 !important;
-  font-weight: 800 !important;
-  color: #20120B !important;
-}
-
-.leaderboard-pinned-rank-player {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.leaderboard-pinned-you {
-  flex: 0 0 auto;
-  border-radius: 999px !important;
-  padding: 2px 7px !important;
-  background: #20120B !important;
-  color: #F5D36C !important;
-  font-family: 'Cinzel', 'Georgia', serif !important;
-  font-size: 8.5px !important;
-  line-height: 1.2 !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.7px !important;
-}
-
-#leaderboard-pinned-rank .elo-title-badge {
-  padding: 2px 6px !important;
-  border-width: 1px !important;
-  background: rgba(32, 18, 11, 0.1) !important;
-  border-color: rgba(32, 18, 11, 0.42) !important;
-  color: #20120B !important;
-  box-shadow: none !important;
-  font-size: 8.5px !important;
-}
-
-#leaderboard-pinned-rank .elo-title-icon {
-  color: #20120B !important;
-}
-
-.leaderboard-pinned-rank-meta {
-  margin-top: 3px !important;
-  font-size: 12px !important;
-  line-height: 1.2 !important;
-  font-weight: 700 !important;
-  color: #4A2E1B !important;
-}
-
-.leaderboard-pinned-rank-meta strong {
-  color: #20120B !important;
-  font-weight: 900 !important;
-}
-
-.leaderboard-pinned-rank-dot {
-  margin: 0 5px;
-  color: rgba(32, 18, 11, 0.48);
-}
-
-@media (max-width: 800px) {
-  .leaderboard-pinned-rank {
-    bottom: calc(92px + env(safe-area-inset-bottom, 0px)) !important;
-    width: min(calc(100% - 40px), 580px) !important;
+  .stat-watermark.watermark-rating path {
+    stroke: #F5D36C !important;
+    stroke-width: 5px !important;
+    stroke-linejoin: round !important;
+    paint-order: stroke fill !important;
+  }
+  
+  .stat-watermark.watermark-wins {
+    width: 64px !important;
+    height: 72px !important;
+  }
+  
+  .stat-watermark.watermark-losses {
+    width: 68px !important;
+    height: 72px !important;
+  }
+  
+  .stat-watermark.watermark-winrate {
+    width: 74px !important;
+    height: 64px !important;
+  }
+  
+  .stat-watermark.watermark-winrate path[fill="none"] {
+    stroke: #F5D36C !important;
+    stroke-width: 4px !important;
   }
 }
