@@ -441,6 +441,8 @@ class App {
     pinned.classList.add('hidden');
     pinned.innerHTML = '';
     pinned.removeAttribute('aria-label');
+    const screen = pinned.closest('#screen-leaderboard');
+    if (screen) screen.classList.remove('has-pinned-rank');
   }
 
   renderLeaderboardMyRank() {
@@ -476,6 +478,8 @@ class App {
     if (!pinned) return;
     pinned.innerHTML = this.buildLeaderboardPinnedCard(self);
     pinned.classList.remove('hidden');
+    const screen = pinned.closest('#screen-leaderboard');
+    if (screen) screen.classList.add('has-pinned-rank');
     const total = Math.max(0, Number(this.leaderboardTotalPlayers) || 0);
     const rating = Number(self.rating != null ? self.rating : self.elo) || 1200;
     pinned.setAttribute(
@@ -4989,8 +4993,20 @@ class App {
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     }[ch]));
 
+    const visiblePlayers = this.leaderboardTopPlayers.filter(
+      (player) => !this.isOwnLeaderboardPlayer(player)
+    );
+    if (visiblePlayers.length === 0) {
+      list.innerHTML = '<div style="text-align: center; padding: 36px 18px; color: #D6BD9B;">' +
+        '<div style="font-size: 34px; margin-bottom: 10px;">&#9822;</div>' +
+        '<p style="margin: 0 0 6px; color: #FDF7EC; font-weight: 700;">You are the only ranked player</p>' +
+        '<p style="margin: 0; font-size: 13px;">Your rank is pinned above the navigation.</p></div>';
+      this.renderLeaderboardMyRank();
+      return;
+    }
+
     const myId = this.cloudProfile && this.cloudProfile.playerId;
-    list.innerHTML = this.leaderboardTopPlayers.map((player, i) => {
+    list.innerHTML = visiblePlayers.map((player, i) => {
       const rank = Number(player.rank) > 0 ? Math.floor(Number(player.rank)) : i + 1;
       const medal = ['🥇', '🥈', '🥉'][rank - 1] || '';
       const rankColor = rank === 1 ? '#FFD700' : rank === 2 ? '#E0E0E0' : rank === 3 ? '#CD7F32' : '#C99700';
