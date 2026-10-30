@@ -320,8 +320,18 @@ class App {
       hasServerStats: true
     };
 
-    // Preserve live coins if already active in memory or localStorage
-    if (this.coins !== null && Number.isFinite(Number(this.coins)) && this.coins >= 0) {
+    // Cloud/Account Profile is the authoritative source of truth on YouTube Playables & cross-device play
+    if (clean && Number.isFinite(Number(clean.coins)) && clean.coins >= 0) {
+      const cloudBalance = Math.floor(Number(clean.coins));
+      // If user earned coins in the active session before cloud profile finished loading,
+      // preserve their earnings; otherwise take the account cloud balance.
+      if (this._sessionCoinsModified) {
+        clean.coins = Math.max(this.coins || 0, cloudBalance);
+      } else {
+        clean.coins = cloudBalance;
+      }
+      this.coins = clean.coins;
+    } else if (this.coins !== null && Number.isFinite(Number(this.coins)) && this.coins >= 0) {
       clean.coins = this.coins;
     } else {
       let savedLocal = NaN;
@@ -329,8 +339,6 @@ class App {
       if (Number.isFinite(savedLocal) && savedLocal >= 0) {
         clean.coins = savedLocal;
         this.coins = savedLocal;
-      } else if (Number.isFinite(Number(clean.coins))) {
-        this.coins = Math.max(0, Math.floor(Number(clean.coins)));
       } else {
         this.coins = 1000;
         clean.coins = 1000;
@@ -3879,6 +3887,9 @@ class App {
   updateUserCoins(newAmount, options = {}) {
     const amount = Math.max(0, Math.floor(Number(newAmount) || 0));
     this.coins = amount;
+    if (options.persist !== false) {
+      this._sessionCoinsModified = true;
+    }
     try {
       localStorage.setItem('chessarena_coins', String(amount));
     } catch(e) {}
@@ -3888,6 +3899,11 @@ class App {
       this.cloudProfile.lastUpdated = Date.now();
       if (options.persist !== false && window.ChessArenaStorage) {
         window.ChessArenaStorage.saveProfile(this.cloudProfile).catch(() => {});
+      }
+    } else if (options.persist !== false && window.ChessArenaStorage) {
+      if (window.ChessArenaStorage.current) {
+        window.ChessArenaStorage.current.coins = amount;
+        window.ChessArenaStorage.saveProfile(window.ChessArenaStorage.current).catch(() => {});
       }
     }
 
@@ -5598,15 +5614,15 @@ class App {
       } catch (e) { /* ignore */ }
       if (!Number.isFinite(localCoins) || localCoins < 0) localCoins = startingCoins;
       let activeCoins;
-      // Priority 1: In-memory live balance (if session already has active coins)
-      if (this.coins !== null && Number.isFinite(Number(this.coins)) && this.coins >= 0) {
+      // Priority 1: Cloud/Account Profile (Authoritative source on YouTube Playables / logged-in accounts)
+      if (cloudCoins !== null) {
+        activeCoins = cloudCoins;
+      // Priority 2: In-memory live balance (if session already has active coins)
+      } else if (this.coins !== null && Number.isFinite(Number(this.coins)) && this.coins >= 0) {
         activeCoins = Math.floor(Number(this.coins));
-      // Priority 2: Persistent localStorage coins (survives page refresh!)
+      // Priority 3: Local mirror fallback (offline cache)
       } else if (Number.isFinite(localCoins) && localCoins >= 0) {
         activeCoins = localCoins;
-      // Priority 3: Cloud profile coins
-      } else if (cloudCoins !== null) {
-        activeCoins = cloudCoins;
       // Priority 4: Initial starting balance
       } else {
         activeCoins = startingCoins;
