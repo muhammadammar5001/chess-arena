@@ -5882,17 +5882,21 @@ class App {
       return;
     }
 
-    if (confirm(`Unlock ${skill.name} for ${skill.cost} Coins?`)) {
-      if (this.spendCoins(skill.cost, `unlock_skill_${id}`)) {
-        if (!this.unlockedSkills.includes(id)) {
-          this.unlockedSkills.push(id);
+    this.showConfirm(
+      'Unlock Ability?',
+      `Unlock ${skill.name} for ${skill.cost.toLocaleString()} Coins?`,
+      () => {
+        if (this.spendCoins(skill.cost, `unlock_skill_${id}`)) {
+          if (!this.unlockedSkills.includes(id)) {
+            this.unlockedSkills.push(id);
+          }
+          this.skillCharges[id] = 3;
+          this.saveEconomyState();
+          this.syncAbilitiesUI();
+          this.showToast(`🎉 ${skill.name} unlocked with 3 free charges!`);
         }
-        this.skillCharges[id] = 3;
-        this.saveEconomyState();
-        this.syncAbilitiesUI();
-        this.showToast(`🎉 ${skill.name} unlocked with 3 free charges!`);
       }
-    }
+    );
   }
 
   syncSlotUI() {
@@ -6008,17 +6012,21 @@ class App {
       return;
     }
 
-    if (confirm(`Unlock ${board.name} for ${board.cost.toLocaleString()} Coins?`)) {
-      if (this.spendCoins(board.cost, `unlock_board_${boardId}`)) {
-        if (!this.unlockedBoards.includes(boardId)) {
-          this.unlockedBoards.push(boardId);
+    this.showConfirm(
+      'Unlock Board?',
+      `Unlock ${board.name} for ${board.cost.toLocaleString()} Coins?`,
+      () => {
+        if (this.spendCoins(board.cost, `unlock_board_${boardId}`)) {
+          if (!this.unlockedBoards.includes(boardId)) {
+            this.unlockedBoards.push(boardId);
+          }
+          this.saveEconomyState();
+          this.equipCosmetic('board', boardId);
+          this.syncShopUI();
+          this.showToast(`🎉 Unlocked and equipped ${board.name}!`);
         }
-        this.saveEconomyState();
-        this.equipCosmetic('board', boardId);
-        this.syncShopUI();
-        this.showToast(`🎉 Unlocked and equipped ${board.name}!`);
       }
-    }
+    );
   }
 
   syncShopUI() {
