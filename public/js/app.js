@@ -12,6 +12,14 @@ const CHECK_VOLUME = 0.9;
 const CHECK_FADE_IN = 0.4;    // seconds — swells in when the king is checked
 const CHECK_FADE_OUT = 0.4;   // seconds — cuts away when the king escapes
 
+// Check alert droplets: golden teardrop sprite with bold black stroke matching the reference page.
+const CHECK_DROPLET_SVG =
+  '<svg viewBox="0 0 100 120" aria-hidden="true" focusable="false">' +
+    '<path d="M50 8C50 8 14 52 14 80a36 36 0 0 0 72 0C86 52 50 8 50 8Z" fill="#FFC837" stroke="#050608" stroke-width="22" stroke-linejoin="round"/>' +
+    '<path d="M50 8C50 8 14 52 14 80a36 36 0 0 0 72 0C86 52 50 8 50 8Z" fill="#FFC837"/>' +
+  '</svg>';
+
+
 const PLAYER_AVATARS = Array.from({ length: 18 }, (_, index) => {
   const number = String(index + 1).padStart(2, '0');
   return {
@@ -2722,45 +2730,96 @@ class App {
 
   // --- Crying king tears ------------------------------
 
+    // --- Check Alert Droplets (Golden teardrops with black strokes) -------
+  // Replicates the reference droplet burst: droplets burst radially around
+  // the checked king with tip trailing back, scaling up then shrinking away.
+
   startCheckTears() {
     this.stopCheckTears();
-    this.spawnCheckTear();
-    this.spawnCheckTear();
-    this._tearInterval = setInterval(() => this.spawnCheckTear(), 260);
+    for (let i = 0; i < 3; i++) {
+      this.spawnCheckTear();
+    }
+    const loop = () => {
+      this.spawnCheckTear();
+      const delay = 210 + Math.random() * (320 - 210);
+      this._tearTimer = setTimeout(loop, delay);
+    };
+    this._tearTimer = setTimeout(loop, 240);
   }
 
   stopCheckTears() {
-    if (this._tearInterval) {
-      clearInterval(this._tearInterval);
-      this._tearInterval = null;
+    if (this._tearTimer) {
+      clearTimeout(this._tearTimer);
+      this._tearTimer = null;
     }
-    document.querySelectorAll('.board-wrap .check-tear').forEach(el => el.remove());
+    document.querySelectorAll('.board-wrap .check-tear').forEach(el => {
+      try {
+        if (el.getAnimations) {
+          el.getAnimations().forEach(a => a.cancel());
+        }
+      } catch (e) {}
+      el.remove();
+    });
   }
 
   spawnCheckTear() {
     const boardWrap = document.querySelector('.board-wrap');
-    const kingSq = document.querySelector('.square.is-check');
+    const kingSq = document.querySelector('.square.is-check') || document.querySelector('.square.check');
     if (!boardWrap || !kingSq) return;
-    if (boardWrap.querySelectorAll('.check-tear').length > 16) return;
+    if (boardWrap.querySelectorAll('.check-tear').length > 22) return;
 
     const wrapRect = boardWrap.getBoundingClientRect();
     const sqRect = kingSq.getBoundingClientRect();
-    if (sqRect.width < 4) return;
+    const kh = sqRect.height;
+    if (sqRect.width < 4 || kh < 4) return;
 
-    const side = Math.random() < 0.5 ? 0.26 : 0.74;
-    const size = 7 + Math.random() * 3.5;
-    const drop = document.createElement('span');
-    drop.className = 'check-tear';
-    drop.style.width = `${size.toFixed(1)}px`;
-    drop.style.height = `${size.toFixed(1)}px`;
-    drop.style.left = `${sqRect.left - wrapRect.left + sqRect.width * (side + (Math.random() * 0.06 - 0.03))}px`;
-    drop.style.top = `${sqRect.top - wrapRect.top + sqRect.height * (0.3 + Math.random() * 0.1)}px`;
-    drop.style.setProperty('--tear-drift', `${((Math.random() * 2 - 1) * 18).toFixed(1)}px`);
-    drop.style.setProperty('--tear-fall', `${(sqRect.height * (1.05 + Math.random() * 0.65)).toFixed(1)}px`);
-    drop.style.setProperty('--tear-spin', `${((Math.random() * 2 - 1) * 40).toFixed(0)}deg`);
-    drop.style.animationDelay = `${(Math.random() * 0.12).toFixed(2)}s`;
+    const rnd = (a, b) => a + Math.random() * (b - a);
+    const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const cx = sqRect.left - wrapRect.left + sqRect.width / 2;
+    const cy = sqRect.top - wrapRect.top + kh / 2;
+
+    // Random point around the checked king's silhouette
+    const th = rnd(0, Math.PI * 2);
+    const ox = cx + Math.cos(th) * sqRect.width * 0.45;
+    const oy = cy + Math.sin(th) * kh * 0.48;
+
+    const a = th * 180 / Math.PI + rnd(-40, 40);
+    const dist = rnd(0.35, 2.1);
+    const sz = rnd(0.2, 1.1);
+
+    const s = sz * kh * 0.55;
+    const rad = a * Math.PI / 180;
+    const dx = Math.cos(rad) * dist * kh;
+    const dy = Math.sin(rad) * dist * kh;
+    const rot = Math.atan2(-Math.cos(rad), Math.sin(rad)) * 180 / Math.PI; // tip trails toward the king
+
+    const drop = document.createElement('div');
+    drop.className = 'check-tear d';
+    drop.style.width = `${s.toFixed(1)}px`;
+    drop.style.height = `${(s * 1.2).toFixed(1)}px`;
+    drop.style.marginLeft = `${(-s / 2).toFixed(1)}px`;
+    drop.style.marginTop = `${(-s * 0.6).toFixed(1)}px`;
+    drop.innerHTML = CHECK_DROPLET_SVG;
     boardWrap.appendChild(drop);
-    drop.addEventListener('animationend', () => drop.remove(), { once: true });
+
+    const T = (f, sc) =>
+      `translate(${(ox + dx * f).toFixed(1)}px, ${(oy + dy * f).toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scale(${sc})`;
+
+    if (drop.animate) {
+      const an = drop.animate([
+        { transform: T(0, 0.03), offset: 0 },
+        { transform: T(0.55, 1), offset: 0.5, easing: 'ease-in' },
+        { transform: T(1, 0.03), offset: 1 }
+      ], {
+        duration: reduce ? 1600 : rnd(900, 2100),
+        easing: 'cubic-bezier(.25,.6,.3,1)',
+        fill: 'both'
+      });
+      an.onfinish = () => drop.remove();
+    } else {
+      setTimeout(() => drop.remove(), 1600);
+    }
   }
 
   // --- Square Click Handling -------------------------
@@ -2802,6 +2861,11 @@ class App {
   handleSquareClick(row, col) {
     if (this.isAnimatingMove) return;
     if (this.engine.gameOver) return;
+
+    const clickedPiece = this.engine ? this.engine.getPiece(row, col) : null;
+    if (clickedPiece && clickedPiece.type === 'king' && this.engine.isKingInCheck(clickedPiece.color)) {
+      for (let i = 0; i < 5; i++) this.spawnCheckTear();
+    }
 
     if (this.activeAbility) {
         if (this.activeAbility === 'shield') {

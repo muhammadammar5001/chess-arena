@@ -455,54 +455,25 @@ body, html, .screen, .fantasy-home-screen, #screen-home, #screen-profile, .shop-
   }
 }
 
-/* --- Crying king teardrops --- */
+/* --- Check Alert Droplets (Cartoon Stress / Panic Burst) ---
+   Golden teardrops with black border. Animated via Web Animations API
+   so droplets burst outward around the checked king with tip trailing back. */
 
 .check-tear {
   position: absolute !important;
-  z-index: 11 !important;
+  left: 0 !important;
+  top: 0 !important;
+  z-index: 15 !important;
   pointer-events: none !important;
-  will-change: transform, opacity;
-  animation: check-tear-fall 0.95s cubic-bezier(0.4, 0.05, 0.65, 0.4) forwards !important;
+  will-change: transform;
+  display: block !important;
 }
 
-.check-tear::before {
-  content: "" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  border-radius: 0 50% 50% 50% !important;
-  transform: rotate(45deg) !important;
-  background: linear-gradient(145deg, #f2fdff 4%, #a9ecff 38%, #4dc4ec 76%, #2a8cbe 100%) !important;
-  box-shadow:
-    inset -1px -1px 2px rgba(16, 78, 112, 0.45),
-    0 0 7px rgba(150, 234, 255, 0.85) !important;
-}
-
-@keyframes check-tear-fall {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, 0, 0) scale(0.3) rotate(0deg);
-  }
-  12% {
-    opacity: 1;
-    transform: translate3d(calc(var(--tear-drift, 0px) * 0.08), -4px, 0) scale(1) rotate(calc(var(--tear-spin, 8deg) * 0.2));
-  }
-  30% {
-    opacity: 1;
-    transform: translate3d(calc(var(--tear-drift, 0px) * 0.25), calc(var(--tear-fall, 42px) * 0.2), 0) scale(1) rotate(calc(var(--tear-spin, 8deg) * 0.4));
-  }
-  72% {
-    opacity: 0.95;
-  }
-  100% {
-    opacity: 0;
-    transform: translate3d(var(--tear-drift, 0px), var(--tear-fall, 42px), 0) scale(0.9) rotate(var(--tear-spin, 8deg));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .check-tear {
-    animation-duration: 1.6s !important;
-  }
+.check-tear svg {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: visible !important;
 }
 
 .square.move-target::after,

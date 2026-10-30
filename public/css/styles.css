@@ -4439,3 +4439,22 @@ div.game-layout-wrapper {
   0% { transform: scale(1); opacity: 0.9; }
   100% { transform: scale(1.04); opacity: 1; }
 }
+
+
+/* ─── Check Alert Droplets ─── */
+.check-tear {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 15;
+  pointer-events: none;
+  will-change: transform;
+  display: block;
+}
+
+.check-tear svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
