@@ -4160,15 +4160,24 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   box-sizing: border-box !important;
 }
 
+#screen-leaderboard .screen-header-back {
+  position: relative !important;
+  min-height: 48px !important;
+  margin-bottom: 14px !important;
+  padding: 4px 4px 10px 4px !important;
+}
+
 #leaderboard-list {
   width: 100% !important;
   max-width: 100% !important;
-  padding: 0 4px 160px 4px !important;
+  padding: 16px 6px 160px 6px !important;
   box-sizing: border-box !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  gap: 10px !important;
+  gap: 12px !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140, 101, 56, 0.3) transparent;
 }
 
 #screen-leaderboard.has-pinned-rank #leaderboard-list {
@@ -4205,9 +4214,8 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
     radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.52), transparent 36%),
     linear-gradient(135deg, #F7DE82 0%, #D9B23C 46%, #B7891D 100%) !important;
   box-shadow:
-    0 8px 22px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(70, 45, 10, 0.48),
-    0 0 14px rgba(247, 222, 130, 0.3),
+    0 2px 6px rgba(70, 45, 10, 0.16),
+    0 1px 2px rgba(70, 45, 10, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.75) !important;
   color: #20120B !important;
 }
@@ -4216,7 +4224,7 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 .ranking-card.rank-top-1 .ranking-num {
   color: #20120B !important;
   font-weight: 900 !important;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+  text-shadow: none !important;
 }
 
 .ranking-card.rank-gold .ranking-name,
@@ -4252,7 +4260,7 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 
 .ranking-card.rank-gold .ranking-medal,
 .ranking-card.rank-top-1 .ranking-medal {
-  filter: drop-shadow(0 2px 6px rgba(32, 18, 11, 0.45)) !important;
+  filter: none !important;
 }
 
 /* 2nd Place - Radiant Silver */
@@ -4264,9 +4272,8 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
     radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.65), transparent 36%),
     linear-gradient(135deg, #F3F5F9 0%, #C8CFD9 46%, #8E98A7 100%) !important;
   box-shadow:
-    0 8px 22px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(45, 52, 64, 0.48),
-    0 0 14px rgba(220, 225, 235, 0.3),
+    0 2px 6px rgba(45, 52, 64, 0.14),
+    0 1px 2px rgba(45, 52, 64, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.85) !important;
   color: #151B26 !important;
 }
@@ -4275,7 +4282,7 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 .ranking-card.rank-top-2 .ranking-num {
   color: #151B26 !important;
   font-weight: 900 !important;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  text-shadow: none !important;
 }
 
 .ranking-card.rank-silver .ranking-name,
@@ -4311,7 +4318,7 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 
 .ranking-card.rank-silver .ranking-medal,
 .ranking-card.rank-top-2 .ranking-medal {
-  filter: drop-shadow(0 2px 6px rgba(21, 27, 38, 0.45)) !important;
+  filter: none !important;
 }
 
 /* 3rd Place - Radiant Bronze */
@@ -4323,9 +4330,8 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
     radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.52), transparent 36%),
     linear-gradient(135deg, #F6BA88 0%, #CE7B42 46%, #944819 100%) !important;
   box-shadow:
-    0 8px 22px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(60, 25, 8, 0.48),
-    0 0 14px rgba(206, 123, 66, 0.3),
+    0 2px 6px rgba(60, 25, 8, 0.16),
+    0 1px 2px rgba(60, 25, 8, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
   color: #200E05 !important;
 }
@@ -4334,7 +4340,7 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 .ranking-card.rank-top-3 .ranking-num {
   color: #200E05 !important;
   font-weight: 900 !important;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  text-shadow: none !important;
 }
 
 .ranking-card.rank-bronze .ranking-name,
@@ -4370,7 +4376,7 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 
 .ranking-card.rank-bronze .ranking-medal,
 .ranking-card.rank-top-3 .ranking-medal {
-  filter: drop-shadow(0 2px 6px rgba(32, 14, 5, 0.45)) !important;
+  filter: none !important;
 }
 
 /* Pinned YOU rank card - matching exact same width & sizing */
@@ -4394,9 +4400,15 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
     padding: 12px 8px 150px 8px !important;
   }
 
+  #screen-leaderboard .screen-header-back {
+    min-height: 44px !important;
+    margin-bottom: 12px !important;
+  }
+
   #leaderboard-list {
-    padding: 0 2px 150px 2px !important;
-    gap: 8px !important;
+    padding: 14px 4px 150px 4px !important;
+    gap: 10px !important;
+    scrollbar-width: none;
   }
 
   .ranking-card,
@@ -4492,7 +4504,7 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
     0 4px 12px rgba(0, 0, 0, 0.45),
     0 0 10px rgba(245, 211, 108, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  text-shadow: none !important;
 }
 
 
