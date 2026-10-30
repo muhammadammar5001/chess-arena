@@ -118,7 +118,7 @@ class App {
     this.setupDraggableChat();
     
     // Economy & Monetization state
-    this.coins = 1000;
+    this.coins = null;
     this.playerLevel = 1;
     this.playerXP = 0;
     this.slot2Unlocked = false;
@@ -321,15 +321,20 @@ class App {
     };
 
     // Preserve live coins if already active in memory or localStorage
-    if (Number.isFinite(Number(this.coins))) {
+    if (this.coins !== null && Number.isFinite(Number(this.coins)) && this.coins >= 0) {
       clean.coins = this.coins;
     } else {
       let savedLocal = NaN;
       try { savedLocal = parseInt(localStorage.getItem('chessarena_coins'), 10); } catch (e) {}
       if (Number.isFinite(savedLocal) && savedLocal >= 0) {
         clean.coins = savedLocal;
+        this.coins = savedLocal;
+      } else if (Number.isFinite(Number(clean.coins))) {
+        this.coins = Math.max(0, Math.floor(Number(clean.coins)));
+      } else {
+        this.coins = 1000;
+        clean.coins = 1000;
       }
-      this.coins = clean.coins;
     }
     this.updateUserCoins(this.coins, { persist: false });
     if (clean.equipped && clean.equipped.board) {
@@ -3862,7 +3867,7 @@ class App {
   }
 
   getUserCoins() {
-    if (this.coins !== undefined && this.coins !== null) return this.coins;
+    if (this.coins !== undefined && this.coins !== null && Number.isFinite(Number(this.coins))) return this.coins;
     let saved = localStorage.getItem('chessarena_coins');
     if (saved !== null) {
       const parsed = parseInt(saved, 10);
@@ -5402,7 +5407,7 @@ class App {
 
   saveEconomyState() {
     try {
-      localStorage.setItem('chessarena_coins', String(this.coins));
+      if (this.coins !== null && Number.isFinite(Number(this.coins))) { localStorage.setItem('chessarena_coins', String(this.coins)); }
       localStorage.setItem('chessarena_avatar_id', this.avatarId);
       localStorage.setItem('owl_player_level', String(this.playerLevel));
       localStorage.setItem('owl_player_xp', String(this.playerXP));
@@ -5593,12 +5598,16 @@ class App {
       } catch (e) { /* ignore */ }
       if (!Number.isFinite(localCoins) || localCoins < 0) localCoins = startingCoins;
       let activeCoins;
-      if (Number.isFinite(Number(this.coins)) && this.coins >= 0) {
+      // Priority 1: In-memory live balance (if session already has active coins)
+      if (this.coins !== null && Number.isFinite(Number(this.coins)) && this.coins >= 0) {
         activeCoins = Math.floor(Number(this.coins));
+      // Priority 2: Persistent localStorage coins (survives page refresh!)
       } else if (Number.isFinite(localCoins) && localCoins >= 0) {
         activeCoins = localCoins;
+      // Priority 3: Cloud profile coins
       } else if (cloudCoins !== null) {
         activeCoins = cloudCoins;
+      // Priority 4: Initial starting balance
       } else {
         activeCoins = startingCoins;
       }
