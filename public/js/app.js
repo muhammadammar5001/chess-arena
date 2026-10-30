@@ -1528,11 +1528,15 @@ class App {
 
   sendChatMessage() {
     const input = document.getElementById('chat-input');
-    const text = input.value.trim();
-    if (!text || !this.multiplayer) return;
+    const text = input ? input.value.trim() : '';
+    if (!text) return;
 
-    this.multiplayer.sendChatMessage(text);
-    input.value = '';
+    if (this.gameMode === 'online' && this.multiplayer && (this.multiplayer.isConnected || (this.multiplayer.ws && this.multiplayer.ws.readyState === 1))) {
+      this.multiplayer.sendChatMessage(text);
+    } else {
+      this.displayLocalChatMessage(this.playerColor || 'white', 'You', text);
+    }
+    if (input) input.value = '';
   }
 
   setupMultiplayerCallbacks() {
@@ -1844,7 +1848,14 @@ class App {
         displaySender = 'You';
       }
 
-      msgDiv.innerHTML = `<span class="chat-sender ${sender}">${displaySender}:</span> <span class="chat-text">${text}</span>`;
+      const senderSpan = document.createElement('span');
+      senderSpan.className = `chat-sender ${sender}`;
+      senderSpan.textContent = `${displaySender}: `;
+      const textSpan = document.createElement('span');
+      textSpan.className = 'chat-text';
+      textSpan.textContent = text;
+      msgDiv.appendChild(senderSpan);
+      msgDiv.appendChild(textSpan);
       chatMessages.appendChild(msgDiv);
       chatMessages.scrollTop = chatMessages.scrollHeight;
 
@@ -5088,19 +5099,42 @@ class App {
   }
 
   sendEmote(text) {
-    if (this.multiplayer && this.multiplayer.ws && this.roomCode) {
-      this.multiplayer.send({ type: 'chat_message', roomCode: this.roomCode, message: text });
-    }
-    const msgBox = document.getElementById('chat-messages');
-    if (msgBox) {
-      const p = document.createElement('div');
-      p.style.margin = '4px 0';
-      p.style.color = '#FFD54F';
-      p.textContent = `You: ${text}`;
-      msgBox.appendChild(p);
-      msgBox.scrollTop = msgBox.scrollHeight;
+    if (!text) return;
+    if (this.gameMode === 'online' && this.multiplayer && (this.multiplayer.isConnected || (this.multiplayer.ws && this.multiplayer.ws.readyState === 1))) {
+      this.multiplayer.sendChatMessage(text);
+    } else {
+      this.displayLocalChatMessage(this.playerColor || 'white', 'You', text);
     }
     this.showToast(text);
+  }
+
+  displayLocalChatMessage(sender, senderName, text) {
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'chat-message';
+      const senderSpan = document.createElement('span');
+      senderSpan.className = `chat-sender ${sender}`;
+      senderSpan.textContent = `${senderName}: `;
+      const textSpan = document.createElement('span');
+      textSpan.className = 'chat-text';
+      textSpan.textContent = text;
+      msgDiv.appendChild(senderSpan);
+      msgDiv.appendChild(textSpan);
+      chatMessages.appendChild(msgDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    const bubble = document.getElementById('bottom-chat-bubble');
+    if (bubble) {
+      bubble.textContent = text;
+      if (bubble.hideTimeout) clearTimeout(bubble.hideTimeout);
+      bubble.classList.remove('show');
+      void bubble.offsetWidth;
+      bubble.classList.add('show');
+      bubble.hideTimeout = setTimeout(() => {
+        bubble.classList.remove('show');
+      }, 4500);
+    }
   }
 
   toggleCoords() {

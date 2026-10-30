@@ -300,7 +300,7 @@ class MultiplayerClient {
   }
 
   sendChatMessage(text) {
-    this.send({ type: 'chat_message', text: text });
+    this.send({ type: 'chat_message', text: text, roomCode: this.roomCode });
   }
 
   findMatch(timerMinutes = null, mode = 'standard', abilities = [], avatarId = null) {

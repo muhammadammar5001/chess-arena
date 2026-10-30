@@ -453,7 +453,7 @@ function handleMessage(ws, data) {
       handleCancelMatch(ws);
       break;
     case 'chat_message':
-      handleChatMessage(ws, data.text);
+      handleChatMessage(ws, data.text || data.message, data.roomCode);
       break;
     case 'use_ability':
         handleUseAbility(ws, data);
@@ -944,21 +944,27 @@ function handleReconnect(ws, data) {
   console.log('Player ' + color + ' reconnected to room ' + data.roomCode);
 }
 
-function handleChatMessage(ws, text) {
-  if (!ws.roomCode) return;
-  const room = rooms.get(ws.roomCode);
+function handleChatMessage(ws, text, roomCode) {
+  if (!text || typeof text !== 'string') return;
+  const cleanText = text.trim().slice(0, 200);
+  if (!cleanText) return;
+
+  const targetRoomCode = ws.roomCode || roomCode;
+  if (!targetRoomCode) return;
+  const room = rooms.get(targetRoomCode);
   if (!room) return;
 
-  const sender = ws.playerColor; // 'white' or 'black'
-  let senderName = 'Player';
+  const sender = ws.playerColor || 'spectator';
+  let senderName = 'Spectator';
   if (sender === 'white') senderName = 'White';
   else if (sender === 'black') senderName = 'Black';
+  else if (ws.spectatorName) senderName = ws.spectatorName;
 
   broadcastToRoom(room, {
     type: 'chat_message',
     sender: sender,
     senderName: senderName,
-    text: text
+    text: cleanText
   });
 }
 
