@@ -320,7 +320,18 @@ class App {
       hasServerStats: true
     };
 
-    this.updateUserCoins(clean.coins, { persist: false });
+    // Preserve live coins if already active in memory or localStorage
+    if (Number.isFinite(Number(this.coins))) {
+      clean.coins = this.coins;
+    } else {
+      let savedLocal = NaN;
+      try { savedLocal = parseInt(localStorage.getItem('chessarena_coins'), 10); } catch (e) {}
+      if (Number.isFinite(savedLocal) && savedLocal >= 0) {
+        clean.coins = savedLocal;
+      }
+      this.coins = clean.coins;
+    }
+    this.updateUserCoins(this.coins, { persist: false });
     if (clean.equipped && clean.equipped.board) {
       const cloudBoard = clean.equipped.board;
       document.body.dataset.boardTheme = cloudBoard;
@@ -3584,6 +3595,7 @@ class App {
   showVictoryScreen(result) {
     // Persist the finished game (once per session) before rendering the recap
     this.recordGameResult(result);
+    this.updateCoinsDisplay();
 
     const earnedCoins = Math.max(0, Number(this.lastMatchCoinsEarned) || 0);
     const coinsMeta = document.getElementById('victory-meta-coins');
@@ -3851,12 +3863,16 @@ class App {
       localStorage.setItem('chessarena_coins', String(amount));
     } catch(e) {}
 
-    if (this.cloudProfile && options.persist !== false) {
+    if (this.cloudProfile) {
       this.cloudProfile.coins = amount;
       this.cloudProfile.lastUpdated = Date.now();
-      if (window.ChessArenaStorage) {
+      if (options.persist !== false && window.ChessArenaStorage) {
         window.ChessArenaStorage.saveProfile(this.cloudProfile).catch(() => {});
       }
+    }
+
+    if (window.ChessArenaStorage && window.ChessArenaStorage.current) {
+      window.ChessArenaStorage.current.coins = amount;
     }
 
     this.updateCoinsDisplay();
@@ -4200,6 +4216,9 @@ class App {
       if (Number.isFinite(Number(stats.bestStreak))) updated.stats.bestStreak = Math.max(0, Math.floor(Number(stats.bestStreak)));
       updated.stats.bestStreak = Math.max(updated.stats.bestStreak || 0, updated.stats.winStreak || 0);
       updated.lastUpdated = Date.now();
+      updated.coins = (this.coins !== undefined && this.coins !== null && Number.isFinite(Number(this.coins)))
+        ? this.coins
+        : (updated.coins || 1000);
       this.cloudProfile = updated;
       this.lastServerStats = stats;
       this.lastServerStatsGameId = gameId || (this.multiplayer && this.multiplayer.gameId) || null;
@@ -4333,7 +4352,8 @@ class App {
           mode,
           opponent: opponentName,
           authoritative,
-          ratingBefore
+          ratingBefore,
+          coins: this.coins
         }).then((updated) => {
           if (!updated) return;
           if (this._profileRevision !== revision) {
@@ -4344,6 +4364,7 @@ class App {
             if (current && Array.isArray(updated.matchHistory) &&
                 updated.matchHistory.length > (current.matchHistory || []).length) {
               current.matchHistory = updated.matchHistory;
+              current.coins = this.coins;
               if (window.ChessArenaStorage) {
                 window.ChessArenaStorage.saveProfile(current).catch(() => {});
               }
@@ -4352,6 +4373,7 @@ class App {
             this.queueLeaderboardSync(200);
             return;
           }
+          updated.coins = this.coins;
           this.cloudProfile = updated;
           this.applyCloudProfile(updated);
           this.lastRatingChange = updated.rating - ratingBefore;
@@ -5555,7 +5577,19 @@ class App {
         if (oldKeyRaw !== null) localStorage.removeItem('owl_coins');
       } catch (e) { /* ignore */ }
       if (!Number.isFinite(localCoins) || localCoins < 0) localCoins = startingCoins;
-      this.coins = cloudCoins !== null ? cloudCoins : localCoins;
+      let activeCoins;
+      if (Number.isFinite(Number(this.coins)) && this.coins >= 0) {
+        activeCoins = Math.floor(Number(this.coins));
+      } else if (Number.isFinite(localCoins) && localCoins >= 0) {
+        activeCoins = localCoins;
+      } else if (cloudCoins !== null) {
+        activeCoins = cloudCoins;
+      } else {
+        activeCoins = startingCoins;
+      }
+      this.coins = activeCoins;
+      try { localStorage.setItem('chessarena_coins', String(activeCoins)); } catch (e) {}
+      if (this.cloudProfile) this.cloudProfile.coins = activeCoins;
 
       const parsedLevel = parseInt(localStorage.getItem('owl_player_level'), 10);
       this.playerLevel = Number.isFinite(parsedLevel) && parsedLevel > 0 ? parsedLevel : 1;

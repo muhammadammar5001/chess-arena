@@ -589,6 +589,18 @@
       if (!profile) profile = this.createDraftProfile();
       if (!profile) return null;
 
+      // Preserve active coin balance from caller or localStorage
+      if (options.coins !== undefined && options.coins !== null && Number.isFinite(Number(options.coins))) {
+        profile.coins = Math.max(0, Math.floor(Number(options.coins)));
+      } else {
+        try {
+          const savedCoins = parseInt(localStorage.getItem('chessarena_coins'), 10);
+          if (Number.isFinite(savedCoins) && savedCoins >= 0) {
+            profile.coins = savedCoins;
+          }
+        } catch (e) { /* ignore */ }
+      }
+
       const beforeRating = Number.isFinite(Number(options.ratingBefore))
         ? Math.min(4000, Math.max(100, toInt(options.ratingBefore, profile.rating)))
         : profile.rating;
