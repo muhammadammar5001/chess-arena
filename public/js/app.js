@@ -1864,23 +1864,9 @@ class App {
         this.playSound('tweet');
       }
 
-      // Show chat bubble on correct player avatar
-      // From THIS client's perspective:
-      //   - "bottom" avatar = the player on THIS device (their own side)
-      //   - "top" avatar = the opponent
-      // So: if sender === my color — show on bottom bubble (MY bubble)
-      //     if sender !== my color — show on top bubble (OPPONENT's bubble)
-      if (sender === 'white' || sender === 'black') {
-        let bubbleId;
-        if (sender === this.playerColor) {
-          // I sent this message — show on my avatar (bottom)
-          bubbleId = 'bottom-chat-bubble';
-        } else {
-          // Opponent sent — show on their avatar (top)
-          bubbleId = 'top-chat-bubble';
-        }
-
-        const bubble = document.getElementById(bubbleId);
+      // Show chat bubble ONLY on opponent's avatar when opponent sends a message
+      if (sender && sender !== this.playerColor) {
+        const bubble = document.getElementById('top-chat-bubble');
         if (bubble) {
           bubble.textContent = text;
           if (bubble.hideTimeout) clearTimeout(bubble.hideTimeout);
@@ -5123,17 +5109,6 @@ class App {
       msgDiv.appendChild(textSpan);
       chatMessages.appendChild(msgDiv);
       chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-    const bubble = document.getElementById('bottom-chat-bubble');
-    if (bubble) {
-      bubble.textContent = text;
-      if (bubble.hideTimeout) clearTimeout(bubble.hideTimeout);
-      bubble.classList.remove('show');
-      void bubble.offsetWidth;
-      bubble.classList.add('show');
-      bubble.hideTimeout = setTimeout(() => {
-        bubble.classList.remove('show');
-      }, 4500);
     }
   }
 
