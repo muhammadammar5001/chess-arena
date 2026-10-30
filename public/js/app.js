@@ -4176,19 +4176,22 @@ class App {
    * Match payout: coins + XP + first-win-of-the-day bonus.
    * Called once from recordGameResult, after its idempotency guard.
    */
-  awardMatchEconomy(outcome, mode) {
+  awardMatchEconomy(outcome, mode, reason) {
     this.ensureDailyTracking();
     const difficulty = (this.ai && this.ai.difficulty) ? this.ai.difficulty : 'medium';
     const config = window.ECONOMY_CONFIG;
     let reward = { coins: 0, xp: 0 };
 
     if (config && typeof config.calculateMatchReward === 'function') {
-      reward = config.calculateMatchReward(mode, difficulty, outcome);
+      reward = config.calculateMatchReward(mode, difficulty, outcome, reason);
     } else if (config) {
       const isPvp = mode === 'online' || mode === 'pvp';
       if (isPvp) {
         reward.coins = Number(config.currency?.pvp?.[outcome] || 0);
         reward.xp = Number(config.progression?.pvpXp?.[outcome] || 0);
+      } else if (reason === 'resignation' || reason === 'resign') {
+        reward.coins = 0;
+        reward.xp = 0;
       } else {
         const ai = config.currency?.ai?.[difficulty] || config.currency?.ai?.medium || {};
         reward.coins = Number(ai[outcome] || 0);
@@ -4233,7 +4236,7 @@ class App {
 
     // Award the match economy exactly once (the session guard above prevents
     // duplicate awards when the recap screen is re-rendered/reconnected).
-    this.awardMatchEconomy(outcome, mode);
+    this.awardMatchEconomy(outcome, mode, result.reason);
 
     const fallbackRating = this.loadPlayerStats().rating;
     const hasRatingStart = this.ratingAtGameStart !== null &&

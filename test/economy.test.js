@@ -20,6 +20,12 @@ test('new players start with 1,000 coins', () => {
   assert.strictEqual(config.currency.startingCoins, 1000);
 });
 
+test('resignation against AI awards zero coins and zero XP to prevent farming', () => {
+  assert.deepStrictEqual(config.calculateMatchReward('ai', 'easy', 'loss', 'resignation'), { coins: 0, xp: 0 });
+  assert.deepStrictEqual(config.calculateMatchReward('ai', 'medium', 'loss', 'resignation'), { coins: 0, xp: 0 });
+  assert.deepStrictEqual(config.calculateMatchReward('ai', 'hard', 'loss', 'resignation'), { coins: 0, xp: 0 });
+});
+
 test('AI match rewards match the advertised table', () => {
   assert.deepStrictEqual(config.calculateMatchReward('ai', 'easy', 'win'), { coins: 30, xp: 20 });
   assert.deepStrictEqual(config.calculateMatchReward('ai', 'easy', 'draw'), { coins: 15, xp: 12 });
@@ -96,7 +102,7 @@ test('daily ad caps and first-ad bonus are configured', () => {
 test('app wiring calls initEconomy and awards match payouts once', () => {
   const app = fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'app.js'), 'utf8');
   assert.ok(app.includes('this.initEconomy();'), 'initEconomy must be called from app init/profile load');
-  assert.ok(app.includes('this.awardMatchEconomy(outcome, mode);'), 'recordGameResult must award economy');
+  assert.ok(app.includes('this.awardMatchEconomy(outcome, mode'), 'recordGameResult must award economy');
   assert.ok(app.includes("if (this.statsRecordedForGame === sessionKey) return;"), 'match award must be idempotent');
   assert.ok(app.includes('Hints are disabled in competitive PvP'), 'hints must be blocked in online PvP');
 });

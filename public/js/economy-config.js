@@ -84,9 +84,14 @@ const ECONOMY_CONFIG = {
  * Single source of truth for match payouts. Keeping this pure makes the
  * economy easy to test and prevents the UI/config from drifting apart.
  */
-function calculateMatchReward(mode, difficulty, outcome) {
+function calculateMatchReward(mode, difficulty, outcome, reason) {
   const result = ['win', 'draw', 'loss'].includes(outcome) ? outcome : 'draw';
   const isPvp = mode === 'online' || mode === 'pvp';
+
+  // Anti-farming exploit protection: Resigning against AI gives 0 coins and 0 XP
+  if (!isPvp && (reason === 'resignation' || reason === 'resign')) {
+    return { coins: 0, xp: 0 };
+  }
 
   if (isPvp) {
     const coins = Number(ECONOMY_CONFIG.currency.pvp[result] || 0);
