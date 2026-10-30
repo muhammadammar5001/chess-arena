@@ -1030,15 +1030,30 @@ class App {
         }
 
         case 'your-turn': {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.frequency.value = 880;
-          gain.gain.setValueAtTime(0.06, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
-          osc.start(ctx.currentTime);
-          osc.stop(ctx.currentTime + 0.25);
+          const t0 = ctx.currentTime;
+          // Tone 1: D5 (587 Hz)
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(587.33, t0);
+          gain1.gain.setValueAtTime(0.24, t0);
+          gain1.gain.exponentialRampToValueAtTime(0.01, t0 + 0.12);
+          osc1.connect(gain1);
+          gain1.connect(ctx.destination);
+          osc1.start(t0);
+          osc1.stop(t0 + 0.12);
+
+          // Tone 2: A5 (880 Hz) - crisp notification bell
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(880, t0 + 0.08);
+          gain2.gain.setValueAtTime(0.26, t0 + 0.08);
+          gain2.gain.exponentialRampToValueAtTime(0.001, t0 + 0.35);
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc2.start(t0 + 0.08);
+          osc2.stop(t0 + 0.35);
           break;
         }
       }
