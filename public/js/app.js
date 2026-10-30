@@ -1518,7 +1518,7 @@ class App {
     this.pendingJoinData = null;
     this.privateRoom = true;
     this.opponentAvatarSrc = null;
-    this.multiplayer.joinRoom(roomCode, this.selectedAbilities || ['swap', 'freeze']);
+    this.multiplayer.joinRoom(roomCode, this.selectedAbilities || ['swap', 'freeze'], this.avatarId);
   }
 
   cancelJoinRoom() {
@@ -1640,8 +1640,7 @@ class App {
         const startGame = () => {
           try {
             const topAvatar = document.getElementById('top-player-avatar');
-            if (topAvatar) {
-               if (!this.opponentAvatarSrc) this.opponentAvatarSrc = this.getRandomAvatarSrc();
+            if (topAvatar && this.opponentAvatarSrc) {
                topAvatar.src = this.opponentAvatarSrc;
             }
             this.showScreen('screen-game');
@@ -2067,7 +2066,30 @@ class App {
       ? source.level
       : (source.playerLevel != null ? source.playerLevel : fallbackLevel);
     const level = Math.max(1, Math.floor(Number(rawLevel) || Number(fallbackLevel) || 1));
-    return { username, rating, level };
+    const avatarId = this.normalizeAvatarId(source.avatarId);
+    return { username, rating, level, avatarId };
+  }
+
+  getAvatarSrcById(avatarId) {
+    const normalized = this.normalizeAvatarId(avatarId);
+    const avatar = normalized ? this.getAvatarById(normalized) : null;
+    return avatar ? avatar.src : null;
+  }
+
+  syncOpponentAvatarFromMeta(meta) {
+    // The server sends the opponent's equipped avatarId with the game state.
+    // Prefer it over the roulette/random fallback so every device sees the
+    // same portrait for the same player.
+    const equippedAvatarSrc = meta ? this.getAvatarSrcById(meta.avatarId) : null;
+    if (equippedAvatarSrc) {
+      this.opponentAvatarSrc = equippedAvatarSrc;
+    } else if (!this.opponentAvatarSrc) {
+      this.opponentAvatarSrc = this.getRandomAvatarSrc();
+    }
+
+    const topAvatar = document.getElementById('top-player-avatar');
+    if (topAvatar && this.opponentAvatarSrc) topAvatar.src = this.opponentAvatarSrc;
+    return this.opponentAvatarSrc;
   }
 
   renderGameHeader(selfMeta, opponentMeta) {
@@ -2155,12 +2177,7 @@ class App {
       : [];
     this.renderOpponentSkills(opponentAbilities);
     this.applyAvatarToUI();
-
-    const topAvatar = document.getElementById('top-player-avatar');
-    if (topAvatar) {
-       if (!this.opponentAvatarSrc) this.opponentAvatarSrc = this.getRandomAvatarSrc();
-       topAvatar.src = this.opponentAvatarSrc;
-    }
+    this.syncOpponentAvatarFromMeta(normalizedOpponent);
 
     // Show/hide online-only controls
     document.getElementById('btn-ingame-draw').style.display = isOnline ? '' : 'none';
