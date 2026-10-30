@@ -2642,18 +2642,21 @@ class App {
     boardEl.classList.add('check-alert');
 
     // Ember ring over the checked king (real element so theme background
-    // rules cannot hide it).
-    const oldRing = boardEl.querySelector('.check-ring');
+    // rules cannot hide it, and it lives outside the board so renderBoard()
+    // rebuilding the grid does not wipe it mid-pulse).
+    const oldRing = boardWrap.querySelector('.check-ring');
     if (oldRing) oldRing.remove();
     const kingSq = boardEl.querySelector('.square.is-check');
     if (kingSq) {
+      const wrapRect = boardWrap.getBoundingClientRect();
+      const sqRect = kingSq.getBoundingClientRect();
       const ring = document.createElement('div');
       ring.className = 'check-ring';
-      ring.style.left = `${kingSq.offsetLeft}px`;
-      ring.style.top = `${kingSq.offsetTop}px`;
-      ring.style.width = `${kingSq.offsetWidth}px`;
-      ring.style.height = `${kingSq.offsetHeight}px`;
-      boardEl.appendChild(ring);
+      ring.style.left = `${sqRect.left - wrapRect.left}px`;
+      ring.style.top = `${sqRect.top - wrapRect.top}px`;
+      ring.style.width = `${sqRect.width}px`;
+      ring.style.height = `${sqRect.height}px`;
+      boardWrap.appendChild(ring);
       if (this._checkRingRemove) clearTimeout(this._checkRingRemove);
       this._checkRingRemove = setTimeout(() => {
         this._checkRingRemove = null;
