@@ -5,6 +5,13 @@
 
 const AVATAR_ASSET_VERSION = '2';
 
+// Check cue: a short, seamless one-period loop of the supplied check sound.
+// Played through Web Audio so the loop seam is sample accurate (no gap/pause).
+const CHECK_LOOP_SRC = '/assets/sounds/check-loop.wav?v=1';
+const CHECK_VOLUME = 0.9;
+const CHECK_FADE_IN = 0.4;    // seconds — swells in when the king is checked
+const CHECK_FADE_OUT = 0.4;   // seconds — cuts away when the king escapes
+
 const PLAYER_AVATARS = Array.from({ length: 18 }, (_, index) => {
   const number = String(index + 1).padStart(2, '0');
   return {
@@ -874,6 +881,11 @@ class App {
     if (this.audioCtx && this.audioCtx.state === 'suspended') {
       this.audioCtx.resume().catch(() => {});
     }
+    // Warm the check loop so the first check starts instantly.
+    if (!this._checkPreloadStarted && this.audioCtx) {
+      this._checkPreloadStarted = true;
+      this.loadCheckLoop();
+    }
   }
 
   playSound(type) {
@@ -1020,66 +1032,101 @@ class App {
     } catch (e) {}
   }
 
-  // The check cue loops for as long as the king stays in check and fades out
-  // the moment the king moves out of check.
-  startCheckSound() {
-    if (this.soundMuted || this.platformAudioMuted || this.platformPaused) return;
-    try {
-      if (!this._checkAudio) {
-        const audio = new Audio('/assets/sounds/check.mp3');
-        audio.loop = true;
-        audio.preload = 'auto';
-        audio.volume = 0;
-        this._checkAudio = audio;
-      }
-      const audio = this._checkAudio;
-      audio.loop = true;
-      this._cancelVolumeFade();
-      try { audio.currentTime = 0; } catch (e) {}
-      const p = audio.play();
-      if (p && p.catch) p.catch(() => {});
-      this._fadeAudioTo(audio, 0.9, 350);
-    } catch (e) {}
+  // --- Check cue (dynamic gapless loop) ---------------
+  // The player supplied a check sound that is itself a short repeating phrase
+  // (~0.92s). Instead of playing the whole file once we loop just one clean
+  // period with an AudioBufferSourceNode, which is sample accurate: no pause,
+  // no silence and no audible cut at the seam. A GainNode handles the fade-in
+  // when the king is checked and the quick fade-out the instant it escapes.
+
+  loadCheckLoop() {
+    if (this._checkBuffer) return Promise.resolve(this._checkBuffer);
+    if (this._checkLoadPromise) return this._checkLoadPromise;
+    this.initAudio();
+    const ctx = this.audioCtx;
+    if (!ctx) return Promise.resolve(null);
+
+    this._checkLoadPromise = fetch(CHECK_LOOP_SRC, { cache: 'force-cache' })
+      .then(res => {
+        if (!res.ok) throw new Error('check loop ' + res.status);
+        return res.arrayBuffer();
+      })
+      .then(ab => new Promise((resolve, reject) => {
+        const p = ctx.decodeAudioData(ab, resolve, reject);
+        if (p && typeof p.then === 'function') p.then(resolve, reject);
+      }))
+      .then(buffer => {
+        this._checkBuffer = buffer;
+        this._checkLoadPromise = null;
+        return buffer;
+      })
+      .catch(() => {
+        this._checkLoadPromise = null;
+        return null;
+      });
+    return this._checkLoadPromise;
   }
 
-  stopCheckSound(fadeMs = 700) {
-    const audio = this._checkAudio;
-    if (!audio) return;
-    this._cancelVolumeFade();
-    if (audio.paused) {
-      try { audio.currentTime = 0; } catch (e) {}
-      audio.volume = 0;
-      return;
-    }
-    this._fadeAudioTo(audio, 0, fadeMs, () => {
-      try { audio.pause(); audio.currentTime = 0; } catch (e) {}
-      audio.volume = 0;
+  startCheckSound() {
+    if (this.soundMuted || this.platformAudioMuted || this.platformPaused) return;
+    if (this._checkSource) return; // already looping
+    this.initAudio();
+    const ctx = this.audioCtx;
+    if (!ctx) return;
+
+    this.loadCheckLoop().then(buffer => {
+      if (!buffer) return;
+      if (this._checkSource) return;
+      if (!this._checkAlertOn) return; // king already escaped while decoding
+      if (this.soundMuted || this.platformAudioMuted || this.platformPaused) return;
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
+      const now = ctx.currentTime;
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      source.loopStart = 0;
+      source.loopEnd = buffer.duration;
+
+      const gain = ctx.createGain();
+      gain.gain.value = 0.0001; // never let the first sample through at full level
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(CHECK_VOLUME, now + CHECK_FADE_IN);
+
+      source.connect(gain);
+      gain.connect(ctx.destination);
+      source.start(now);
+
+      this._checkSource = source;
+      this._checkGain = gain;
     });
   }
 
-  _fadeAudioTo(audio, target, ms, onDone) {
-    this._cancelVolumeFade();
-    const start = audio.volume;
-    const t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-    const step = () => {
-      const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-      const k = Math.min(1, (now - t0) / Math.max(1, ms));
-      audio.volume = Math.max(0, Math.min(1, start + (target - start) * k));
-      if (k < 1 && !(audio.paused && target === 0)) {
-        this._volumeFadeRaf = requestAnimationFrame(step);
-      } else {
-        this._volumeFadeRaf = null;
-        if (onDone) onDone();
-      }
-    };
-    step();
-  }
+  stopCheckSound(fadeSec = CHECK_FADE_OUT) {
+    const ctx = this.audioCtx;
+    const source = this._checkSource;
+    const gain = this._checkGain;
+    this._checkSource = null;
+    this._checkGain = null;
+    if (!ctx || !source || !gain) return;
 
-  _cancelVolumeFade() {
-    if (this._volumeFadeRaf) {
-      cancelAnimationFrame(this._volumeFadeRaf);
-      this._volumeFadeRaf = null;
-    }
+    const now = ctx.currentTime;
+    const fade = Math.max(0.02, fadeSec);
+    try {
+      // Hold whatever level the fade-in currently sits at, then ramp to silence
+      // so an early escape never cuts the cue abruptly.
+      if (typeof gain.gain.cancelAndHoldAtTime === 'function') {
+        gain.gain.cancelAndHoldAtTime(now);
+      } else {
+        gain.gain.cancelScheduledValues(now);
+        gain.gain.setValueAtTime(gain.gain.value, now);
+      }
+      gain.gain.linearRampToValueAtTime(0.0001, now + fade);
+    } catch (e) {}
+    try { source.stop(now + fade + 0.02); } catch (e) {}
+    setTimeout(() => {
+      try { source.disconnect(); gain.disconnect(); } catch (e) {}
+    }, (fade + 0.2) * 1000);
   }
 
   // --- Screen Management -----------------------------
@@ -2600,8 +2647,8 @@ class App {
       }
       if (boardEl) boardEl.classList.remove('check-alert');
       this.stopCheckTears();
-      // King moved out of check -> let the cue melt away.
-      this.stopCheckSound(700);
+      // King moved out of check -> cut the cue away immediately.
+      this.stopCheckSound(CHECK_FADE_OUT);
       return;
     }
 
@@ -2629,7 +2676,7 @@ class App {
     const ring = document.querySelector('.board-wrap .check-ring');
     if (ring) ring.remove();
     this.stopCheckTears();
-    this.stopCheckSound(500);
+    this.stopCheckSound(0.3);
   }
 
   flashCheckAlert() {
@@ -5169,7 +5216,7 @@ class App {
 
   toggleSound() {
     this.soundMuted = !this.soundMuted;
-    if (this.soundMuted) this.stopCheckSound(250);
+    if (this.soundMuted) this.stopCheckSound(0.25);
     this.syncSettingsUI();
     this.saveEconomyState();
     this.showToast(this.soundMuted ? 'Sound effects muted' : 'Sound effects enabled');
