@@ -99,6 +99,7 @@ class MultiplayerClient {
             type: 'authenticate',
             playerId: window.app.playerId,
             displayName: displayName || undefined,
+            avatarId: (window.app && window.app.avatarId) ? window.app.avatarId : undefined,
             playerLevel: Math.max(1, Number(window.app.playerLevel) || 1),
             rating: window.app.cloudProfile && Number.isFinite(Number(window.app.cloudProfile.rating))
               ? Number(window.app.cloudProfile.rating)

@@ -1297,6 +1297,15 @@ class App {
   updateRoulettePlayerAvatar() {
     const avatar = document.getElementById('roulette-you-avatar');
     if (avatar) avatar.src = this.getSelectedAvatarSrc();
+
+    const nameEl = document.getElementById('roulette-you-name');
+    if (nameEl) nameEl.textContent = this.getPreferredDisplayName() || 'You';
+
+    const ratingEl = document.getElementById('roulette-you-rating');
+    const myRating = (this.cloudProfile && Number.isFinite(Number(this.cloudProfile.rating)))
+      ? Number(this.cloudProfile.rating)
+      : (this.getTotalStats && this.getTotalStats().rating ? this.getTotalStats().rating : 1200);
+    if (ratingEl) ratingEl.textContent = `${myRating} Elo`;
   }
 
   startSlotMachine() {
@@ -1321,6 +1330,11 @@ class App {
 
     this.opponentAvatarSrc = null;
     this.updateRoulettePlayerAvatar();
+
+    const oppNameEl = document.getElementById('match-opponent-name');
+    const oppRatingEl = document.getElementById('match-opponent-rating');
+    if (oppNameEl) oppNameEl.textContent = 'Searching...';
+    if (oppRatingEl) oppRatingEl.textContent = '—';
 
     // Build a fresh strip from the same portrait pool the player chooses from.
     const avatars = this.buildAvatarStrip(40);
@@ -1364,7 +1378,7 @@ class App {
     }, 2200);
   }
 
-  stopSlotMachine(opponentName, callback) {
+  stopSlotMachine(opponentName, opponentRating, opponentAvatarSrc, callback) {
     if (this.slotInterval) {
       clearInterval(this.slotInterval);
       this.slotInterval = null;
@@ -1374,29 +1388,28 @@ class App {
       this.statusInterval = null;
     }
 
+    const finalAvatar = opponentAvatarSrc || this.opponentAvatarSrc || this.getRandomAvatarSrc();
+    this.opponentAvatarSrc = finalAvatar;
+
     const machine = document.getElementById('avatar-slot-machine');
     if (machine) {
-      // Slow decelerate to final avatar
       machine.classList.remove('spinning');
-      machine.style.transition = 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      machine.style.transition = 'transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      const firstChild = machine.firstElementChild;
+      if (firstChild) {
+        const img = firstChild.querySelector('img');
+        if (img) img.src = finalAvatar;
+      }
       machine.style.transform = 'translateY(0px)';
-      // Replace with a portrait from the same random opponent pool.
       setTimeout(() => {
-        const pool = Array.isArray(this.slotAvatarPool) ? this.slotAvatarPool : [];
-        const finalAvatar = pool.length
-          ? pool[Math.floor(Math.random() * pool.length)]
-          : this.getRandomAvatarSrc();
         machine.innerHTML = `<div class="slot-avatar-item matched"><img src="${finalAvatar}" alt="${opponentName || 'Opponent'}" style="object-fit:cover; border-radius:50%; width:100%; height:100%;"></div>`;
-
-        // Save the selected portrait so the game and victory screens can reuse it.
-        this.opponentAvatarSrc = finalAvatar;
       }, 400);
     }
 
     const nameEl = document.getElementById('match-opponent-name');
     const ratingEl = document.getElementById('match-opponent-rating');
     if (nameEl) nameEl.textContent = opponentName || 'Opponent';
-    if (ratingEl) ratingEl.textContent = Math.floor(Math.random() * 300 + 1100).toString();
+    if (ratingEl) ratingEl.textContent = opponentRating ? `${opponentRating} Elo` : '1200 Elo';
 
     const titleEl = document.getElementById('waiting-title');
     const subtitleEl = document.getElementById('waiting-subtitle');
@@ -1436,7 +1449,16 @@ class App {
 
     try {
       await this.multiplayer.connect();
-      this.multiplayer.findMatch(timerValue, this.matchType, this.matchType === 'tactical' ? (this.selectedAbilities || ['swap', 'freeze']) : [], this.avatarId);
+      const myProfile = {
+        username: this.getPreferredDisplayName() || 'Player',
+        rating: (this.cloudProfile && Number.isFinite(Number(this.cloudProfile.rating)))
+          ? Number(this.cloudProfile.rating)
+          : (this.getTotalStats && this.getTotalStats().rating ? this.getTotalStats().rating : 1200),
+        avatarId: this.avatarId || 'pfp-01',
+        avatarSrc: this.getSelectedAvatarSrc(),
+        level: Math.max(1, Number(this.playerLevel) || 1)
+      };
+      this.multiplayer.findMatch(timerValue, this.matchType, this.matchType === 'tactical' ? (this.selectedAbilities || ['swap', 'freeze']) : [], this.avatarId, myProfile);
     } catch {
       if (this.slotInterval) clearInterval(this.slotInterval);
       if (this.statusInterval) clearInterval(this.statusInterval);
@@ -1461,7 +1483,16 @@ class App {
       await this.multiplayer.connect();
       const timerValue = 10;
       this.timerMinutes = timerValue;
-      this.multiplayer.createRoom(timerValue, this.matchType, this.matchType === 'tactical' ? (this.selectedAbilities || ['swap', 'freeze']) : [], this.avatarId);
+      const myProfile = {
+        username: this.getPreferredDisplayName() || 'Player',
+        rating: (this.cloudProfile && Number.isFinite(Number(this.cloudProfile.rating)))
+          ? Number(this.cloudProfile.rating)
+          : (this.getTotalStats && this.getTotalStats().rating ? this.getTotalStats().rating : 1200),
+        avatarId: this.avatarId || 'pfp-01',
+        avatarSrc: this.getSelectedAvatarSrc(),
+        level: Math.max(1, Number(this.playerLevel) || 1)
+      };
+      this.multiplayer.createRoom(timerValue, this.matchType, this.matchType === 'tactical' ? (this.selectedAbilities || ['swap', 'freeze']) : [], this.avatarId, myProfile);
     } catch {
       this.showToast('Failed to connect to server');
     }
@@ -1611,8 +1642,13 @@ class App {
           hintBtn.classList.add('hidden');
           hintBtn.style.display = 'none';
         }
+        const opponentMeta = gameData.opponentProfile || {};
+        const oppName = opponentMeta.username || opponent || 'Opponent';
+        const oppRating = opponentMeta.rating || 1200;
+        const oppAvatarId = opponentMeta.avatarId || gameData.opponentAvatarId;
+        const oppAvatarSrc = opponentMeta.avatarSrc || (oppAvatarId ? this.getAvatarById(oppAvatarId)?.src : null) || this.getRandomAvatarSrc();
+        this.opponentAvatarSrc = oppAvatarSrc;
         const youName = this.getPreferredDisplayName() || 'Player';
-        const oppName = opponent || 'Opponent';
 
         if (timerMinutes) {
           this.timerMinutes = timerMinutes;
@@ -1655,13 +1691,13 @@ class App {
 
         const animContainer = document.getElementById('matchmaking-animation');
         if (!this.privateRoom && animContainer && !animContainer.classList.contains('hidden') && typeof this.stopSlotMachine === 'function') {
-            this.stopSlotMachine(); 
+            this.stopSlotMachine(oppName, oppRating, oppAvatarSrc);
             setTimeout(() => {
                 if (typeof this.showMatchmakingFound === 'function') {
-                  this.showMatchmakingFound(opponent, this.opponentAvatarSrc || this.getRandomAvatarSrc());
+                  this.showMatchmakingFound(oppName, oppAvatarSrc);
                 }
-                setTimeout(startGame, 3000); 
-            }, 1000);
+                setTimeout(startGame, 2500);
+            }, 600);
         } else {
             if (animContainer) animContainer.classList.add('hidden');
             startGame();

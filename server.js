@@ -368,6 +368,11 @@ setInterval(() => {
 wss.on('connection', (ws) => {
   ws.id = uuidv4();
   ws.isAlive = true;
+  ws.username = 'Player';
+  ws.rating = 1200;
+  ws.avatarId = 'pfp-01';
+  ws.avatarSrc = null;
+  ws.playerLevel = 1;
 
   ws.on('pong', () => { ws.isAlive = true; });
 
@@ -1502,6 +1507,7 @@ async function handleAuthenticate(ws, data) {
   ws.displayName = sanitizeDisplayName(data && data.displayName) || fallbackUsername(playerId);
   ws.playerRating = Math.min(4000, Math.max(100, safeInt(data && data.rating, 1200)));
   ws.playerLevel = Math.min(999, Math.max(1, safeInt(data && data.playerLevel, 1)));
+  if (data && data.avatarId) ws.avatarId = String(data.avatarId).trim().slice(0, 32);
 
   // The database is optional. Without it the player still gets a full game and
   // local/Bridge-backed stats; only cross-device profile sync is unavailable.
