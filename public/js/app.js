@@ -946,47 +946,58 @@ class App {
 
         case 'capture': {
           const t0 = ctx.currentTime;
-          // Layer 1: Warm resonant wooden piece impact (satisfying solid "thud")
+          // Noise burst: sharp crack/snap on piece capture
+          try {
+            const bufSz = Math.floor(ctx.sampleRate * 0.06);
+            const nBuf = ctx.createBuffer(1, bufSz, ctx.sampleRate);
+            const nd = nBuf.getChannelData(0);
+            for (let i = 0; i < bufSz; i++) {
+              nd[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.012));
+            }
+            const nSrc = ctx.createBufferSource();
+            nSrc.buffer = nBuf;
+            const nFilt = ctx.createBiquadFilter();
+            nFilt.type = 'bandpass';
+            nFilt.frequency.value = 2200;
+            nFilt.Q.value = 1.2;
+            const nGain = ctx.createGain();
+            nGain.gain.setValueAtTime(0.55, t0);
+            nGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.06);
+            nSrc.connect(nFilt);
+            nFilt.connect(nGain);
+            nGain.connect(ctx.destination);
+            nSrc.start(t0);
+          } catch(e) {}
+          // Wood thud body
           const woodOsc = ctx.createOscillator();
           const woodGain = ctx.createGain();
           woodOsc.type = 'triangle';
-          woodOsc.frequency.setValueAtTime(280, t0);
-          woodOsc.frequency.exponentialRampToValueAtTime(75, t0 + 0.11);
-          woodGain.gain.setValueAtTime(0.14, t0);
-          woodGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.11);
+          woodOsc.frequency.setValueAtTime(320, t0);
+          woodOsc.frequency.exponentialRampToValueAtTime(80, t0 + 0.12);
+          woodGain.gain.setValueAtTime(0.22, t0);
+          woodGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.12);
           woodOsc.connect(woodGain);
           woodGain.connect(ctx.destination);
           woodOsc.start(t0);
-          woodOsc.stop(t0 + 0.11);
-
-          // Layer 2: Crisp wooden piece click/snap transient (clean "clack")
-          const clickOsc = ctx.createOscillator();
-          const clickGain = ctx.createGain();
-          clickOsc.type = 'sine';
-          clickOsc.frequency.setValueAtTime(620, t0);
-          clickOsc.frequency.exponentialRampToValueAtTime(180, t0 + 0.04);
-          clickGain.gain.setValueAtTime(0.09, t0);
-          clickGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.04);
-          clickOsc.connect(clickGain);
-          clickGain.connect(ctx.destination);
-          clickOsc.start(t0);
-          clickOsc.stop(t0 + 0.04);
+          woodOsc.stop(t0 + 0.12);
           break;
         }
 
         case 'check': {
-          // Urgent double-tone warning
-          [0, 0.08].forEach((delay, idx) => {
+          // Repeating urgent chess check alarm — 3 quick beep-beeps
+          [0, 0.16, 0.32].forEach((delay) => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(idx === 0 ? 540 : 820, ctx.currentTime + delay);
-            gain.gain.setValueAtTime(0.12, ctx.currentTime + delay);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.18);
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(880, ctx.currentTime + delay);
+            gain.gain.setValueAtTime(0, ctx.currentTime + delay);
+            gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + delay + 0.02);
+            gain.gain.setValueAtTime(0.18, ctx.currentTime + delay + 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.12);
             osc.connect(gain);
             gain.connect(ctx.destination);
             osc.start(ctx.currentTime + delay);
-            osc.stop(ctx.currentTime + delay + 0.18);
+            osc.stop(ctx.currentTime + delay + 0.13);
           });
           break;
         }
@@ -2490,6 +2501,14 @@ class App {
           if (piece && piece.type === 'king' && piece.color === this.engine.currentTurn) {
             if (this.engine.isKingInCheck(this.engine.currentTurn)) {
               square.classList.add('check', 'is-check');
+              // Play check alarm every time king is in check on board render
+              if (!this._checkSoundPending) {
+                this._checkSoundPending = true;
+                setTimeout(() => {
+                  this._checkSoundPending = false;
+                  this.playSound('check');
+                }, 80);
+              }
             }
           }
         }
@@ -2878,13 +2897,28 @@ class App {
     slash.className = 'kill-slash-line';
     overlay.appendChild(slash);
 
+    // Burst dot particles — 8 dots exploding outward
+    const dotColors = ['#ffdd00','#ff8800','#ffffff','#ff4444','#ffaa00','#ffee44','#ff6600','#ffcc00'];
+    const dotCount = 8;
+    for (let i = 0; i < dotCount; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'capture-burst-dot';
+      const angle = (i / dotCount) * 2 * Math.PI;
+      const dist = 26 + Math.random() * 14;
+      dot.style.setProperty('--bx', Math.round(Math.cos(angle) * dist) + 'px');
+      dot.style.setProperty('--by', Math.round(Math.sin(angle) * dist) + 'px');
+      dot.style.background = dotColors[i % dotColors.length];
+      dot.style.animationDelay = (Math.random() * 0.04).toFixed(3) + 's';
+      overlay.appendChild(dot);
+    }
+
     boardEl.appendChild(overlay);
 
     setTimeout(() => {
       if (overlay.parentNode) {
         overlay.parentNode.removeChild(overlay);
       }
-    }, 220);
+    }, 380);
   }
 
   animateMoveAndApply(result, onDone) {
