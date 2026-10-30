@@ -984,21 +984,70 @@ class App {
         }
 
         case 'check': {
-          // Repeating urgent chess check alarm — 3 quick beep-beeps
-          [0, 0.16, 0.32].forEach((delay) => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(880, ctx.currentTime + delay);
-            gain.gain.setValueAtTime(0, ctx.currentTime + delay);
-            gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + delay + 0.02);
-            gain.gain.setValueAtTime(0.18, ctx.currentTime + delay + 0.06);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.12);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(ctx.currentTime + delay);
-            osc.stop(ctx.currentTime + delay + 0.13);
-          });
+          // King in check: heavy wooden "slam" with a short bright crack.
+          // Matches the reference clip: a single deep knock, clearly louder
+          // and fuller than a normal piece placement.
+          const t0 = ctx.currentTime;
+
+          try {
+            const bufSz = Math.floor(ctx.sampleRate * 0.09);
+            const nBuf = ctx.createBuffer(1, bufSz, ctx.sampleRate);
+            const nd = nBuf.getChannelData(0);
+            for (let i = 0; i < bufSz; i++) {
+              nd[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.018));
+            }
+            const nSrc = ctx.createBufferSource();
+            nSrc.buffer = nBuf;
+            const nFilt = ctx.createBiquadFilter();
+            nFilt.type = 'bandpass';
+            nFilt.frequency.value = 2500;
+            nFilt.Q.value = 0.9;
+            const nGain = ctx.createGain();
+            nGain.gain.setValueAtTime(0.6, t0);
+            nGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.09);
+            nSrc.connect(nFilt);
+            nFilt.connect(nGain);
+            nGain.connect(ctx.destination);
+            nSrc.start(t0);
+          } catch (e) {}
+
+          // Deep wooden body
+          const body = ctx.createOscillator();
+          const bodyGain = ctx.createGain();
+          body.type = 'triangle';
+          body.frequency.setValueAtTime(330, t0);
+          body.frequency.exponentialRampToValueAtTime(88, t0 + 0.22);
+          bodyGain.gain.setValueAtTime(0.34, t0);
+          bodyGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.28);
+          body.connect(bodyGain);
+          bodyGain.connect(ctx.destination);
+          body.start(t0);
+          body.stop(t0 + 0.3);
+
+          // Sub thump for weight
+          const sub = ctx.createOscillator();
+          const subGain = ctx.createGain();
+          sub.type = 'sine';
+          sub.frequency.setValueAtTime(150, t0);
+          sub.frequency.exponentialRampToValueAtTime(58, t0 + 0.26);
+          subGain.gain.setValueAtTime(0.24, t0);
+          subGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.32);
+          sub.connect(subGain);
+          subGain.connect(ctx.destination);
+          sub.start(t0);
+          sub.stop(t0 + 0.34);
+
+          // Faint high ring that follows the crack
+          const ring = ctx.createOscillator();
+          const ringGain = ctx.createGain();
+          ring.type = 'sine';
+          ring.frequency.setValueAtTime(2340, t0);
+          ringGain.gain.setValueAtTime(0.07, t0);
+          ringGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.11);
+          ring.connect(ringGain);
+          ringGain.connect(ctx.destination);
+          ring.start(t0);
+          ring.stop(t0 + 0.12);
           break;
         }
 
@@ -2440,6 +2489,7 @@ class App {
       }
 
     const files = 'abcdefgh';
+    let kingInCheck = false;
 
     for (let displayRow = 0; displayRow < 8; displayRow++) {
       for (let displayCol = 0; displayCol < 8; displayCol++) {
@@ -2501,14 +2551,7 @@ class App {
           if (piece && piece.type === 'king' && piece.color === this.engine.currentTurn) {
             if (this.engine.isKingInCheck(this.engine.currentTurn)) {
               square.classList.add('check', 'is-check');
-              // Play check alarm every time king is in check on board render
-              if (!this._checkSoundPending) {
-                this._checkSoundPending = true;
-                setTimeout(() => {
-                  this._checkSoundPending = false;
-                  this.playSound('check');
-                }, 80);
-              }
+              kingInCheck = true;
             }
           }
         }
@@ -2552,6 +2595,78 @@ class App {
         boardEl.appendChild(square);
       }
     }
+
+    this.updateCheckAlert(kingInCheck);
+  }
+
+  // --- King check alert (board glow + king shake + sound) ---
+
+  updateCheckAlert(inCheck) {
+    const boardWrap = document.querySelector('.board-wrap');
+    const boardEl = document.getElementById('chess-board') || document.getElementById('board');
+
+    if (!inCheck) {
+      if (!this._checkAlertOn) return;
+      this._checkAlertOn = false;
+      if (this._checkAlertDelay) {
+        clearTimeout(this._checkAlertDelay);
+        this._checkAlertDelay = null;
+      }
+      if (boardWrap) boardWrap.classList.remove('check-alert');
+      if (boardEl) boardEl.classList.remove('check-alert');
+      return;
+    }
+
+    if (this._checkAlertOn) return;
+    this._checkAlertOn = true;
+
+    // Let the moved piece finish landing before the alert fires.
+    if (this._checkAlertDelay) clearTimeout(this._checkAlertDelay);
+    this._checkAlertDelay = setTimeout(() => {
+      this._checkAlertDelay = null;
+      this.playSound('check');
+      this.flashCheckAlert();
+    }, 150);
+  }
+
+  flashCheckAlert() {
+    const boardWrap = document.querySelector('.board-wrap');
+    const boardEl = document.getElementById('chess-board') || document.getElementById('board');
+    if (!boardWrap || !boardEl) return;
+
+    boardWrap.classList.remove('check-alert');
+    boardEl.classList.remove('check-alert');
+    // Force a reflow so back-to-back checks restart the CSS animation.
+    void boardWrap.offsetWidth;
+    boardWrap.classList.add('check-alert');
+    boardEl.classList.add('check-alert');
+
+    // Ember ring over the checked king (real element so theme background
+    // rules cannot hide it).
+    const oldRing = boardEl.querySelector('.check-ring');
+    if (oldRing) oldRing.remove();
+    const kingSq = boardEl.querySelector('.square.is-check');
+    if (kingSq) {
+      const ring = document.createElement('div');
+      ring.className = 'check-ring';
+      ring.style.left = `${kingSq.offsetLeft}px`;
+      ring.style.top = `${kingSq.offsetTop}px`;
+      ring.style.width = `${kingSq.offsetWidth}px`;
+      ring.style.height = `${kingSq.offsetHeight}px`;
+      boardEl.appendChild(ring);
+      if (this._checkRingRemove) clearTimeout(this._checkRingRemove);
+      this._checkRingRemove = setTimeout(() => {
+        this._checkRingRemove = null;
+        ring.remove();
+      }, 2000);
+    }
+
+    if (this._checkAlertHide) clearTimeout(this._checkAlertHide);
+    this._checkAlertHide = setTimeout(() => {
+      this._checkAlertHide = null;
+      boardWrap.classList.remove('check-alert');
+      boardEl.classList.remove('check-alert');
+    }, 2000);
   }
 
   // --- Square Click Handling -------------------------
@@ -2965,7 +3080,9 @@ class App {
     }
 
     if (result.check) {
-      setTimeout(() => this.playSound('check'), 180);
+      // The board glow, king shake and check sound are fired by
+      // updateCheckAlert() once the moved piece has landed.
+      this._checkAlertOn = false;
     }
 
     // Check if we can animate DOM pieces
