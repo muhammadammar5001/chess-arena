@@ -945,69 +945,32 @@ class App {
         }
 
         case 'capture': {
-          // Layer 1: Sub-bass punch (the heavy impact "THUMP")
-          const subOsc = ctx.createOscillator();
-          const subGain = ctx.createGain();
-          subOsc.type = 'sine';
-          subOsc.frequency.setValueAtTime(160, ctx.currentTime);
-          subOsc.frequency.exponentialRampToValueAtTime(32, ctx.currentTime + 0.2);
-          subGain.gain.setValueAtTime(0.38, ctx.currentTime);
-          subGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-          subOsc.connect(subGain);
-          subGain.connect(ctx.destination);
-          subOsc.start(ctx.currentTime);
-          subOsc.stop(ctx.currentTime + 0.2);
+          const t0 = ctx.currentTime;
+          // Layer 1: Warm resonant wooden piece impact (satisfying solid "thud")
+          const woodOsc = ctx.createOscillator();
+          const woodGain = ctx.createGain();
+          woodOsc.type = 'triangle';
+          woodOsc.frequency.setValueAtTime(280, t0);
+          woodOsc.frequency.exponentialRampToValueAtTime(75, t0 + 0.11);
+          woodGain.gain.setValueAtTime(0.14, t0);
+          woodGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.11);
+          woodOsc.connect(woodGain);
+          woodGain.connect(ctx.destination);
+          woodOsc.start(t0);
+          woodOsc.stop(t0 + 0.11);
 
-          // Layer 2: Metallic sword blade slash / strike clash
-          const metalOsc = ctx.createOscillator();
-          const metalGain = ctx.createGain();
-          metalOsc.type = 'triangle';
-          metalOsc.frequency.setValueAtTime(820, ctx.currentTime);
-          metalOsc.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.15);
-          metalGain.gain.setValueAtTime(0.25, ctx.currentTime);
-          metalGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-          metalOsc.connect(metalGain);
-          metalGain.connect(ctx.destination);
-          metalOsc.start(ctx.currentTime);
-          metalOsc.stop(ctx.currentTime + 0.15);
-
-          // Layer 3: High resonance strike ring (sword clink)
-          const ringOsc = ctx.createOscillator();
-          const ringGain = ctx.createGain();
-          ringOsc.type = 'square';
-          ringOsc.frequency.setValueAtTime(1240, ctx.currentTime);
-          ringOsc.frequency.exponentialRampToValueAtTime(480, ctx.currentTime + 0.1);
-          ringGain.gain.setValueAtTime(0.09, ctx.currentTime);
-          ringGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
-          ringOsc.connect(ringGain);
-          ringGain.connect(ctx.destination);
-          ringOsc.start(ctx.currentTime);
-          ringOsc.stop(ctx.currentTime + 0.1);
-
-          // Layer 4: Impact noise burst (crunch/crack of physical impact)
-          try {
-            const bufferSize = Math.floor(ctx.sampleRate * 0.08);
-            const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-            const output = noiseBuffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-              output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.02));
-            }
-            const noise = ctx.createBufferSource();
-            noise.buffer = noiseBuffer;
-            const filter = ctx.createBiquadFilter();
-            filter.type = 'bandpass';
-            filter.frequency.value = 1400;
-            filter.Q.value = 2.5;
-            const noiseGain = ctx.createGain();
-            noiseGain.gain.setValueAtTime(0.3, ctx.currentTime);
-            noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
-            noise.connect(filter);
-            filter.connect(noiseGain);
-            noiseGain.connect(ctx.destination);
-            noise.start(ctx.currentTime);
-          } catch (e) {
-            // Audio buffer fallback
-          }
+          // Layer 2: Crisp wooden piece click/snap transient (clean "clack")
+          const clickOsc = ctx.createOscillator();
+          const clickGain = ctx.createGain();
+          clickOsc.type = 'sine';
+          clickOsc.frequency.setValueAtTime(620, t0);
+          clickOsc.frequency.exponentialRampToValueAtTime(180, t0 + 0.04);
+          clickGain.gain.setValueAtTime(0.09, t0);
+          clickGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.04);
+          clickOsc.connect(clickGain);
+          clickGain.connect(ctx.destination);
+          clickOsc.start(t0);
+          clickOsc.stop(t0 + 0.04);
           break;
         }
 
@@ -2899,44 +2862,21 @@ class App {
     const boardEl = document.getElementById('chess-board');
     if (!boardEl) return;
 
-    // Trigger board micro-shake for physical combat impact
-    boardEl.classList.remove('combat-shake');
-    void boardEl.offsetWidth; // Force reflow
-    boardEl.classList.add('combat-shake');
-    setTimeout(() => {
-      boardEl.classList.remove('combat-shake');
-    }, 240);
-
-    // Create combat kill overlay positioned over the target square
+    // Lightweight combat kill overlay on the target square only (zero board-wide reflow)
     const overlay = document.createElement('div');
     overlay.className = 'kill-combat-overlay';
-    overlay.style.left = `${toSq.offsetLeft}px`;
-    overlay.style.top = `${toSq.offsetTop}px`;
-    overlay.style.width = `${toSq.offsetWidth}px`;
-    overlay.style.height = `${toSq.offsetHeight}px`;
+    overlay.style.left = toSq.offsetLeft + 'px';
+    overlay.style.top = toSq.offsetTop + 'px';
+    overlay.style.width = toSq.offsetWidth + 'px';
+    overlay.style.height = toSq.offsetHeight + 'px';
 
-    // 1. Comic flash circle
     const flash = document.createElement('div');
     flash.className = 'kill-flash-circle';
     overlay.appendChild(flash);
 
-    // 2. Comic slash cut line
     const slash = document.createElement('div');
     slash.className = 'kill-slash-line';
     overlay.appendChild(slash);
-
-    // 3. Sharp triangular shards matching the reference image!
-    const shards = [
-      'shard-top-left',
-      'shard-bottom',
-      'shard-right',
-      'shard-top-right'
-    ];
-    shards.forEach(cls => {
-      const shard = document.createElement('div');
-      shard.className = `kill-shard ${cls}`;
-      overlay.appendChild(shard);
-    });
 
     boardEl.appendChild(overlay);
 
@@ -2944,7 +2884,7 @@ class App {
       if (overlay.parentNode) {
         overlay.parentNode.removeChild(overlay);
       }
-    }, 550);
+    }, 220);
   }
 
   animateMoveAndApply(result, onDone) {
@@ -3030,13 +2970,13 @@ class App {
         if (victimPieceEl) {
           victimPieceEl.classList.add('piece-being-killed');
         }
-        // At impact (~110ms): trigger triangular shard explosion
+        // At impact (~90ms): trigger smooth lightweight combat effect
         setTimeout(() => {
           if (victimSq) this.createCombatKillEffect(victimSq);
-        }, 110);
+        }, 90);
       }
 
-      // After glide finishes (230ms): commit to engine rendering
+      // After glide finishes (200ms): commit to engine rendering
       setTimeout(() => {
         this.lastMove = { from: result.from, to: result.to };
         this.renderBoard();
@@ -3046,7 +2986,7 @@ class App {
         this.isAnimatingMove = false;
 
         if (onDone) onDone();
-      }, 230);
+      }, 200);
     } else {
       // Direct render fallback
       this.lastMove = { from: result.from, to: result.to };

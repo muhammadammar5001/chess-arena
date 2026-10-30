@@ -1203,10 +1203,10 @@ body {
 /* ─── Piece Animations & Combat Kill FX ────────────── */
 
 .piece.piece-gliding {
-  transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1), filter 0.22s ease !important;
+  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1) !important;
   z-index: 120 !important;
   pointer-events: none;
-  filter: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.65)) scale(1.12) !important;
+  will-change: transform;
 }
 
 .square.selected .piece {
@@ -1222,12 +1222,12 @@ body {
 }
 
 .piece.piece-being-killed {
-  transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.24s ease-in, filter 0.24s ease-in !important;
-  transform: translate(14px, -14px) scale(0.65) rotate(18deg) !important;
-  filter: drop-shadow(6px 8px 0px rgba(0, 0, 0, 0.85)) brightness(1.7) !important;
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.18s ease-out !important;
+  transform: scale(0.3) rotate(8deg) !important;
   opacity: 0 !important;
   z-index: 105 !important;
   pointer-events: none;
+  will-change: transform, opacity;
 }
 
 /* Combat Kill Overlay & Comic Triangular Shards (Attached Picture Style) */
@@ -1351,7 +1351,7 @@ body {
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(201, 151, 0, 0.5) 40%, transparent 72%);
   transform: translate(-50%, -50%) scale(0.2);
-  animation: killFlashAnim 0.32s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+  animation: killFlashAnim 0.2s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
   pointer-events: none;
 }
 
@@ -1371,7 +1371,7 @@ body {
   background: linear-gradient(90deg, transparent, #ffffff 30%, #bcf346 70%, transparent);
   box-shadow: 0 0 10px rgba(201, 151, 0, 0.5), 0 0 4px #ffffff;
   transform: translate(-50%, -50%) rotate(-35deg) scaleX(0);
-  animation: killSlashCutAnim 0.32s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+  animation: killSlashCutAnim 0.2s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
   pointer-events: none;
 }
 
@@ -1383,7 +1383,7 @@ body {
 
 /* Board Combat Shake */
 .combat-shake {
-  animation: boardCombatShakeAnim 0.22s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  /* Disabled whole-board shake to eliminate capture lag */
 }
 
 @keyframes boardCombatShakeAnim {
