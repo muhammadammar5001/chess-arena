@@ -5345,26 +5345,35 @@ class App {
     list.innerHTML = visiblePlayers.map((player, i) => {
       const rank = Number(player.rank) > 0 ? Math.floor(Number(player.rank)) : i + 1;
       const medal = ['🥇', '🥈', '🥉'][rank - 1] || '';
-      const rankColor = rank === 1 ? '#FFD700' : rank === 2 ? '#E0E0E0' : rank === 3 ? '#CD7F32' : '#C99700';
+      let rankTierClass = '';
+      if (rank === 1) rankTierClass = 'rank-gold rank-top-1';
+      else if (rank === 2) rankTierClass = 'rank-silver rank-top-2';
+      else if (rank === 3) rankTierClass = 'rank-bronze rank-top-3';
+
+      const rankNumColor = rank === 1 ? '#20120B' : rank === 2 ? '#151B26' : rank === 3 ? '#200E05' : '#C99700';
       const name = escapeHtml(player.username || 'Player');
       const rating = Number(player.rating != null ? player.rating : player.elo) || 1200;
       const wins = Number(player.wins) || 0;
       const losses = Number(player.losses) || 0;
       const titleBadge = this.getEloTitleBadgeHtml(rating);
       const isMe = myId && player.playerId === myId;
-      const border = isMe ? '2px solid #F5D36C' : '1.5px solid #8C6538';
+      const border = isMe ? '2px solid #E9D5FF' : (rank > 3 ? '1.5px solid #8C6538' : '');
       const youTag = isMe
-        ? '<span style="font-size:10px; color:#20120B; background:#F5D36C; border-radius:9999px; padding:1px 6px;">YOU</span>'
+        ? '<span style="font-size:10px; color:#FFFFFF; background:#8728E6; border-radius:9999px; padding:1px 6px; font-weight:800;">YOU</span>'
         : '';
-      return `<div class="ranking-card" style="background: linear-gradient(180deg, #4A2E1B 0%, #2A170C 100%); border: ${border}; border-radius: 12px; padding: 12px 18px; margin-bottom: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: space-between;">
+      const cardStyle = rank > 3
+        ? `background: linear-gradient(180deg, #4A2E1B 0%, #2A170C 100%); border: ${border}; border-radius: 12px; padding: 12px 18px; margin-bottom: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: space-between;`
+        : `margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;`;
+
+      return `<div class="ranking-card ${rankTierClass}" style="${cardStyle}">
         <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
-          <div style="font-family: 'Georgia', serif; font-size: 20px; font-weight: 800; width: 32px; text-align: center; color: ${rankColor};">${rank}</div>
+          <div class="ranking-num" style="font-family: 'Georgia', serif; font-size: 20px; font-weight: 800; width: 32px; text-align: center; color: ${rankNumColor};">${rank}</div>
           <div style="display: flex; flex-direction: column;">
             <div class="ranking-name" style="font-family: 'Georgia', serif; font-weight: 700; color: #FDF7EC; font-size: 16px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">${name}${titleBadge}${youTag}</div>
-            <div style="font-size: 13px; color: #D6BD9B; font-weight: 600; margin-top: 2px;">Rating: <span style="color: #FFD54F; font-weight: 800;">${rating}</span> · ${wins}W / ${losses}L</div>
+            <div class="ranking-meta" style="font-size: 13px; color: #D6BD9B; font-weight: 600; margin-top: 2px;">Rating: <span class="ranking-rating-val" style="color: #FFD54F; font-weight: 800;">${rating}</span> · ${wins}W / ${losses}L</div>
           </div>
         </div>
-        <div style="font-size: 22px; filter: drop-shadow(0 0 6px rgba(201,151,0,0.5));">${medal}</div>
+        <div class="ranking-medal" style="font-size: 22px; filter: drop-shadow(0 0 6px rgba(201,151,0,0.5));">${medal}</div>
       </div>`;
     }).join('');
     this.renderLeaderboardMyRank();
