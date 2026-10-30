@@ -945,109 +945,12 @@ class App {
         }
 
         case 'capture': {
-          const t0 = ctx.currentTime;
-          // Noise burst: sharp crack/snap on piece capture
-          try {
-            const bufSz = Math.floor(ctx.sampleRate * 0.06);
-            const nBuf = ctx.createBuffer(1, bufSz, ctx.sampleRate);
-            const nd = nBuf.getChannelData(0);
-            for (let i = 0; i < bufSz; i++) {
-              nd[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.012));
-            }
-            const nSrc = ctx.createBufferSource();
-            nSrc.buffer = nBuf;
-            const nFilt = ctx.createBiquadFilter();
-            nFilt.type = 'bandpass';
-            nFilt.frequency.value = 2200;
-            nFilt.Q.value = 1.2;
-            const nGain = ctx.createGain();
-            nGain.gain.setValueAtTime(0.55, t0);
-            nGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.06);
-            nSrc.connect(nFilt);
-            nFilt.connect(nGain);
-            nGain.connect(ctx.destination);
-            nSrc.start(t0);
-          } catch(e) {}
-          // Wood thud body
-          const woodOsc = ctx.createOscillator();
-          const woodGain = ctx.createGain();
-          woodOsc.type = 'triangle';
-          woodOsc.frequency.setValueAtTime(320, t0);
-          woodOsc.frequency.exponentialRampToValueAtTime(80, t0 + 0.12);
-          woodGain.gain.setValueAtTime(0.22, t0);
-          woodGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.12);
-          woodOsc.connect(woodGain);
-          woodGain.connect(ctx.destination);
-          woodOsc.start(t0);
-          woodOsc.stop(t0 + 0.12);
+          this.playShortSound('/assets/sounds/capture.mp3', 0.85);
           break;
         }
 
         case 'check': {
-          // King in check: heavy wooden "slam" with a short bright crack.
-          // Matches the reference clip: a single deep knock, clearly louder
-          // and fuller than a normal piece placement.
-          const t0 = ctx.currentTime;
-
-          try {
-            const bufSz = Math.floor(ctx.sampleRate * 0.09);
-            const nBuf = ctx.createBuffer(1, bufSz, ctx.sampleRate);
-            const nd = nBuf.getChannelData(0);
-            for (let i = 0; i < bufSz; i++) {
-              nd[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.018));
-            }
-            const nSrc = ctx.createBufferSource();
-            nSrc.buffer = nBuf;
-            const nFilt = ctx.createBiquadFilter();
-            nFilt.type = 'bandpass';
-            nFilt.frequency.value = 2500;
-            nFilt.Q.value = 0.9;
-            const nGain = ctx.createGain();
-            nGain.gain.setValueAtTime(0.6, t0);
-            nGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.09);
-            nSrc.connect(nFilt);
-            nFilt.connect(nGain);
-            nGain.connect(ctx.destination);
-            nSrc.start(t0);
-          } catch (e) {}
-
-          // Deep wooden body
-          const body = ctx.createOscillator();
-          const bodyGain = ctx.createGain();
-          body.type = 'triangle';
-          body.frequency.setValueAtTime(330, t0);
-          body.frequency.exponentialRampToValueAtTime(88, t0 + 0.22);
-          bodyGain.gain.setValueAtTime(0.34, t0);
-          bodyGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.28);
-          body.connect(bodyGain);
-          bodyGain.connect(ctx.destination);
-          body.start(t0);
-          body.stop(t0 + 0.3);
-
-          // Sub thump for weight
-          const sub = ctx.createOscillator();
-          const subGain = ctx.createGain();
-          sub.type = 'sine';
-          sub.frequency.setValueAtTime(150, t0);
-          sub.frequency.exponentialRampToValueAtTime(58, t0 + 0.26);
-          subGain.gain.setValueAtTime(0.24, t0);
-          subGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.32);
-          sub.connect(subGain);
-          subGain.connect(ctx.destination);
-          sub.start(t0);
-          sub.stop(t0 + 0.34);
-
-          // Faint high ring that follows the crack
-          const ring = ctx.createOscillator();
-          const ringGain = ctx.createGain();
-          ring.type = 'sine';
-          ring.frequency.setValueAtTime(2340, t0);
-          ringGain.gain.setValueAtTime(0.07, t0);
-          ringGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.11);
-          ring.connect(ringGain);
-          ringGain.connect(ctx.destination);
-          ring.start(t0);
-          ring.stop(t0 + 0.12);
+          this.startCheckSound();
           break;
         }
 
@@ -1098,9 +1001,93 @@ class App {
     }
   }
 
+  // --- Sound helpers (file based) ---------------------
+
+  playShortSound(url, volume = 0.8) {
+    if (this.soundMuted || this.platformAudioMuted || this.platformPaused) return;
+    try {
+      if (!this._shortSoundCache) this._shortSoundCache = new Map();
+      let audio = this._shortSoundCache.get(url);
+      if (!audio) {
+        audio = new Audio(url);
+        audio.preload = 'auto';
+        this._shortSoundCache.set(url, audio);
+      }
+      audio.volume = volume;
+      audio.currentTime = 0;
+      const p = audio.play();
+      if (p && p.catch) p.catch(() => {});
+    } catch (e) {}
+  }
+
+  // The check cue loops for as long as the king stays in check and fades out
+  // the moment the king moves out of check.
+  startCheckSound() {
+    if (this.soundMuted || this.platformAudioMuted || this.platformPaused) return;
+    try {
+      if (!this._checkAudio) {
+        const audio = new Audio('/assets/sounds/check.mp3');
+        audio.loop = true;
+        audio.preload = 'auto';
+        audio.volume = 0;
+        this._checkAudio = audio;
+      }
+      const audio = this._checkAudio;
+      audio.loop = true;
+      this._cancelVolumeFade();
+      try { audio.currentTime = 0; } catch (e) {}
+      const p = audio.play();
+      if (p && p.catch) p.catch(() => {});
+      this._fadeAudioTo(audio, 0.9, 350);
+    } catch (e) {}
+  }
+
+  stopCheckSound(fadeMs = 700) {
+    const audio = this._checkAudio;
+    if (!audio) return;
+    this._cancelVolumeFade();
+    if (audio.paused) {
+      try { audio.currentTime = 0; } catch (e) {}
+      audio.volume = 0;
+      return;
+    }
+    this._fadeAudioTo(audio, 0, fadeMs, () => {
+      try { audio.pause(); audio.currentTime = 0; } catch (e) {}
+      audio.volume = 0;
+    });
+  }
+
+  _fadeAudioTo(audio, target, ms, onDone) {
+    this._cancelVolumeFade();
+    const start = audio.volume;
+    const t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    const step = () => {
+      const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+      const k = Math.min(1, (now - t0) / Math.max(1, ms));
+      audio.volume = Math.max(0, Math.min(1, start + (target - start) * k));
+      if (k < 1 && !(audio.paused && target === 0)) {
+        this._volumeFadeRaf = requestAnimationFrame(step);
+      } else {
+        this._volumeFadeRaf = null;
+        if (onDone) onDone();
+      }
+    };
+    step();
+  }
+
+  _cancelVolumeFade() {
+    if (this._volumeFadeRaf) {
+      cancelAnimationFrame(this._volumeFadeRaf);
+      this._volumeFadeRaf = null;
+    }
+  }
+
   // --- Screen Management -----------------------------
 
   showScreen(screenId) {
+    if (screenId !== 'screen-game' && this._checkAlertOn) {
+      this.stopCheckAlert();
+    }
     document.querySelectorAll('.screen').forEach(s => {
       s.classList.remove('active');
     });
@@ -2602,7 +2589,6 @@ class App {
   // --- King check alert (board glow + king shake + sound) ---
 
   updateCheckAlert(inCheck) {
-    const boardWrap = document.querySelector('.board-wrap');
     const boardEl = document.getElementById('chess-board') || document.getElementById('board');
 
     if (!inCheck) {
@@ -2612,8 +2598,10 @@ class App {
         clearTimeout(this._checkAlertDelay);
         this._checkAlertDelay = null;
       }
-      if (boardWrap) boardWrap.classList.remove('check-alert');
       if (boardEl) boardEl.classList.remove('check-alert');
+      this.stopCheckTears();
+      // King moved out of check -> let the cue melt away.
+      this.stopCheckSound(700);
       return;
     }
 
@@ -2624,26 +2612,40 @@ class App {
     if (this._checkAlertDelay) clearTimeout(this._checkAlertDelay);
     this._checkAlertDelay = setTimeout(() => {
       this._checkAlertDelay = null;
-      this.playSound('check');
+      this.playSound('check'); // starts the looping check cue
       this.flashCheckAlert();
+      this.startCheckTears();
     }, 150);
   }
 
-  flashCheckAlert() {
-    const boardWrap = document.querySelector('.board-wrap');
+  stopCheckAlert() {
+    if (this._checkAlertDelay) {
+      clearTimeout(this._checkAlertDelay);
+      this._checkAlertDelay = null;
+    }
+    this._checkAlertOn = false;
     const boardEl = document.getElementById('chess-board') || document.getElementById('board');
-    if (!boardWrap || !boardEl) return;
+    if (boardEl) boardEl.classList.remove('check-alert');
+    const ring = document.querySelector('.board-wrap .check-ring');
+    if (ring) ring.remove();
+    this.stopCheckTears();
+    this.stopCheckSound(500);
+  }
 
-    boardWrap.classList.remove('check-alert');
+  flashCheckAlert() {
+    const boardEl = document.getElementById('chess-board') || document.getElementById('board');
+    if (!boardEl) return;
+
     boardEl.classList.remove('check-alert');
     // Force a reflow so back-to-back checks restart the CSS animation.
-    void boardWrap.offsetWidth;
-    boardWrap.classList.add('check-alert');
+    void boardEl.offsetWidth;
     boardEl.classList.add('check-alert');
 
     // Ember ring over the checked king (real element so theme background
     // rules cannot hide it, and it lives outside the board so renderBoard()
     // rebuilding the grid does not wipe it mid-pulse).
+    const boardWrap = document.querySelector('.board-wrap');
+    if (!boardWrap) return;
     const oldRing = boardWrap.querySelector('.check-ring');
     if (oldRing) oldRing.remove();
     const kingSq = boardEl.querySelector('.square.is-check');
@@ -2667,9 +2669,51 @@ class App {
     if (this._checkAlertHide) clearTimeout(this._checkAlertHide);
     this._checkAlertHide = setTimeout(() => {
       this._checkAlertHide = null;
-      boardWrap.classList.remove('check-alert');
       boardEl.classList.remove('check-alert');
     }, 2000);
+  }
+
+  // --- Crying king tears ------------------------------
+
+  startCheckTears() {
+    this.stopCheckTears();
+    this.spawnCheckTear();
+    this.spawnCheckTear();
+    this._tearInterval = setInterval(() => this.spawnCheckTear(), 260);
+  }
+
+  stopCheckTears() {
+    if (this._tearInterval) {
+      clearInterval(this._tearInterval);
+      this._tearInterval = null;
+    }
+    document.querySelectorAll('.board-wrap .check-tear').forEach(el => el.remove());
+  }
+
+  spawnCheckTear() {
+    const boardWrap = document.querySelector('.board-wrap');
+    const kingSq = document.querySelector('.square.is-check');
+    if (!boardWrap || !kingSq) return;
+    if (boardWrap.querySelectorAll('.check-tear').length > 16) return;
+
+    const wrapRect = boardWrap.getBoundingClientRect();
+    const sqRect = kingSq.getBoundingClientRect();
+    if (sqRect.width < 4) return;
+
+    const side = Math.random() < 0.5 ? 0.26 : 0.74;
+    const size = 7 + Math.random() * 3.5;
+    const drop = document.createElement('span');
+    drop.className = 'check-tear';
+    drop.style.width = `${size.toFixed(1)}px`;
+    drop.style.height = `${size.toFixed(1)}px`;
+    drop.style.left = `${sqRect.left - wrapRect.left + sqRect.width * (side + (Math.random() * 0.06 - 0.03))}px`;
+    drop.style.top = `${sqRect.top - wrapRect.top + sqRect.height * (0.3 + Math.random() * 0.1)}px`;
+    drop.style.setProperty('--tear-drift', `${((Math.random() * 2 - 1) * 18).toFixed(1)}px`);
+    drop.style.setProperty('--tear-fall', `${(sqRect.height * (1.05 + Math.random() * 0.65)).toFixed(1)}px`);
+    drop.style.setProperty('--tear-spin', `${((Math.random() * 2 - 1) * 40).toFixed(0)}deg`);
+    drop.style.animationDelay = `${(Math.random() * 0.12).toFixed(2)}s`;
+    boardWrap.appendChild(drop);
+    drop.addEventListener('animationend', () => drop.remove(), { once: true });
   }
 
   // --- Square Click Handling -------------------------
@@ -3698,6 +3742,7 @@ class App {
 
   showGameOver() {
     this.stopTimerTick();
+    this.stopCheckAlert();
     this.postGameBreak = true;
     const result = (this.engine && this.engine.gameResult) ? this.engine.gameResult : { winner: null, reason: 'completed' };
     this.showVictoryScreen(result);
@@ -5124,6 +5169,7 @@ class App {
 
   toggleSound() {
     this.soundMuted = !this.soundMuted;
+    if (this.soundMuted) this.stopCheckSound(250);
     this.syncSettingsUI();
     this.saveEconomyState();
     this.showToast(this.soundMuted ? 'Sound effects muted' : 'Sound effects enabled');
