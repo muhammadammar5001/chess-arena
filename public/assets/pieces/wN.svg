@@ -1,0 +1,9 @@
+<svg class="chess-piece new-style-piece white-knight" data-color="w" viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="52" cy="91" rx="34" ry="4.5" fill="rgba(0,0,0,0.22)" />
+          
+          <g fill="#F7EAD0" stroke="#8C6738" stroke-width="1.8" stroke-linejoin="round">
+            <path d="M18 91C18 86 21 83 26 83H74C79 83 82 86 82 91Z"/><path d="M25 83C25 79 28 77 32 77H68C72 77 75 79 75 83Z"/><path d="M68 77C71 58 66 40 57 30L58 17L50 22C47 22 45 24 43 26L27 42C24 45 25 50 30 51L37 52C41 52 44 50 47 47C41 56 36 64 33 77Z"/>
+          </g>
+          <circle cx="46" cy="34" r="2.4" fill="#5A381E" stroke="none"/><circle cx="30" cy="45" r="1.3" fill="#5A381E" stroke="none"/><path d="M59 32C66 41 67 53 65 68" fill="none" stroke="#8C6738" stroke-width="1.4" stroke-opacity=".45" stroke-linecap="round"/><path d="M54 35C60 43 61 53 59 66" fill="none" stroke="#8C6738" stroke-width="1.4" stroke-opacity=".3" stroke-linecap="round"/><path d="M38 51C41 49 43 47 44 44" fill="none" stroke="#8C6738" stroke-width="1.4" stroke-opacity=".35" stroke-linecap="round"/>
+          <rect x="32" y="71" width="37" height="3.2" rx="1.6" fill="#DEC29B" stroke="#8C6738" stroke-width=".8"/><rect x="24" y="80" width="52" height="3.2" rx="1.6" fill="#DEC29B" stroke="#8C6738" stroke-width=".8"/>
+        </svg>

@@ -1,0 +1,9 @@
+<svg class="chess-piece new-style-piece black-queen" data-color="b" viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="52" cy="91" rx="34" ry="4.5" fill="rgba(0,0,0,0.32)" />
+          <g fill="none" stroke="rgba(255, 236, 200, 0.45)" stroke-width="4.2" stroke-linejoin="round"><path d="M18 91C18 86 21 83 26 83H74C79 83 82 86 82 91Z"/><path d="M25 83C25 79 28 77 32 77H68C72 77 75 79 75 83Z"/><path d="M34 77C36 68 40 62 42 58H58C60 62 64 68 66 77Z"/><rect x="35" y="52" width="30" height="8" rx="4"/><path d="M36 53L26 29L34 42L38 21L43 40L50 17L57 40L62 21L66 42L74 29L64 53Z"/><circle cx="26" cy="27" r="4.4"/><circle cx="38" cy="18" r="4.4"/><circle cx="50" cy="14" r="4.6"/><circle cx="62" cy="18" r="4.4"/><circle cx="74" cy="27" r="4.4"/></g>
+          <g fill="#2B1D16" stroke="#0D0704" stroke-width="1.8" stroke-linejoin="round">
+            <path d="M18 91C18 86 21 83 26 83H74C79 83 82 86 82 91Z"/><path d="M25 83C25 79 28 77 32 77H68C72 77 75 79 75 83Z"/><path d="M34 77C36 68 40 62 42 58H58C60 62 64 68 66 77Z"/><rect x="35" y="52" width="30" height="8" rx="4"/><path d="M36 53L26 29L34 42L38 21L43 40L50 17L57 40L62 21L66 42L74 29L64 53Z"/><circle cx="26" cy="27" r="4.4"/><circle cx="38" cy="18" r="4.4"/><circle cx="50" cy="14" r="4.6"/><circle cx="62" cy="18" r="4.4"/><circle cx="74" cy="27" r="4.4"/>
+          </g>
+          
+          <rect x="34" y="72" width="32" height="3.2" rx="1.6" fill="#4A3428" stroke="#0D0704" stroke-width=".8"/><rect x="24" y="80" width="52" height="3.2" rx="1.6" fill="#4A3428" stroke="#0D0704" stroke-width=".8"/>
+        </svg>
