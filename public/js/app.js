@@ -2691,48 +2691,18 @@ class App {
     const boardEl = document.getElementById('chess-board') || document.getElementById('board');
     if (!boardEl) return;
 
+    // King piece shake only — no red square glow, no check-ring
     boardEl.classList.remove('check-alert');
-    // Force a reflow so back-to-back checks restart the CSS animation.
     void boardEl.offsetWidth;
     boardEl.classList.add('check-alert');
 
-    // Ember ring over the checked king (real element so theme background
-    // rules cannot hide it, and it lives outside the board so renderBoard()
-    // rebuilding the grid does not wipe it mid-pulse).
+    // Clean up any lingering ring
     const boardWrap = document.querySelector('.board-wrap');
-    if (!boardWrap) return;
-    const oldRing = boardWrap.querySelector('.check-ring');
-    if (oldRing) oldRing.remove();
-    const kingSq = boardEl.querySelector('.square.is-check');
-    if (kingSq) {
-      const wrapRect = boardWrap.getBoundingClientRect();
-      const sqRect = kingSq.getBoundingClientRect();
-      const ring = document.createElement('div');
-      ring.className = 'check-ring';
-      ring.style.left = `${sqRect.left - wrapRect.left}px`;
-      ring.style.top = `${sqRect.top - wrapRect.top}px`;
-      ring.style.width = `${sqRect.width}px`;
-      ring.style.height = `${sqRect.height}px`;
-      boardWrap.appendChild(ring);
-      if (this._checkRingRemove) clearTimeout(this._checkRingRemove);
-      this._checkRingRemove = setTimeout(() => {
-        this._checkRingRemove = null;
-        ring.remove();
-      }, 2000);
+    if (boardWrap) {
+      const oldRing = boardWrap.querySelector('.check-ring');
+      if (oldRing) oldRing.remove();
     }
-
-    if (this._checkAlertHide) clearTimeout(this._checkAlertHide);
-    this._checkAlertHide = setTimeout(() => {
-      this._checkAlertHide = null;
-      boardEl.classList.remove('check-alert');
-    }, 2000);
   }
-
-  // --- Crying king tears ------------------------------
-
-    // --- Check Alert Droplets (Golden teardrops with black strokes) -------
-  // Replicates the reference droplet burst: droplets burst radially around
-  // the checked king with tip trailing back, scaling up then shrinking away.
 
   startCheckTears() {
     this.stopCheckTears();
@@ -2741,10 +2711,10 @@ class App {
     }
     const loop = () => {
       this.spawnCheckTear();
-      const delay = 210 + Math.random() * (320 - 210);
+      const delay = 130 + Math.random() * 80;
       this._tearTimer = setTimeout(loop, delay);
     };
-    this._tearTimer = setTimeout(loop, 240);
+    this._tearTimer = setTimeout(loop, 150);
   }
 
   stopCheckTears() {
@@ -2766,7 +2736,7 @@ class App {
     const boardWrap = document.querySelector('.board-wrap');
     const kingSq = document.querySelector('.square.is-check') || document.querySelector('.square.check');
     if (!boardWrap || !kingSq) return;
-    if (boardWrap.querySelectorAll('.check-tear').length > 22) return;
+    if (boardWrap.querySelectorAll('.check-tear').length > 24) return;
 
     const wrapRect = boardWrap.getBoundingClientRect();
     const sqRect = kingSq.getBoundingClientRect();
@@ -2781,12 +2751,12 @@ class App {
 
     // Random point around the checked king's silhouette
     const th = rnd(0, Math.PI * 2);
-    const ox = cx + Math.cos(th) * sqRect.width * 0.45;
-    const oy = cy + Math.sin(th) * kh * 0.48;
+    const ox = cx + Math.cos(th) * sqRect.width * 0.44;
+    const oy = cy + Math.sin(th) * kh * 0.46;
 
-    const a = th * 180 / Math.PI + rnd(-40, 40);
-    const dist = rnd(0.35, 2.1);
-    const sz = rnd(0.2, 1.1);
+    const a = th * 180 / Math.PI + rnd(-35, 35);
+    const dist = rnd(0.75, 1.45); // shoots visibly outward from king
+    const sz = rnd(0.70, 0.82);   // consistent visible base size — no tiny specs
 
     const s = sz * kh * 0.55;
     const rad = a * Math.PI / 180;
@@ -2806,19 +2776,20 @@ class App {
     const T = (f, sc) =>
       `translate(${(ox + dx * f).toFixed(1)}px, ${(oy + dy * f).toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scale(${sc})`;
 
+    // All droplets emerge small (0.05), grow big (1.15), and shrink back to small (0.05) & disappear fast
     if (drop.animate) {
       const an = drop.animate([
-        { transform: T(0, 0.03), offset: 0 },
-        { transform: T(0.55, 1), offset: 0.5, easing: 'ease-in' },
-        { transform: T(1, 0.03), offset: 1 }
+        { transform: T(0, 0.05), opacity: 0.9, offset: 0 },
+        { transform: T(0.45, 1.15), opacity: 1, offset: 0.45, easing: 'ease-out' },
+        { transform: T(1, 0.05), opacity: 0, offset: 1, easing: 'ease-in' }
       ], {
-        duration: reduce ? 1600 : rnd(900, 2100),
+        duration: reduce ? 750 : rnd(380, 520), // fast, snappy cartoon speed
         easing: 'cubic-bezier(.25,.6,.3,1)',
         fill: 'both'
       });
       an.onfinish = () => drop.remove();
     } else {
-      setTimeout(() => drop.remove(), 1600);
+      setTimeout(() => drop.remove(), 600);
     }
   }
 
