@@ -2711,10 +2711,10 @@ class App {
     }
     const loop = () => {
       this.spawnCheckTear();
-      const delay = 130 + Math.random() * 80;
+      const delay = 230 + Math.random() * 90;
       this._tearTimer = setTimeout(loop, delay);
     };
-    this._tearTimer = setTimeout(loop, 150);
+    this._tearTimer = setTimeout(loop, 240);
   }
 
   stopCheckTears() {
@@ -2783,13 +2783,13 @@ class App {
         { transform: T(0.45, 1.15), opacity: 1, offset: 0.45, easing: 'ease-out' },
         { transform: T(1, 0.05), opacity: 0, offset: 1, easing: 'ease-in' }
       ], {
-        duration: reduce ? 750 : rnd(380, 520), // fast, snappy cartoon speed
+        duration: reduce ? 1200 : rnd(750, 950), // smooth, well-paced cartoon burst
         easing: 'cubic-bezier(.25,.6,.3,1)',
         fill: 'both'
       });
       an.onfinish = () => drop.remove();
     } else {
-      setTimeout(() => drop.remove(), 600);
+      setTimeout(() => drop.remove(), 1100);
     }
   }
 
