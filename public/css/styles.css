@@ -1266,7 +1266,7 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  background: #0f172a;
+  background: #050608;
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
   filter: drop-shadow(2px 3px 0px rgba(0, 0, 0, 0.8));
   pointer-events: none;

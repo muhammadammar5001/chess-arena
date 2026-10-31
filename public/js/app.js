@@ -3143,6 +3143,19 @@ class App {
     slash.className = 'kill-slash-line';
     overlay.appendChild(slash);
 
+    // Sharp comic triangular black shards matching the reference image
+    const shards = [
+      'shard-top-left',
+      'shard-bottom',
+      'shard-right',
+      'shard-top-right'
+    ];
+    shards.forEach(cls => {
+      const shard = document.createElement('div');
+      shard.className = `kill-shard ${cls}`;
+      overlay.appendChild(shard);
+    });
+
     // Burst dot particles — 8 dots exploding outward
     const dotColors = ['#ffdd00','#ff8800','#ffffff','#ff4444','#ffaa00','#ffee44','#ff6600','#ffcc00'];
     const dotCount = 8;
@@ -3164,7 +3177,7 @@ class App {
       if (overlay.parentNode) {
         overlay.parentNode.removeChild(overlay);
       }
-    }, 380);
+    }, 480);
   }
 
   animateMoveAndApply(result, onDone) {
