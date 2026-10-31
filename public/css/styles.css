@@ -4458,3 +4458,6 @@ div.game-layout-wrapper {
   height: 100%;
   overflow: visible;
 }
+
+/* Disable non-shard capture FX */
+.capture-burst-dot, .kill-flash-circle, .kill-slash-line { display: none !important; }

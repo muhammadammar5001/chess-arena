@@ -3147,15 +3147,7 @@ class App {
     overlay.style.width = toSq.offsetWidth + 'px';
     overlay.style.height = toSq.offsetHeight + 'px';
 
-    const flash = document.createElement('div');
-    flash.className = 'kill-flash-circle';
-    overlay.appendChild(flash);
-
-    const slash = document.createElement('div');
-    slash.className = 'kill-slash-line';
-    overlay.appendChild(slash);
-
-    // Sharp comic triangular black shards matching the reference image
+    // Sharp comic triangular black shards matching the reference image ONLY
     const shards = [
       'shard-top-left',
       'shard-bottom',
@@ -3167,21 +3159,6 @@ class App {
       shard.className = `kill-shard ${cls}`;
       overlay.appendChild(shard);
     });
-
-    // Burst dot particles — 8 dots exploding outward
-    const dotColors = ['#ffdd00','#ff8800','#ffffff','#ff4444','#ffaa00','#ffee44','#ff6600','#ffcc00'];
-    const dotCount = 8;
-    for (let i = 0; i < dotCount; i++) {
-      const dot = document.createElement('div');
-      dot.className = 'capture-burst-dot';
-      const angle = (i / dotCount) * 2 * Math.PI;
-      const dist = 26 + Math.random() * 14;
-      dot.style.setProperty('--bx', Math.round(Math.cos(angle) * dist) + 'px');
-      dot.style.setProperty('--by', Math.round(Math.sin(angle) * dist) + 'px');
-      dot.style.background = dotColors[i % dotColors.length];
-      dot.style.animationDelay = (Math.random() * 0.04).toFixed(3) + 's';
-      overlay.appendChild(dot);
-    }
 
     boardEl.appendChild(overlay);
 
