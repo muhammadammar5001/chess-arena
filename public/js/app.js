@@ -1425,6 +1425,9 @@ class App {
   }
 
   startSlotMachine() {
+    if (this.slotInterval) { clearInterval(this.slotInterval); this.slotInterval = null; }
+    if (this.statusInterval) { clearInterval(this.statusInterval); this.statusInterval = null; }
+    if (this.slotStopTimeout) { clearTimeout(this.slotStopTimeout); this.slotStopTimeout = null; }
     const machine = document.getElementById('avatar-slot-machine');
     const animationEl = document.getElementById('matchmaking-animation');
     const waitingInfo = document.getElementById('waiting-room-info');
@@ -1504,7 +1507,12 @@ class App {
       this.statusInterval = null;
     }
 
-    const finalAvatar = opponentAvatarSrc || this.opponentAvatarSrc || this.getRandomAvatarSrc();
+    if (this.slotStopTimeout) {
+      clearTimeout(this.slotStopTimeout);
+      this.slotStopTimeout = null;
+    }
+
+    const finalAvatar = opponentAvatarSrc || this.opponentAvatarSrc || (opponentName ? this.buildUserAvatar(opponentName) : this.getRandomAvatarSrc());
     this.opponentAvatarSrc = finalAvatar;
 
     const machine = document.getElementById('avatar-slot-machine');
@@ -1517,7 +1525,9 @@ class App {
         if (img) img.src = finalAvatar;
       }
       machine.style.transform = 'translateY(0px)';
-      setTimeout(() => {
+      this.slotStopTimeout = setTimeout(() => {
+        machine.style.transition = 'none';
+        machine.style.transform = 'translateY(0px)';
         machine.innerHTML = `<div class="slot-avatar-item matched"><img src="${finalAvatar}" alt="${opponentName || 'Opponent'}" style="object-fit:cover; border-radius:50%; width:100%; height:100%;"></div>`;
       }, 400);
     }
@@ -1707,7 +1717,9 @@ class App {
 
     mp.onWaitingForMatch = () => {
       this.showScreen('screen-waiting');
-      this.startSlotMachine();
+      if (!this.slotInterval) {
+        this.startSlotMachine();
+      }
     };
 
     mp.onCheckRoomResult = (data) => {
@@ -1762,7 +1774,7 @@ class App {
         const oppName = opponentMeta.username || opponent || 'Opponent';
         const oppRating = opponentMeta.rating || 1200;
         const oppAvatarId = opponentMeta.avatarId || gameData.opponentAvatarId;
-        const oppAvatarSrc = opponentMeta.avatarSrc || (oppAvatarId ? this.getAvatarById(oppAvatarId)?.src : null) || this.getRandomAvatarSrc();
+        const oppAvatarSrc = opponentMeta.avatarSrc || (oppAvatarId ? this.getAvatarSrcById(oppAvatarId) : null) || (oppName ? this.buildUserAvatar(oppName) : this.getRandomAvatarSrc());
         this.opponentAvatarSrc = oppAvatarSrc;
         const youName = this.getPreferredDisplayName() || 'Player';
 
@@ -1806,7 +1818,8 @@ class App {
         };
 
         const animContainer = document.getElementById('matchmaking-animation');
-        if (!this.privateRoom && animContainer && !animContainer.classList.contains('hidden') && typeof this.stopSlotMachine === 'function') {
+        if (!this.privateRoom && typeof this.stopSlotMachine === 'function') {
+            if (animContainer) animContainer.classList.remove('hidden');
             this.stopSlotMachine(oppName, oppRating, oppAvatarSrc);
             setTimeout(() => {
                 if (typeof this.showMatchmakingFound === 'function') {
@@ -2168,6 +2181,10 @@ class App {
     if (this.statusInterval) {
       clearInterval(this.statusInterval);
       this.statusInterval = null;
+    }
+    if (this.slotStopTimeout) {
+      clearTimeout(this.slotStopTimeout);
+      this.slotStopTimeout = null;
     }
 
     this.showScreen('screen-home');

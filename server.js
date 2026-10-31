@@ -422,7 +422,8 @@ function getSocketProfile(ws) {
   const rating = Math.min(4000, Math.max(100, safeInt(rawRating, 1200)));
   const level = Math.min(999, Math.max(1, safeInt(ws && ws.playerLevel, 1)));
   const avatarId = (ws && ws.avatarId) ? ws.avatarId : 'pfp-01';
-  return { username, rating, level, avatarId };
+  const avatarSrc = (ws && ws.avatarSrc) ? ws.avatarSrc : null;
+  return { username, rating, level, avatarId, avatarSrc };
 }
 
 function broadcastToRoom(room, data) {
@@ -446,13 +447,13 @@ function handleMessage(ws, data) {
       handleLeavePrivateRoom(ws, data);
       break;
     case 'create_room':
-        createRoom(ws, data.timer, data.mode, data.abilities, data.avatarId);
+        createRoom(ws, data.timer, data.mode, data.abilities, data.avatarId, data.avatarSrc || (data.profile && data.profile.avatarSrc));
       break;
     case 'join_room':
-        joinRoom(ws, data.roomCode, data.abilities, data.avatarId);
+        joinRoom(ws, data.roomCode, data.abilities, data.avatarId, data.avatarSrc || (data.profile && data.profile.avatarSrc));
       break;
     case 'find_match':
-        handleFindMatch(ws, data.mode, data.abilities, data.avatarId);
+        handleFindMatch(ws, data.mode, data.abilities, data.avatarId, data.avatarSrc || (data.profile && data.profile.avatarSrc));
       break;
     case 'cancel_match':
       handleCancelMatch(ws);
@@ -510,8 +511,9 @@ function handleLeavePrivateRoom(ws, data) {
   }
 }
 
-function createRoom(ws, timerMinutes, mode = 'standard', abilities = [], avatarId = null) {
+function createRoom(ws, timerMinutes, mode = 'standard', abilities = [], avatarId = null, avatarSrc = null) {
   if (avatarId) ws.avatarId = avatarId;
+  if (avatarSrc) ws.avatarSrc = avatarSrc;
   const roomCode = generateRoomCode();
   const gameId = uuidv4();
   // Private rooms always use the standard 10-minute clock.
@@ -584,8 +586,9 @@ function handleCheckRoom(ws, roomCode) {
   });
 }
 
-function joinRoom(ws, roomCode, abilities = [], avatarId = null) {
+function joinRoom(ws, roomCode, abilities = [], avatarId = null, avatarSrc = null) {
   if (avatarId) ws.avatarId = avatarId;
+  if (avatarSrc) ws.avatarSrc = avatarSrc;
   const code = roomCode.toUpperCase();
   const room = rooms.get(code);
 
@@ -645,15 +648,16 @@ function joinRoom(ws, roomCode, abilities = [], avatarId = null) {
   console.log(`Player joined room ${code}`);
 }
 
-function handleFindMatch(ws, mode = 'standard', abilities = [], avatarId = null) {
+function handleFindMatch(ws, mode = 'standard', abilities = [], avatarId = null, avatarSrc = null) {
   if (avatarId) ws.avatarId = avatarId;
+  if (avatarSrc) ws.avatarSrc = avatarSrc;
   const existingIdx = matchmakingQueue.findIndex(p => p.ws === ws);
   if (existingIdx !== -1) return;
 
   const opponentIdx = matchmakingQueue.findIndex(p => p.mode === mode && p.ws.readyState === 1);
 
   if (opponentIdx === -1) {
-    matchmakingQueue.push({ ws, mode: mode, abilities: abilities, avatarId: avatarId });
+    matchmakingQueue.push({ ws, mode: mode, abilities: abilities, avatarId: avatarId, avatarSrc: avatarSrc || ws.avatarSrc });
     sendJSON(ws, { type: 'waiting_for_match' });
     console.log(`Player ${ws.id} entered matchmaking queue`);
     return;
@@ -662,6 +666,7 @@ function handleFindMatch(ws, mode = 'standard', abilities = [], avatarId = null)
   const opponentEntry = matchmakingQueue.splice(opponentIdx, 1)[0];
   const opponentWs = opponentEntry.ws;
   if (opponentEntry.avatarId) opponentWs.avatarId = opponentEntry.avatarId;
+  if (opponentEntry.avatarSrc) opponentWs.avatarSrc = opponentEntry.avatarSrc;
   if (opponentWs.readyState !== 1) {
     handleFindMatch(ws, mode, abilities);
     return;
@@ -1508,6 +1513,7 @@ async function handleAuthenticate(ws, data) {
   ws.playerRating = Math.min(4000, Math.max(100, safeInt(data && data.rating, 1200)));
   ws.playerLevel = Math.min(999, Math.max(1, safeInt(data && data.playerLevel, 1)));
   if (data && data.avatarId) ws.avatarId = String(data.avatarId).trim().slice(0, 32);
+  if (data && data.avatarSrc) ws.avatarSrc = String(data.avatarSrc).trim().slice(0, 256);
 
   // The database is optional. Without it the player still gets a full game and
   // local/Bridge-backed stats; only cross-device profile sync is unavailable.

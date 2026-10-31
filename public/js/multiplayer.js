@@ -287,25 +287,28 @@ class MultiplayerClient {
     }
   }
 
-  createRoom(timerMinutes = null, mode = 'standard', abilities = [], avatarId = null) {
-    this.send({ type: 'create_room', timer: timerMinutes, mode: mode, abilities: abilities, avatarId: avatarId });
+  createRoom(timerMinutes = null, mode = 'standard', abilities = [], avatarId = null, profile = null) {
+    const avatarSrc = profile && profile.avatarSrc ? profile.avatarSrc : null;
+    this.send({ type: 'create_room', timer: timerMinutes, mode: mode, abilities: abilities, avatarId: avatarId, avatarSrc: avatarSrc, profile: profile });
   }
 
   checkRoom(roomCode) {
     this.send({ type: 'check_room', roomCode: roomCode.toUpperCase() });
   }
 
-  joinRoom(roomCode, abilities = [], avatarId = null) {
+  joinRoom(roomCode, abilities = [], avatarId = null, profile = null) {
     this.roomCode = roomCode.toUpperCase();
-    this.send({ type: 'join_room', roomCode: this.roomCode, abilities: abilities, avatarId: avatarId });
+    const avatarSrc = profile && profile.avatarSrc ? profile.avatarSrc : null;
+    this.send({ type: 'join_room', roomCode: this.roomCode, abilities: abilities, avatarId: avatarId, avatarSrc: avatarSrc, profile: profile });
   }
 
   sendChatMessage(text) {
     this.send({ type: 'chat_message', text: text, roomCode: this.roomCode });
   }
 
-  findMatch(timerMinutes = null, mode = 'standard', abilities = [], avatarId = null) {
-    this.send({ type: 'find_match', timer: timerMinutes, mode: mode, abilities: abilities, avatarId: avatarId });
+  findMatch(timerMinutes = null, mode = 'standard', abilities = [], avatarId = null, profile = null) {
+    const avatarSrc = profile && profile.avatarSrc ? profile.avatarSrc : null;
+    this.send({ type: 'find_match', timer: timerMinutes, mode: mode, abilities: abilities, avatarId: avatarId, avatarSrc: avatarSrc, profile: profile });
   }
 
   cancelMatch() {
