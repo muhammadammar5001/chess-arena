@@ -4489,15 +4489,28 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
    Adapts to Radiant Gold (1st), Radiant Silver (2nd), Radiant Bronze (3rd)
    Maintains default purple styling for 4th and below
    ========================================================================== */
-.leaderboard-pinned-rank-medal {
+.ranking-crown,
+.leaderboard-pinned-rank-crown {
   flex: 0 0 auto !important;
-  font-size: 22px !important;
-  line-height: 1 !important;
-  padding-left: 6px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  filter: none !important;
+  padding-left: 6px !important;
+}
+
+.ranking-crown-img {
+  width: auto !important;
+  height: 28px !important;
+  max-width: 48px !important;
+  object-fit: contain !important;
+  display: block !important;
+  filter: drop-shadow(0 2px 4px rgba(32, 18, 11, 0.28)) !important;
+  transition: transform 0.2s ease !important;
+}
+
+.ranking-card.rank-top-1:hover .ranking-crown-img,
+.leaderboard-pinned-rank.pinned-rank-1:hover .ranking-crown-img {
+  transform: scale(1.08) rotate(-2deg) !important;
 }
 
 /* 1st Place - Radiant Gold Pinned Card */

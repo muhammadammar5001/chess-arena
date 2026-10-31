@@ -476,8 +476,9 @@ class App {
     const losses = Math.max(0, Number(entry.losses) || 0);
     const titleBadge = this.getEloTitleBadgeHtml(rating);
     const totalLabel = total > 0 ? `<small>of ${total}</small>` : '';
-    const medal = ['🥇', '🥈', '🥉'][rank - 1] || '';
-    const medalHtml = medal ? `<div class="leaderboard-pinned-rank-medal" aria-hidden="true">${medal}</div>` : '';
+    const crownHtml = rank === 1
+      ? `<div class="leaderboard-pinned-rank-crown" aria-label="1st Place Champion"><img src="/assets/crown-rank-1.webp" alt="Champion Crown" class="ranking-crown-img" /></div>`
+      : '';
 
     return `<div class="leaderboard-pinned-rank-badge" aria-hidden="true">
         <span class="leaderboard-pinned-rank-number">#${rank}</span>
@@ -491,7 +492,7 @@ class App {
         </div>
         <div class="leaderboard-pinned-rank-meta">Rating: <strong>${rating}</strong><span class="leaderboard-pinned-rank-dot">·</span>${wins}W / ${losses}L</div>
       </div>
-      ${medalHtml}`;
+      ${crownHtml}`;
   }
 
   hideLeaderboardPinnedCard(pinned) {
@@ -5599,7 +5600,9 @@ class App {
     const myId = this.cloudProfile && this.cloudProfile.playerId;
     list.innerHTML = visiblePlayers.map((player, i) => {
       const rank = Number(player.rank) > 0 ? Math.floor(Number(player.rank)) : i + 1;
-      const medal = ['🥇', '🥈', '🥉'][rank - 1] || '';
+      const crownHtml = rank === 1
+        ? `<div class="ranking-crown" aria-label="1st Place Champion"><img src="/assets/crown-rank-1.webp" alt="Champion Crown" class="ranking-crown-img" /></div>`
+        : '';
       let rankTierClass = '';
       if (rank === 1) rankTierClass = 'rank-gold rank-top-1';
       else if (rank === 2) rankTierClass = 'rank-silver rank-top-2';
@@ -5628,7 +5631,7 @@ class App {
             <div class="ranking-meta" style="font-size: 13px; color: #D6BD9B; font-weight: 600; margin-top: 2px;">Rating: <span class="ranking-rating-val" style="color: #FFD54F; font-weight: 800;">${rating}</span> · ${wins}W / ${losses}L</div>
           </div>
         </div>
-        <div class="ranking-medal" style="font-size: 22px; filter: none;">${medal}</div>
+        ${crownHtml}
       </div>`;
     }).join('');
     this.renderLeaderboardMyRank();
