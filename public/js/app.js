@@ -476,6 +476,8 @@ class App {
     const losses = Math.max(0, Number(entry.losses) || 0);
     const titleBadge = this.getEloTitleBadgeHtml(rating);
     const totalLabel = total > 0 ? `<small>of ${total}</small>` : '';
+    const medal = ['🥇', '🥈', '🥉'][rank - 1] || '';
+    const medalHtml = medal ? `<div class="leaderboard-pinned-rank-medal" aria-hidden="true">${medal}</div>` : '';
 
     return `<div class="leaderboard-pinned-rank-badge" aria-hidden="true">
         <span class="leaderboard-pinned-rank-number">#${rank}</span>
@@ -488,12 +490,14 @@ class App {
           <span class="leaderboard-pinned-you">YOU</span>
         </div>
         <div class="leaderboard-pinned-rank-meta">Rating: <strong>${rating}</strong><span class="leaderboard-pinned-rank-dot">·</span>${wins}W / ${losses}L</div>
-      </div>`;
+      </div>
+      ${medalHtml}`;
   }
 
   hideLeaderboardPinnedCard(pinned) {
     if (!pinned) return;
     pinned.classList.add('hidden');
+    pinned.classList.remove('pinned-rank-1', 'pinned-rank-2', 'pinned-rank-3');
     pinned.innerHTML = '';
     pinned.removeAttribute('aria-label');
     const screen = pinned.closest('#screen-leaderboard');
@@ -532,7 +536,14 @@ class App {
 
     if (!pinned) return;
     pinned.innerHTML = this.buildLeaderboardPinnedCard(self);
-    pinned.classList.remove('hidden');
+    pinned.classList.remove('hidden', 'pinned-rank-1', 'pinned-rank-2', 'pinned-rank-3');
+    if (rank === 1) {
+      pinned.classList.add('pinned-rank-1');
+    } else if (rank === 2) {
+      pinned.classList.add('pinned-rank-2');
+    } else if (rank === 3) {
+      pinned.classList.add('pinned-rank-3');
+    }
     const screen = pinned.closest('#screen-leaderboard');
     if (screen) screen.classList.add('has-pinned-rank');
     const total = Math.max(0, Number(this.leaderboardTotalPlayers) || 0);

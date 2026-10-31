@@ -4484,6 +4484,218 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   }
 }
 
+/* ==========================================================================
+   PINNED "YOU" RANK CARD - DYNAMIC TOP 1 / 2 / 3 THEMES
+   Adapts to Radiant Gold (1st), Radiant Silver (2nd), Radiant Bronze (3rd)
+   Maintains default purple styling for 4th and below
+   ========================================================================== */
+.leaderboard-pinned-rank-medal {
+  flex: 0 0 auto !important;
+  font-size: 22px !important;
+  line-height: 1 !important;
+  padding-left: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  filter: none !important;
+}
+
+/* 1st Place - Radiant Gold Pinned Card */
+.leaderboard-pinned-rank.pinned-rank-1 {
+  border: 2px solid #FFF0A8 !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.52), transparent 36%),
+    linear-gradient(135deg, #F7DE82 0%, #D9B23C 46%, #B7891D 100%) !important;
+  box-shadow:
+    0 10px 26px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(183, 137, 29, 0.55),
+    0 0 18px rgba(247, 222, 130, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75) !important;
+  color: #20120B !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-1 .leaderboard-pinned-rank-badge {
+  border-right: 1px solid rgba(32, 18, 11, 0.28) !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-1 .leaderboard-pinned-rank-badge::before {
+  color: rgba(32, 18, 11, 0.8) !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-1 .leaderboard-pinned-rank-number {
+  color: #20120B !important;
+  text-shadow: none !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-1 .leaderboard-pinned-rank-badge small {
+  color: rgba(32, 18, 11, 0.8) !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-1 .leaderboard-pinned-rank-name {
+  color: #20120B !important;
+  text-shadow: none !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-1 .leaderboard-pinned-you {
+  background: #20120B !important;
+  color: #F7DE82 !important;
+  box-shadow: 0 1px 4px rgba(32, 18, 11, 0.35) !important;
+}
+
+#leaderboard-pinned-rank.pinned-rank-1 .elo-title-badge {
+  background: rgba(32, 18, 11, 0.12) !important;
+  border-color: rgba(32, 18, 11, 0.42) !important;
+  color: #20120B !important;
+  box-shadow: none !important;
+}
+
+#leaderboard-pinned-rank.pinned-rank-1 .elo-title-icon {
+  color: #20120B !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-1 .leaderboard-pinned-rank-meta {
+  color: #4A2E1B !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-1 .leaderboard-pinned-rank-meta strong {
+  color: #20120B !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-1 .leaderboard-pinned-rank-dot {
+  color: rgba(32, 18, 11, 0.55) !important;
+}
+
+/* 2nd Place - Radiant Silver Pinned Card */
+.leaderboard-pinned-rank.pinned-rank-2 {
+  border: 2px solid #FFFFFF !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.65), transparent 36%),
+    linear-gradient(135deg, #F3F5F9 0%, #C8CFD9 46%, #8E98A7 100%) !important;
+  box-shadow:
+    0 10px 26px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(142, 152, 167, 0.55),
+    0 0 18px rgba(200, 207, 217, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+  color: #151B26 !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-2 .leaderboard-pinned-rank-badge {
+  border-right: 1px solid rgba(21, 27, 38, 0.28) !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-2 .leaderboard-pinned-rank-badge::before {
+  color: rgba(21, 27, 38, 0.8) !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-2 .leaderboard-pinned-rank-number {
+  color: #151B26 !important;
+  text-shadow: none !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-2 .leaderboard-pinned-rank-badge small {
+  color: rgba(21, 27, 38, 0.8) !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-2 .leaderboard-pinned-rank-name {
+  color: #151B26 !important;
+  text-shadow: none !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-2 .leaderboard-pinned-you {
+  background: #151B26 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 1px 4px rgba(21, 27, 38, 0.35) !important;
+}
+
+#leaderboard-pinned-rank.pinned-rank-2 .elo-title-badge {
+  background: rgba(21, 27, 38, 0.12) !important;
+  border-color: rgba(21, 27, 38, 0.42) !important;
+  color: #151B26 !important;
+  box-shadow: none !important;
+}
+
+#leaderboard-pinned-rank.pinned-rank-2 .elo-title-icon {
+  color: #151B26 !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-2 .leaderboard-pinned-rank-meta {
+  color: #344054 !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-2 .leaderboard-pinned-rank-meta strong {
+  color: #151B26 !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-2 .leaderboard-pinned-rank-dot {
+  color: rgba(21, 27, 38, 0.55) !important;
+}
+
+/* 3rd Place - Radiant Bronze Pinned Card */
+.leaderboard-pinned-rank.pinned-rank-3 {
+  border: 2px solid #FFE2CC !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.52), transparent 36%),
+    linear-gradient(135deg, #F6BA88 0%, #CE7B42 46%, #944819 100%) !important;
+  box-shadow:
+    0 10px 26px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(148, 72, 25, 0.55),
+    0 0 18px rgba(206, 123, 66, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+  color: #200E05 !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-3 .leaderboard-pinned-rank-badge {
+  border-right: 1px solid rgba(32, 14, 5, 0.28) !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-3 .leaderboard-pinned-rank-badge::before {
+  color: rgba(32, 14, 5, 0.8) !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-3 .leaderboard-pinned-rank-number {
+  color: #200E05 !important;
+  text-shadow: none !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-3 .leaderboard-pinned-rank-badge small {
+  color: rgba(32, 14, 5, 0.8) !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-3 .leaderboard-pinned-rank-name {
+  color: #200E05 !important;
+  text-shadow: none !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-3 .leaderboard-pinned-you {
+  background: #200E05 !important;
+  color: #F6BA88 !important;
+  box-shadow: 0 1px 4px rgba(32, 14, 5, 0.35) !important;
+}
+
+#leaderboard-pinned-rank.pinned-rank-3 .elo-title-badge {
+  background: rgba(32, 14, 5, 0.12) !important;
+  border-color: rgba(32, 14, 5, 0.42) !important;
+  color: #200E05 !important;
+  box-shadow: none !important;
+}
+
+#leaderboard-pinned-rank.pinned-rank-3 .elo-title-icon {
+  color: #200E05 !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-3 .leaderboard-pinned-rank-meta {
+  color: #4A220E !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-3 .leaderboard-pinned-rank-meta strong {
+  color: #200E05 !important;
+}
+
+.leaderboard-pinned-rank.pinned-rank-3 .leaderboard-pinned-rank-dot {
+  color: rgba(32, 14, 5, 0.55) !important;
+}
+
+
 
 /* ==========================================================================
    SHOP MOBILE EXPANSION - WIDER CONTAINER & CARDS FOR ANDROID / PHONES
