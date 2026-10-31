@@ -1,182 +1,405 @@
 /**
- * Staunton Wooden Chess Pieces (High-Definition 2D with 3D Depth)
- * Designed for YouTube Playables / Playgama
- * Restored classic handcrafted Staunton piece geometry
+ * Chess Arena — Multi-Theme Vector Chess Pieces (New Artisan Set)
+ *
+ * Implements high-definition vector chess pieces paired for each board theme:
+ *  - classic-oak: Warm Polished Boxwood & Aged Ebony Wood with Brass Rings
+ *  - ember: Fiery Warm Amber & Charred Basalt with Magma Rim & Molten Rings
+ *  - moonlit: Celestial Silver-Ivory & Midnight Sapphire with Starlight Rim
+ *  - sakura: Mother-of-Pearl Blossom & Royal Rosewood with Rose Gold Rings
+ *  - walnut-maple: Cream Canadian Maple & Rich Dark Walnut with Antique Brass
+ *  - ebony-ivory: Sovereign Carrara Marble & Jet Obsidian with 24K Royal Gold
  */
 
-const PIECE_NAMES = {
-  P: 'pawn',
-  N: 'knight',
-  B: 'bishop',
-  R: 'rook',
-  Q: 'queen',
-  K: 'king',
-  pawn: 'pawn',
-  knight: 'knight',
-  bishop: 'bishop',
-  rook: 'rook',
-  queen: 'queen',
-  king: 'king'
-};
+(function () {
+  'use strict';
 
-const TYPE_MAP = {
-  p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king',
-  P: 'pawn', N: 'knight', B: 'bishop', R: 'rook', Q: 'queen', K: 'king',
-  pawn: 'pawn', knight: 'knight', bishop: 'bishop', rook: 'rook', queen: 'queen', king: 'king'
-};
+  const PIECE_NAMES = {
+    P: 'pawn',
+    N: 'knight',
+    B: 'bishop',
+    R: 'rook',
+    Q: 'queen',
+    K: 'king',
+    pawn: 'pawn',
+    knight: 'knight',
+    bishop: 'bishop',
+    rook: 'rook',
+    queen: 'queen',
+    king: 'king'
+  };
 
-const PieceSVGs = {
-  PIECE_NAMES,
-  getPiece(color, type) {
-    const isWhite = color === 'white' || color === 'w';
-    const colorName = isWhite ? 'white' : 'black';
-    const pieceType = TYPE_MAP[type] || 'pawn';
-    const colCode = isWhite ? 'w' : 'b';
+  const TYPE_MAP = {
+    p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king',
+    P: 'pawn', N: 'knight', B: 'bishop', R: 'rook', Q: 'queen', K: 'king',
+    pawn: 'pawn', knight: 'knight', bishop: 'bishop', rook: 'rook', queen: 'queen', king: 'king'
+  };
 
-    const gradId = isWhite ? 'whiteWoodGrad' : 'blackWoodGrad';
-    const highlightGrad = isWhite ? 'whiteHighlightGrad' : 'blackHighlightGrad';
-    const strokeColor = isWhite ? '#8C6738' : '#0D0704';
+  const LETTER_MAP = {
+    pawn: 'P', knight: 'N', bishop: 'B', rook: 'R', queen: 'Q', king: 'K'
+  };
 
-    let paths = '';
+  const THEMES = {
+    'classic-oak': {
+      name: 'Classic Oak',
+      white: {
+        bodyStops: [
+          { offset: '0%', color: '#8f6c38' },
+          { offset: '26%', color: '#EBD8AB' },
+          { offset: '40%', color: '#FFF7DE' },
+          { offset: '68%', color: '#EBD8AB' },
+          { offset: '100%', color: '#9a7740' }
+        ],
+        bandStops: [
+          { offset: '0%', color: '#F6D77A' },
+          { offset: '50%', color: '#D9A441' },
+          { offset: '100%', color: '#8A5E16' }
+        ],
+        stroke: '#46300f',
+        detailStroke: '#46300f',
+        eyeFill: '#2b1a08',
+        rimStroke: null
+      },
+      black: {
+        bodyStops: [
+          { offset: '0%', color: '#080402' },
+          { offset: '26%', color: '#3b261a' },
+          { offset: '40%', color: '#775340' },
+          { offset: '68%', color: '#3b261a' },
+          { offset: '100%', color: '#100804' }
+        ],
+        bandStops: [
+          { offset: '0%', color: '#F6D77A' },
+          { offset: '50%', color: '#D9A441' },
+          { offset: '100%', color: '#8A5E16' }
+        ],
+        stroke: '#030100',
+        detailStroke: '#030100',
+        eyeFill: '#f1d9a8',
+        rimStroke: 'rgba(255, 236, 200, 0.55)'
+      }
+    },
 
-    switch (pieceType) {
-      case 'pawn':
-        paths = `
-          <!-- Pawn Base & Torso -->
-          <ellipse cx="22" cy="40" rx="14" ry="3.5" fill="rgba(0,0,0,0.3)" />
-          <path d="M12 39 C12 37 15 36 22 36 C29 36 32 37 32 39 C32 41 12 41 12 39 Z" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-          <path d="M14 36 C16 30 18 24 19 20 C19 19 25 19 25 20 C26 24 28 30 30 36 Z" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Collar Ring -->
-          <ellipse cx="22" cy="19.5" rx="6.5" ry="2" fill="url(#${highlightGrad})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Head Ball -->
-          <circle cx="22" cy="12.5" r="7.5" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-          <ellipse cx="19.5" cy="10" rx="2.5" ry="2" fill="url(#${highlightGrad})" opacity="0.6" />
-        `;
-        break;
+    'ember': {
+      name: 'Emberwood',
+      white: {
+        bodyStops: [
+          { offset: '0%', color: '#9E4416' },
+          { offset: '26%', color: '#F7A74E' },
+          { offset: '40%', color: '#FFF2D9' },
+          { offset: '68%', color: '#F7A74E' },
+          { offset: '100%', color: '#B34F1A' }
+        ],
+        bandStops: [
+          { offset: '0%', color: '#FFA726' },
+          { offset: '50%', color: '#E65100' },
+          { offset: '100%', color: '#8C2200' }
+        ],
+        stroke: '#541C04',
+        detailStroke: '#541C04',
+        eyeFill: '#3E1200',
+        rimStroke: null
+      },
+      black: {
+        bodyStops: [
+          { offset: '0%', color: '#0D0606' },
+          { offset: '26%', color: '#2E120D' },
+          { offset: '40%', color: '#5C241B' },
+          { offset: '68%', color: '#2E120D' },
+          { offset: '100%', color: '#120706' }
+        ],
+        bandStops: [
+          { offset: '0%', color: '#FF7043' },
+          { offset: '50%', color: '#D84315' },
+          { offset: '100%', color: '#BF360C' }
+        ],
+        stroke: '#080202',
+        detailStroke: '#080202',
+        eyeFill: '#FF8A65',
+        rimStroke: 'rgba(255, 120, 50, 0.82)'
+      }
+    },
 
-      case 'rook':
-        paths = `
-          <!-- Rook Base -->
-          <ellipse cx="22" cy="40.5" rx="15" ry="3.5" fill="rgba(0,0,0,0.3)" />
-          <path d="M10 40 C10 38 13 36 22 36 C31 36 34 38 34 40 C34 42 10 42 10 40 Z" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Tower Body -->
-          <path d="M13 36 L15 19 L29 19 L31 36 Z" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Parapet Base Ring -->
-          <rect x="13" y="17" width="18" height="3" rx="1" fill="url(#${highlightGrad})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Crenellations (Castles) -->
-          <path d="M12 17 L12 9 L16 9 L16 13 L20 13 L20 9 L24 9 L24 13 L28 13 L28 9 L32 9 L32 17 Z" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-        `;
-        break;
+    'moonlit': {
+      name: 'Moonlit Grove',
+      white: {
+        bodyStops: [
+          { offset: '0%', color: '#5C768D' },
+          { offset: '26%', color: '#BDD5E7' },
+          { offset: '40%', color: '#F4FAFF' },
+          { offset: '68%', color: '#BDD5E7' },
+          { offset: '100%', color: '#688299' }
+        ],
+        bandStops: [
+          { offset: '0%', color: '#E0F2FE' },
+          { offset: '50%', color: '#90CDF4' },
+          { offset: '100%', color: '#3182CE' }
+        ],
+        stroke: '#1E3A5F',
+        detailStroke: '#1E3A5F',
+        eyeFill: '#1A365D',
+        rimStroke: null
+      },
+      black: {
+        bodyStops: [
+          { offset: '0%', color: '#050B14' },
+          { offset: '26%', color: '#142238' },
+          { offset: '40%', color: '#2D486F' },
+          { offset: '68%', color: '#142238' },
+          { offset: '100%', color: '#080F1C' }
+        ],
+        bandStops: [
+          { offset: '0%', color: '#93C5FD' },
+          { offset: '50%', color: '#3B82F6' },
+          { offset: '100%', color: '#1D4ED8' }
+        ],
+        stroke: '#02050A',
+        detailStroke: '#02050A',
+        eyeFill: '#BFDBFE',
+        rimStroke: 'rgba(147, 197, 253, 0.75)'
+      }
+    },
 
-      case 'knight':
-        paths = `
-          <!-- Knight Base -->
-          <ellipse cx="22" cy="40.5" rx="15" ry="3.5" fill="rgba(0,0,0,0.3)" />
-          <path d="M10 40 C10 38 13 36 22 36 C31 36 34 38 34 40 C34 42 10 42 10 40 Z" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Horse Head & Mane -->
-          <path d="M12 36 C13 28 12 21 15 15 C17 12 20 8 23 7 C24 7 24 10 24 11 C26 9 29 8 31 10 C33 12 32 17 31 20 C29 20 28 18 26 19 C25 21 27 25 28 29 C29 32 30 35 31 36 Z" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Muzzle & Chest -->
-          <path d="M15 15 C13 16 9 18 8 21 C7 23 10 26 13 24 C16 22 17 25 17 28 C17 31 15 34 13 36 Z" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Eye & Nostril -->
-          <circle cx="14" cy="18" r="1.2" fill="${isWhite ? '#5A381E' : '#EBD2A5'}" />
-          <!-- Mane Highlights -->
-          <path d="M23 11 C21 16 20 22 21 28" stroke="${isWhite ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.15)'}" stroke-width="1.5" stroke-linecap="round" fill="none" />
-        `;
-        break;
+    'sakura': {
+      name: 'Sakurawood',
+      white: {
+        bodyStops: [
+          { offset: '0%', color: '#96606E' },
+          { offset: '26%', color: '#F2CED8' },
+          { offset: '40%', color: '#FFF5F8' },
+          { offset: '68%', color: '#F2CED8' },
+          { offset: '100%', color: '#A66B7A' }
+        ],
+        bandStops: [
+          { offset: '0%', color: '#FBCFE8' },
+          { offset: '50%', color: '#F472B6' },
+          { offset: '100%', color: '#9D174D' }
+        ],
+        stroke: '#5E2B38',
+        detailStroke: '#5E2B38',
+        eyeFill: '#4A1D27',
+        rimStroke: null
+      },
+      black: {
+        bodyStops: [
+          { offset: '0%', color: '#14070B' },
+          { offset: '26%', color: '#3B1522' },
+          { offset: '40%', color: '#6B283F' },
+          { offset: '68%', color: '#3B1522' },
+          { offset: '100%', color: '#1A090F' }
+        ],
+        bandStops: [
+          { offset: '0%', color: '#F472B6' },
+          { offset: '50%', color: '#BE185D' },
+          { offset: '100%', color: '#831843' }
+        ],
+        stroke: '#0D0306',
+        detailStroke: '#0D0306',
+        eyeFill: '#FBCFE8',
+        rimStroke: 'rgba(254, 205, 211, 0.7)'
+      }
+    },
 
-      case 'bishop':
-        paths = `
-          <!-- Bishop Base -->
-          <ellipse cx="22" cy="40.5" rx="14.5" ry="3.5" fill="rgba(0,0,0,0.3)" />
-          <path d="M11 40 C11 38 14 36 22 36 C30 36 33 38 33 40 C33 42 11 42 11 40 Z" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-          <path d="M14 36 C16 30 18 24 19 21 L25 21 C26 24 28 30 30 36 Z" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Collar -->
-          <ellipse cx="22" cy="20.5" rx="7.5" ry="2" fill="url(#${highlightGrad})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Mitre Body -->
-          <path d="M15 20 C14 14 16 8 22 6 C28 8 30 14 29 20 Z" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Mitre Slit Cut -->
-          <path d="M21 9 L17 15" stroke="${strokeColor}" stroke-width="1.8" stroke-linecap="round" />
-          <!-- Finial Cross/Ball -->
-          <circle cx="22" cy="5" r="2.2" fill="url(#${highlightGrad})" stroke="${strokeColor}" stroke-width="0.8" />
-        `;
-        break;
+    'walnut-maple': {
+      name: 'Walnut & Maple',
+      white: {
+        bodyStops: [
+          { offset: '0%', color: '#9C7744' },
+          { offset: '26%', color: '#F0DEBA' },
+          { offset: '40%', color: '#FDF6E9' },
+          { offset: '68%', color: '#F0DEBA' },
+          { offset: '100%', color: '#A8824C' }
+        ],
+        bandStops: [
+          { offset: '0%', color: '#FDE047' },
+          { offset: '50%', color: '#CA8A04' },
+          { offset: '100%', color: '#854D0E' }
+        ],
+        stroke: '#4D3315',
+        detailStroke: '#4D3315',
+        eyeFill: '#3B250C',
+        rimStroke: null
+      },
+      black: {
+        bodyStops: [
+          { offset: '0%', color: '#0C0704' },
+          { offset: '26%', color: '#331B10' },
+          { offset: '40%', color: '#5E3522' },
+          { offset: '68%', color: '#331B10' },
+          { offset: '100%', color: '#140A06' }
+        ],
+        bandStops: [
+          { offset: '0%', color: '#FDE047' },
+          { offset: '50%', color: '#CA8A04' },
+          { offset: '100%', color: '#854D0E' }
+        ],
+        stroke: '#070402',
+        detailStroke: '#070402',
+        eyeFill: '#F0DEBA',
+        rimStroke: 'rgba(240, 222, 186, 0.65)'
+      }
+    },
 
-      case 'queen':
-        paths = `
-          <!-- Queen Base -->
-          <ellipse cx="22" cy="41" rx="16" ry="3.5" fill="rgba(0,0,0,0.3)" />
-          <path d="M9 40 C9 38 13 36 22 36 C31 36 35 38 35 40 C35 42 9 42 9 40 Z" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Flared Waist -->
-          <path d="M13 36 C16 28 17 22 18 19 L26 19 C27 22 28 28 31 36 Z" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Waist Ring -->
-          <ellipse cx="22" cy="18.5" rx="8" ry="2" fill="url(#${highlightGrad})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Coronet (Crown with 5 pearls) -->
-          <path d="M14 18 L11 9 L16 13 L22 7 L28 13 L33 9 L30 18 Z" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-          <circle cx="11" cy="8" r="1.5" fill="url(#${highlightGrad})" stroke="${strokeColor}" stroke-width="0.7" />
-          <circle cx="16.5" cy="12" r="1.5" fill="url(#${highlightGrad})" stroke="${strokeColor}" stroke-width="0.7" />
-          <circle cx="22" cy="6" r="1.8" fill="url(#${highlightGrad})" stroke="${strokeColor}" stroke-width="0.7" />
-          <circle cx="27.5" cy="12" r="1.5" fill="url(#${highlightGrad})" stroke="${strokeColor}" stroke-width="0.7" />
-          <circle cx="33" cy="8" r="1.5" fill="url(#${highlightGrad})" stroke="${strokeColor}" stroke-width="0.7" />
-        `;
-        break;
-
-      case 'king':
-        paths = `
-          <!-- King Base -->
-          <ellipse cx="22" cy="41" rx="16.5" ry="3.5" fill="rgba(0,0,0,0.3)" />
-          <path d="M8.5 40 C8.5 38 12.5 36 22 36 C31.5 36 35.5 38 35.5 40 C35.5 42 8.5 42 8.5 40 Z" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Torso -->
-          <path d="M12.5 36 C15.5 28 16.5 22 17.5 19 L26.5 19 C27.5 22 28.5 28 31.5 36 Z" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Waist Ring -->
-          <ellipse cx="22" cy="18.5" rx="8.5" ry="2.2" fill="url(#${highlightGrad})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Imperial Arched Crown -->
-          <path d="M13.5 18 C12.5 11 16 8 22 8 C28 8 31.5 11 30.5 18 Z" fill="url(#${gradId})" stroke="${strokeColor}" stroke-width="1" />
-          <!-- Royal Finial Cross -->
-          <path d="M22 2 L22 8 M19.5 4.5 L24.5 4.5" stroke="url(#${highlightGrad})" stroke-width="2" stroke-linecap="square" />
-        `;
-        break;
+    'ebony-ivory': {
+      name: 'Royal Ebony & Ivory',
+      white: {
+        bodyStops: [
+          { offset: '0%', color: '#71717A' },
+          { offset: '26%', color: '#E4E4E7' },
+          { offset: '40%', color: '#FFFFFF' },
+          { offset: '68%', color: '#E4E4E7' },
+          { offset: '100%', color: '#797984' }
+        ],
+        bandStops: [
+          { offset: '0%', color: '#FEF08A' },
+          { offset: '50%', color: '#EAB308' },
+          { offset: '100%', color: '#A16207' }
+        ],
+        stroke: '#27272A',
+        detailStroke: '#27272A',
+        eyeFill: '#18181B',
+        rimStroke: null
+      },
+      black: {
+        bodyStops: [
+          { offset: '0%', color: '#000000' },
+          { offset: '26%', color: '#18181B' },
+          { offset: '40%', color: '#3F3F46' },
+          { offset: '68%', color: '#18181B' },
+          { offset: '100%', color: '#050506' }
+        ],
+        bandStops: [
+          { offset: '0%', color: '#FEF08A' },
+          { offset: '50%', color: '#EAB308' },
+          { offset: '100%', color: '#A16207' }
+        ],
+        stroke: '#000000',
+        detailStroke: '#000000',
+        eyeFill: '#FEF08A',
+        rimStroke: 'rgba(254, 240, 138, 0.85)'
+      }
     }
+  };
 
-    return `
-      <svg class="chess-piece staunton-piece ${colorName}-${pieceType}" data-color="${colCode}" viewBox="0 0 44 44" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <!-- Boxwood White Piece Gradient -->
-          <linearGradient id="whiteWoodGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#FFF8EC" />
-            <stop offset="35%" stop-color="#EED9B7" />
-            <stop offset="80%" stop-color="#CBB18B" />
-            <stop offset="100%" stop-color="#A98A62" />
-          </linearGradient>
-          <linearGradient id="whiteHighlightGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#FFFFFF" />
-            <stop offset="100%" stop-color="#EAD6B8" />
-          </linearGradient>
+  // Support theme aliases
+  THEMES['cherry-rosewood'] = THEMES['sakura'];
 
-          <!-- Ebony Black Piece Gradient -->
-          <linearGradient id="blackWoodGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#4A3428" />
-            <stop offset="30%" stop-color="#2D1C13" />
-            <stop offset="85%" stop-color="#190F09" />
-            <stop offset="100%" stop-color="#0E0704" />
-          </linearGradient>
-          <linearGradient id="blackHighlightGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#6B4F3E" />
-            <stop offset="100%" stop-color="#281A12" />
-          </linearGradient>
-        </defs>
-        ${paths}
-      </svg>
-    `;
-  },
+  const PIECE_GEOMS = {
+    pawn: {
+      geom: '<path d="M18 91C18 86 21 83 26 83H74C79 83 82 86 82 91Z"/><path d="M25 83C25 79 28 77 32 77H68C72 77 75 79 75 83Z"/><path d="M33 77C36 66 41 59 44 52H56C59 59 64 66 67 77Z"/><rect x="35" y="50" width="30" height="7" rx="3.5"/><circle cx="50" cy="37" r="12"/>',
+      bands: (bGrad, sCol) => `<rect x="33" y="74" width="34" height="3.2" rx="1.6" fill="url(#${bGrad})" stroke="${sCol}" stroke-width=".8"/><rect x="24" y="80" width="52" height="3.2" rx="1.6" fill="url(#${bGrad})" stroke="${sCol}" stroke-width=".8"/>`,
+      details: () => ''
+    },
+    rook: {
+      geom: '<path d="M18 91C18 86 21 83 26 83H74C79 83 82 86 82 91Z"/><path d="M25 83C25 79 28 77 32 77H68C72 77 75 79 75 83Z"/><path d="M33 77L36 47H64L67 77Z"/><rect x="27" y="39" width="46" height="9" rx="2.5"/><path d="M30 40V20H40V26H45V20H55V26H60V20H70V40Z"/>',
+      bands: (bGrad, sCol) => `<rect x="33" y="72" width="34" height="3.2" rx="1.6" fill="url(#${bGrad})" stroke="${sCol}" stroke-width=".8"/><rect x="24" y="80" width="52" height="3.2" rx="1.6" fill="url(#${bGrad})" stroke="${sCol}" stroke-width=".8"/>`,
+      details: (sCol) => `<g fill="none" stroke="${sCol}" stroke-width="1.4" stroke-linecap="round"><path d="M36 33H64" stroke-opacity=".35"/></g>`
+    },
+    knight: {
+      geom: '<path d="M18 91C18 86 21 83 26 83H74C79 83 82 86 82 91Z"/><path d="M25 83C25 79 28 77 32 77H68C72 77 75 79 75 83Z"/><path d="M68 77C71 58 66 40 57 30L58 17L50 22C47 22 45 24 43 26L27 42C24 45 25 50 30 51L37 52C41 52 44 50 47 47C41 56 36 64 33 77Z"/>',
+      bands: (bGrad, sCol) => `<rect x="32" y="71" width="37" height="3.2" rx="1.6" fill="url(#${bGrad})" stroke="${sCol}" stroke-width=".8"/><rect x="24" y="80" width="52" height="3.2" rx="1.6" fill="url(#${bGrad})" stroke="${sCol}" stroke-width=".8"/>`,
+      details: (sCol, eyeFill) => `<g fill="none" stroke="${sCol}" stroke-width="1.4" stroke-linecap="round"><circle cx="46" cy="34" r="2.4" fill="${eyeFill}" stroke="none"/><circle cx="30" cy="45" r="1.3" fill="${eyeFill}" stroke="none"/><path d="M59 32C66 41 67 53 65 68" stroke-opacity=".45"/><path d="M54 35C60 43 61 53 59 66" stroke-opacity=".3"/><path d="M38 51C41 49 43 47 44 44" stroke-opacity=".35"/></g>`
+    },
+    bishop: {
+      geom: '<path d="M18 91C18 86 21 83 26 83H74C79 83 82 86 82 91Z"/><path d="M25 83C25 79 28 77 32 77H68C72 77 75 79 75 83Z"/><path d="M36 77C38 68 42 62 44 59H56C58 62 62 68 64 77Z"/><rect x="37" y="53" width="26" height="8" rx="4"/><path d="M50 14C61 23 67 34 63 44C61 49 57 51 57 54H43C43 51 39 49 37 44C33 34 39 23 50 14Z"/><circle cx="50" cy="12" r="5"/>',
+      bands: (bGrad, sCol) => `<rect x="35" y="72" width="30" height="3.2" rx="1.6" fill="url(#${bGrad})" stroke="${sCol}" stroke-width=".8"/><rect x="24" y="80" width="52" height="3.2" rx="1.6" fill="url(#${bGrad})" stroke="${sCol}" stroke-width=".8"/>`,
+      details: (sCol) => `<g fill="none" stroke="${sCol}" stroke-width="1.4" stroke-linecap="round"><path d="M46 29L56 39" stroke-width="2.6"/></g>`
+    },
+    queen: {
+      geom: '<path d="M18 91C18 86 21 83 26 83H74C79 83 82 86 82 91Z"/><path d="M25 83C25 79 28 77 32 77H68C72 77 75 79 75 83Z"/><path d="M34 77C36 68 40 62 42 58H58C60 62 64 68 66 77Z"/><rect x="35" y="52" width="30" height="8" rx="4"/><path d="M36 53L26 29L34 42L38 21L43 40L50 17L57 40L62 21L66 42L74 29L64 53Z"/><circle cx="26" cy="27" r="4.4"/><circle cx="38" cy="18" r="4.4"/><circle cx="50" cy="14" r="4.6"/><circle cx="62" cy="18" r="4.4"/><circle cx="74" cy="27" r="4.4"/>',
+      bands: (bGrad, sCol) => `<rect x="34" y="72" width="32" height="3.2" rx="1.6" fill="url(#${bGrad})" stroke="${sCol}" stroke-width=".8"/><rect x="24" y="80" width="52" height="3.2" rx="1.6" fill="url(#${bGrad})" stroke="${sCol}" stroke-width=".8"/>`,
+      details: () => ''
+    },
+    king: {
+      geom: '<path d="M18 91C18 86 21 83 26 83H74C79 83 82 86 82 91Z"/><path d="M25 83C25 79 28 77 32 77H68C72 77 75 79 75 83Z"/><path d="M34 77C36 68 40 62 42 58H58C60 62 64 68 66 77Z"/><rect x="35" y="52" width="30" height="8" rx="4"/><path d="M36 53C31 40 38 30 50 30C62 30 69 40 64 53Z"/><rect x="45.5" y="5" width="9" height="28" rx="3"/><rect x="38" y="12" width="24" height="9" rx="3"/>',
+      bands: (bGrad, sCol) => `<rect x="34" y="72" width="32" height="3.2" rx="1.6" fill="url(#${bGrad})" stroke="${sCol}" stroke-width=".8"/><rect x="24" y="80" width="52" height="3.2" rx="1.6" fill="url(#${bGrad})" stroke="${sCol}" stroke-width=".8"/>`,
+      details: () => ''
+    }
+  };
 
-  pieceMarkup(pieceCode) {
-    if (!pieceCode) return '';
-    const color = pieceCode[0] === 'w' ? 'white' : 'black';
-    const type = pieceCode[1];
-    return this.getPiece(color, type);
+  let currentBoardTheme = 'classic-oak';
+
+  const PieceSVGs = {
+    PIECE_NAMES,
+    THEMES,
+
+    setBoardTheme(theme) {
+      if (theme && THEMES[theme]) currentBoardTheme = theme;
+    },
+
+    getActiveTheme(explicitTheme) {
+      if (explicitTheme && THEMES[explicitTheme]) return explicitTheme;
+      if (typeof document !== 'undefined' && document.body && document.body.dataset && document.body.dataset.boardTheme) {
+        const docTheme = document.body.dataset.boardTheme;
+        if (THEMES[docTheme]) return docTheme;
+      }
+      return currentBoardTheme || 'classic-oak';
+    },
+
+    getPiece(color, type, boardTheme) {
+      const isWhite = color === 'white' || color === 'w';
+      const colCode = isWhite ? 'w' : 'b';
+      const pieceType = TYPE_MAP[type] || 'pawn';
+      const letter = LETTER_MAP[pieceType] || 'P';
+      const themeId = this.getActiveTheme(boardTheme);
+
+      const theme = THEMES[themeId] || THEMES['classic-oak'];
+      const palette = isWhite ? theme.white : theme.black;
+      const piece = PIECE_GEOMS[pieceType] || PIECE_GEOMS.pawn;
+
+      const pfx = `${themeId}_${colCode}${letter}`;
+      const gId = `g_${pfx}`;
+      const vId = `v_${pfx}`;
+      const brId = `br_${pfx}`;
+      const blId = `bl_${pfx}`;
+      const sId = `s_${pfx}`;
+
+      const bodyStops = palette.bodyStops.map(s => `<stop offset="${s.offset}" stop-color="${s.color}"/>`).join('');
+      const bandStops = palette.bandStops.map(s => `<stop offset="${s.offset}" stop-color="${s.color}"/>`).join('');
+
+      const rimUse = palette.rimStroke
+        ? `<use href="#${sId}" fill="none" stroke="${palette.rimStroke}" stroke-width="4.2"/>`
+        : '';
+
+      return `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%" class="chess-piece new-style-piece ${isWhite ? 'white' : 'black'}-piece ${isWhite ? 'white' : 'black'}-${pieceType}" data-color="${colCode}" data-theme="${themeId}">
+          <defs>
+            <linearGradient id="${gId}" x1="0" x2="1" y1="0" y2="0">${bodyStops}</linearGradient>
+            <linearGradient id="${vId}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".25"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient>
+            <linearGradient id="${brId}" x1="0" x2="0" y1="0" y2="1">${bandStops}</linearGradient>
+            <filter id="${blId}" x="-20%" y="-100%" width="140%" height="300%"><feGaussianBlur stdDeviation="2.2"/></filter>
+            <g id="${sId}" stroke-linejoin="round">${piece.geom}</g>
+          </defs>
+          <ellipse cx="52" cy="91" rx="34" ry="4.5" fill="#000" opacity=".4" filter="url(#${blId})"/>
+          ${rimUse}
+          <use href="#${sId}" fill="url(#${gId})" stroke="${palette.stroke}" stroke-width="1.8"/>
+          <use href="#${sId}" fill="url(#${vId})" stroke="none"/>
+          ${piece.details(palette.detailStroke, palette.eyeFill)}
+          ${piece.bands(brId, palette.stroke)}
+        </svg>
+      `;
+    },
+
+    pieceMarkup(pieceCode, boardTheme) {
+      if (!pieceCode) return '';
+      const color = pieceCode[0] === 'w' ? 'white' : 'black';
+      const type = pieceCode[1];
+      return this.getPiece(color, type, boardTheme);
+    },
+
+    getPieceUrl(color, type, boardTheme) {
+      const isWhite = color === 'white' || color === 'w';
+      const colCode = isWhite ? 'w' : 'b';
+      const pieceType = TYPE_MAP[type] || 'pawn';
+      const letter = LETTER_MAP[pieceType] || 'P';
+      const themeId = this.getActiveTheme(boardTheme);
+      return `assets/pieces/${themeId}/${colCode}${letter}.svg`;
+    }
+  };
+
+  if (typeof window !== 'undefined') {
+    window.PieceSVGs = PieceSVGs;
   }
-};
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = PieceSVGs;
-}
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = PieceSVGs;
+  }
+})();

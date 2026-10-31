@@ -5514,6 +5514,12 @@ class App {
       }
     }
     this.showToast('Equipped ' + id.replace('-', ' ') + ' board!');
+    if (this.engine) {
+      try {
+        this.renderBoard();
+        this.updateCapturedPieces();
+      } catch (e) { /* ignore */ }
+    }
     const boardPane = document.getElementById('shop-pane-boards');
     if (!boardPane) return;
     boardPane.querySelectorAll('.shop-item-card').forEach(card => {

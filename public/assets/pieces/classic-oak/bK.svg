@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%" class="chess-piece new-style-piece black-piece" data-color="b" data-theme="classic-oak"><defs>
+<linearGradient id="g_classic-oak_bK" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#080402"/><stop offset="26%" stop-color="#3b261a"/><stop offset="40%" stop-color="#775340"/><stop offset="68%" stop-color="#3b261a"/><stop offset="100%" stop-color="#100804"/></linearGradient>
+<linearGradient id="v_classic-oak_bK" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".25"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient>
+<linearGradient id="br_classic-oak_bK" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#F6D77A"/><stop offset="50%" stop-color="#D9A441"/><stop offset="100%" stop-color="#8A5E16"/></linearGradient>
+<filter id="bl_classic-oak_bK" x="-20%" y="-100%" width="140%" height="300%"><feGaussianBlur stdDeviation="2.2"/></filter>
+<g id="s_classic-oak_bK" stroke-linejoin="round"><path d="M18 91C18 86 21 83 26 83H74C79 83 82 86 82 91Z"/><path d="M25 83C25 79 28 77 32 77H68C72 77 75 79 75 83Z"/><path d="M34 77C36 68 40 62 42 58H58C60 62 64 68 66 77Z"/><rect x="35" y="52" width="30" height="8" rx="4"/><path d="M36 53C31 40 38 30 50 30C62 30 69 40 64 53Z"/><rect x="45.5" y="5" width="9" height="28" rx="3"/><rect x="38" y="12" width="24" height="9" rx="3"/></g></defs>
+<ellipse cx="52" cy="91" rx="34" ry="4.5" fill="#000" opacity=".4" filter="url(#bl_classic-oak_bK)"/>
+<use href="#s_classic-oak_bK" fill="none" stroke="rgba(255, 236, 200, 0.55)" stroke-width="4.2"/>
+<use href="#s_classic-oak_bK" fill="url(#g_classic-oak_bK)" stroke="#030100" stroke-width="1.8"/>
+<use href="#s_classic-oak_bK" fill="url(#v_classic-oak_bK)" stroke="none"/>
+<rect x="34" y="72" width="32" height="3.2" rx="1.6" fill="url(#br_classic-oak_bK)" stroke="#030100" stroke-width=".8"/><rect x="24" y="80" width="52" height="3.2" rx="1.6" fill="url(#br_classic-oak_bK)" stroke="#030100" stroke-width=".8"/></svg>

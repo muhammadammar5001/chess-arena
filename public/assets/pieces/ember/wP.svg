@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%" class="chess-piece new-style-piece white-piece" data-color="w" data-theme="ember"><defs>
+<linearGradient id="g_ember_wP" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#9E4416"/><stop offset="26%" stop-color="#F7A74E"/><stop offset="40%" stop-color="#FFF2D9"/><stop offset="68%" stop-color="#F7A74E"/><stop offset="100%" stop-color="#B34F1A"/></linearGradient>
+<linearGradient id="v_ember_wP" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".25"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient>
+<linearGradient id="br_ember_wP" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#FFA726"/><stop offset="50%" stop-color="#E65100"/><stop offset="100%" stop-color="#8C2200"/></linearGradient>
+<filter id="bl_ember_wP" x="-20%" y="-100%" width="140%" height="300%"><feGaussianBlur stdDeviation="2.2"/></filter>
+<g id="s_ember_wP" stroke-linejoin="round"><path d="M18 91C18 86 21 83 26 83H74C79 83 82 86 82 91Z"/><path d="M25 83C25 79 28 77 32 77H68C72 77 75 79 75 83Z"/><path d="M33 77C36 66 41 59 44 52H56C59 59 64 66 67 77Z"/><rect x="35" y="50" width="30" height="7" rx="3.5"/><circle cx="50" cy="37" r="12"/></g></defs>
+<ellipse cx="52" cy="91" rx="34" ry="4.5" fill="#000" opacity=".4" filter="url(#bl_ember_wP)"/>
+<use href="#s_ember_wP" fill="url(#g_ember_wP)" stroke="#541C04" stroke-width="1.8"/>
+<use href="#s_ember_wP" fill="url(#v_ember_wP)" stroke="none"/>
+<rect x="33" y="74" width="34" height="3.2" rx="1.6" fill="url(#br_ember_wP)" stroke="#541C04" stroke-width=".8"/><rect x="24" y="80" width="52" height="3.2" rx="1.6" fill="url(#br_ember_wP)" stroke="#541C04" stroke-width=".8"/></svg>
