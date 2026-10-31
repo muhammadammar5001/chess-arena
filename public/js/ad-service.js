@@ -1,66 +1,47 @@
 ﻿/**
- * AdService - unified PlayGama / local ad layer.
+ * AdService — PlayGama Bridge advertisement layer.
  *
- * PlayGama Bridge v2 returns void from showRewarded()/showInterstitial() and
- * reports the result through REWARDED_STATE_CHANGED /
- * INTERSTITIAL_STATE_CHANGED. The previous callback-object implementation is
- * intentionally gone: on a real host it never resolved and could hang the game
- * until the 120s safety timeout.
+ * Bridge v2 returns void from showRewarded()/showInterstitial() and reports the
+ * outcome through REWARDED_STATE_CHANGED / INTERSTITIAL_STATE_CHANGED, so this
+ * class listens for those events instead of passing callbacks.
+ *
+ * Rules implemented here:
+ *  - Rewarded currency is granted only in the `rewarded` state (2.2.5).
+ *  - Interstitials are shown only at natural pauses; Bridge decides the actual
+ *    frequency, so there is no client-side cooldown (required step 7).
+ *  - While a full-screen ad is open, sound and gameplay are paused and restored
+ *    afterwards (2.1.6).
+ *  - When the host does not support ads, calls fail softly and gameplay goes on
+ *    (2.1.7). Standalone web builds simulate the flow for development only.
  */
 
 class AdServiceClass {
   constructor() {
-    this.adapterType = 'mock'; // 'mock' | 'playgama'
-    this.lastInterstitialTime = 0;
-    this.interstitialCooldownMs = 60000;
+    this.adapterType = 'none';
     this.isInitialized = false;
   }
 
-  async init(adapterType = null) {
-    // Do not touch bridge.advertisement before the Bridge handshake finishes;
-    // the SDK logs an initialization error and can expose an unready adapter.
-    this.adapterType = adapterType || 'mock';
+  async init() {
     this.isInitialized = true;
-    console.log(`[AdService] Initialized with adapter: ${this.adapterType}`);
-
-    // The Bridge owns game_ready on real hosts; this is only a compatibility
-    // fallback for a bare YouTube Playables environment without the Bridge.
-    if (!window.bridge && window.ytgame && typeof window.ytgame.gameReady === 'function') {
-      try { window.ytgame.gameReady(); } catch (e) { /* ignore */ }
-    }
-
-    if (this.adapterType === 'mock') {
-      this.ensureAdapter().catch(() => {});
-    }
+    await this.ensureAdapter();
   }
 
   detectAdapter() {
     try {
       if (window.bridge && window.bridge.advertisement) return 'playgama';
     } catch (e) { /* ignore */ }
-    return 'mock';
+    return 'none';
   }
 
   async ensureAdapter() {
-    if (this.adapterType === 'playgama' && window.bridge && window.bridge.advertisement) {
-      return true;
+    if (!window.bridge) {
+      try {
+        const platform = window.ChessArenaPlatform;
+        if (platform && platform.whenReady) await platform.whenReady;
+      } catch (e) { /* local play continues */ }
     }
-
-    try {
-      const platform = window.ChessArenaPlatform;
-      if (platform && platform.whenReady) {
-        await Promise.race([
-          Promise.resolve(platform.whenReady),
-          new Promise((resolve) => setTimeout(resolve, 5000))
-        ]);
-      }
-    } catch (e) { /* local play continues */ }
-
-    if (window.bridge && window.bridge.advertisement) {
-      this.adapterType = 'playgama';
-      return true;
-    }
-    return false;
+    this.adapterType = this.detectAdapter();
+    return this.adapterType === 'playgama';
   }
 
   _realPlatformId() {
@@ -73,11 +54,9 @@ class AdServiceClass {
     }
   }
 
+  // Development fallback only: a real Bridge host always has a platform id.
   _usingLocalMock() {
-    // The Bridge mock adapter is a local/standalone development fallback. It
-    // reports ads as unsupported, but local players should still be able to
-    // exercise reward flows. A real host always has a non-empty platform id.
-    return this.adapterType === 'mock' || !this._realPlatformId();
+    return this.adapterType !== 'playgama' || !this._realPlatformId();
   }
 
   isRewardedAvailable() {
@@ -98,18 +77,12 @@ class AdServiceClass {
     }
   }
 
-  _pauseAudio() {
-    try {
-      const app = window.app;
-      if (app && app.audioCtx && app.audioCtx.state === 'running') {
-        app.audioCtx.suspend().catch(() => {});
-      }
-    } catch (e) { /* ignore */ }
+  _game() {
+    return window.app || null;
   }
 
-  _canResumeAudio() {
+  _canResumeGame() {
     try {
-      if (window.app && (window.app.platformAudioMuted || window.app.platformPaused)) return false;
       const platform = window.ChessArenaPlatform;
       if (platform && typeof platform.isAudioEnabled === 'function' && !platform.isAudioEnabled()) return false;
       if (platform && typeof platform.isPaused === 'function' && platform.isPaused()) return false;
@@ -117,10 +90,18 @@ class AdServiceClass {
     return true;
   }
 
-  _resumeAudio() {
-    if (!this._canResumeAudio()) return;
+  _adOpened() {
+    const app = this._game();
+    if (app && typeof app.setAdPlaying === 'function') app.setAdPlaying(true);
+  }
+
+  _adFinished() {
+    const app = this._game();
+    if (app && typeof app.setAdPlaying === 'function') app.setAdPlaying(false);
+    // If the host keeps reporting a paused state the Bridge resume event will
+    // restore audio; never force it back on ourselves.
+    if (!this._canResumeGame()) return;
     try {
-      const app = window.app;
       if (app && app.audioCtx && app.audioCtx.state === 'suspended') {
         app.audioCtx.resume().catch(() => {});
       }
@@ -148,33 +129,35 @@ class AdServiceClass {
     } catch (e) { /* ignore */ }
   }
 
-  async showRewarded(rewardId) {
-    console.log(`[AdService] Requesting rewarded ad for: ${rewardId}`);
-    await this.ensureAdapter();
+  // --- Rewarded ------------------------------------------------------------
 
-    if (!this._usingLocalMock() && this.adapterType === 'playgama' &&
-        window.bridge && window.bridge.advertisement) {
+  async showRewarded(rewardId) {
+    await this.ensureAdapter();
+    if (this.adapterType === 'playgama' && window.bridge && window.bridge.advertisement) {
       return this._showPlayGamaRewarded(rewardId);
     }
+    return this._showLocalRewarded();
+  }
 
+  _showLocalRewarded() {
+    // Localhost / self-hosted development: keep the reward flow testable
+    // without an ad network. Never used on a real platform.
     return new Promise((resolve) => {
+      this._adOpened();
       setTimeout(() => {
-        console.log(`[AdService] Mock rewarded ad completed for: ${rewardId}`);
-        this._resumeAudio();
+        this._adFinished();
         resolve({ rewarded: true, mock: true });
-      }, 1200);
+      }, 900);
     });
   }
 
   _showPlayGamaRewarded(placement) {
     return new Promise((resolve) => {
-      const bridge = window.bridge;
-      const ad = bridge && bridge.advertisement;
+      const ad = window.bridge && window.bridge.advertisement;
       if (!ad) {
         resolve({ rewarded: false, reason: 'unavailable' });
         return;
       }
-
       if (ad.isRewardedSupported !== true) {
         this._toast('Rewarded ads are not available on this platform.');
         resolve({ rewarded: false, reason: 'unsupported' });
@@ -193,7 +176,7 @@ class AdServiceClass {
         clearTimeout(hardTimeout);
         clearTimeout(closeFallback);
         this._removeListener(ad, eventName, onState);
-        this._resumeAudio();
+        this._adFinished();
         if (!rewarded && reason === 'failed') {
           this._toast('Ad not available right now. Try again soon.');
         }
@@ -202,71 +185,63 @@ class AdServiceClass {
 
       const onState = (state) => {
         if (state === 'rewarded') {
-          // The reward is earned here. Wait briefly for `closed` so the ad's
-          // own pause/audio state is fully cleared before gameplay resumes.
+          // The reward is earned here and only here.
           gotReward = true;
-          if (!closeFallback) {
-            closeFallback = setTimeout(() => finish(true, 'rewarded'), 1500);
-          }
+          if (!closeFallback) closeFallback = setTimeout(() => finish(true, 'rewarded'), 1500);
         } else if (state === 'closed') {
           finish(gotReward, gotReward ? 'rewarded' : 'closed');
         } else if (state === 'failed') {
           finish(false, 'failed');
         } else if (state === 'opened') {
-          this._pauseAudio();
+          this._adOpened();
         }
       };
 
       try {
         if (typeof ad.on === 'function') ad.on(eventName, onState);
-        // Bridge API: showRewarded(placement) -> void. Never pass a callback
-        // object as the placement.
         ad.showRewarded(placement || null);
       } catch (e) {
         finish(false, 'failed');
         return;
       }
 
-      // Defensive fallback only. Real ads resolve through state events.
+      // Defensive only: real ads resolve through state events.
       hardTimeout = setTimeout(() => finish(false, 'timeout'), 75000);
     });
   }
 
+  // --- Interstitial --------------------------------------------------------
+
   async showInterstitial(placement = 'game_completed') {
-    const now = Date.now();
-    if (now - this.lastInterstitialTime < this.interstitialCooldownMs) return { shown: false, reason: 'cooldown' };
-
     await this.ensureAdapter();
-
-    if (!this._usingLocalMock() && this.adapterType === 'playgama' &&
-        window.bridge && window.bridge.advertisement) {
+    if (this.adapterType === 'playgama' && window.bridge && window.bridge.advertisement) {
       return this._showPlayGamaInterstitial(placement);
     }
+    return this._showLocalInterstitial();
+  }
 
-    this.lastInterstitialTime = now;
+  _showLocalInterstitial() {
     return new Promise((resolve) => {
+      this._adOpened();
       setTimeout(() => {
-        this._resumeAudio();
+        this._adFinished();
         resolve({ shown: true, mock: true });
-      }, 800);
+      }, 600);
     });
   }
 
   _showPlayGamaInterstitial(placement) {
     return new Promise((resolve) => {
-      const bridge = window.bridge;
-      const ad = bridge && bridge.advertisement;
+      const ad = window.bridge && window.bridge.advertisement;
       if (!ad) {
         resolve({ shown: false, reason: 'unavailable' });
         return;
       }
-
       if (ad.isInterstitialSupported !== true) {
         resolve({ shown: false, reason: 'unsupported' });
         return;
       }
 
-      this.lastInterstitialTime = Date.now();
       let settled = false;
       let hardTimeout = null;
       const eventName = this._adEventName('interstitial');
@@ -276,12 +251,12 @@ class AdServiceClass {
         settled = true;
         clearTimeout(hardTimeout);
         this._removeListener(ad, eventName, onState);
-        this._resumeAudio();
+        this._adFinished();
         resolve({ shown: !!shown, reason: reason || null });
       };
 
       const onState = (state) => {
-        if (state === 'opened') this._pauseAudio();
+        if (state === 'opened') this._adOpened();
         else if (state === 'closed') finish(true, 'closed');
         else if (state === 'failed') finish(false, 'failed');
       };

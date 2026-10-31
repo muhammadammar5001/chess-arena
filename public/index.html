@@ -10,15 +10,15 @@
   <meta name="description"
     content="Chess Arena • Free online PvP chess game with tactical skills. Challenge friends or AI.">
   <meta name="theme-color" content="#20120B">
-  <link rel="icon" href="/assets/avatar-default.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/avatar-default.svg" type="image/svg+xml">
   <title>Chess Arena • Tactical PvP Chess</title>
   <!-- PlayGama Bridge (bundles the YouTube Playables adapter) -->
   <script src="https://bridge.playgama.com/v2/stable/playgama-bridge.js"></script>
-  <link rel="stylesheet" href="/css/tokens.css">
-  <link rel="stylesheet" href="/css/styles.css?v=1793406562487">
-  <link rel="stylesheet" href="/css/wooden-theme.css?v=1793406046872">
-  <link rel="stylesheet" href="/css/home-lobby.css?v=1793225700000">
-  <link rel="stylesheet" href="/css/abilities-screen.css?v=1793228570000">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/styles.css?v=1793406562487">
+  <link rel="stylesheet" href="css/wooden-theme.css?v=1793406046872">
+  <link rel="stylesheet" href="css/home-lobby.css?v=1793225700000">
+  <link rel="stylesheet" href="css/abilities-screen.css?v=1793228570000">
   <style>
     #username-modal.hidden {
       display: none !important;
@@ -44,7 +44,7 @@
         <button type="button" class="fantasy-profile" onclick="app.showProfileScreen()"
           aria-label="Open player profile">
           <div class="fantasy-avatar-wrapper">
-            <img src="/assets/avatar-default.svg" alt="Player" class="fantasy-avatar-img">
+            <img src="assets/avatar-default.svg" alt="Player" class="fantasy-avatar-img">
           </div>
           <div class="fantasy-user-meta">
             <span class="fantasy-username">Player</span>
@@ -81,7 +81,7 @@
         <!-- Hero Artwork Card -->
         <section class="fantasy-hero-card" aria-label="Chess Arena artwork">
           <div class="fantasy-hero-banner">
-            <img src="/assets/chess-arena-hero-wide.jpg" alt="Chess Arena wooden chessboard with a knight and pawn"
+            <img src="assets/chess-arena-hero-wide.jpg" alt="Chess Arena wooden chessboard with a knight and pawn"
               class="hero-art-img">
           </div>
           <div class="fantasy-title-block">
@@ -222,7 +222,7 @@
         </button>
         <button id="nav-tab-profile" class="nav-tab nav-profile-btn" onclick="app.showProfileScreen()">
           <span class="nav-icon">
-            <img id="nav-profile-avatar" src="/assets/avatar-default.svg" class="nav-profile-avatar-img" alt="Profile"
+            <img id="nav-profile-avatar" src="assets/avatar-default.svg" class="nav-profile-avatar-img" alt="Profile"
               style="display:none;">
             <svg id="nav-profile-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -389,7 +389,7 @@
         <button class="play-mode-card" onclick="app.findMatch()">
           <div class="play-mode-icon-box"
             style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
-            <img src="/assets/1x/Asset_39.svg" width="26" height="26" alt="Random Match"
+            <img src="assets/1x/Asset_39.svg" width="26" height="26" alt="Random Match"
               style="object-fit: contain; display: block;">
           </div>
           <div class="play-mode-text">
@@ -477,7 +477,7 @@
           <!-- Your avatar (static) -->
           <div class="roulette-player-col">
             <div class="roulette-avatar-frame you">
-              <img id="roulette-you-avatar" src="/assets/avatars/pfp-01.webp" alt="You" class="roulette-avatar-img">
+              <img id="roulette-you-avatar" src="assets/avatars/pfp-01.webp" alt="You" class="roulette-avatar-img">
             </div>
             <span class="roulette-player-label" id="roulette-you-name">You</span>
             <span class="roulette-player-rating" id="roulette-you-rating">1200 Elo</span>
@@ -536,7 +536,7 @@
         <div class="ingame-match-header">
           <div class="ingame-player-pill" id="player-self-tag">
             <div class="avatar-chat-wrapper">
-              <img src="/assets/avatar-default.svg" alt="You" class="ingame-player-avatar" id="bottom-player-avatar">
+              <img src="assets/avatar-default.svg" alt="You" class="ingame-player-avatar" id="bottom-player-avatar">
               <span class="ingame-level-badge" id="bottom-player-level-badge" title="Player Level">Lv 1</span>
               <div id="bottom-chat-bubble" class="ingame-chat-bubble"></div>
             </div>
@@ -566,7 +566,7 @@
                 aria-label="Opponent equipped skills"></span>
             </div>
             <div class="avatar-chat-wrapper">
-              <img src="/assets/avatar-default.svg" alt="Opponent" class="ingame-player-avatar" id="top-player-avatar">
+              <img src="assets/avatar-default.svg" alt="Opponent" class="ingame-player-avatar" id="top-player-avatar">
               <span class="ingame-level-badge" id="top-player-level-badge" title="Player Level">Lv 1</span>
               <div id="top-chat-bubble" class="ingame-chat-bubble" style="right: 0; left: auto;"></div>
             </div>
@@ -816,23 +816,23 @@
           style="display: flex; justify-content: center; gap: 10px; margin: 12px 0 16px 0;">
           <div id="preview-medallion-second" onclick="app.toggleAbility('second')" title="Second Chance"
             style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(145deg, #4A2E1B, #20120B); border: 2px solid #C99700; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
-            <img src="/assets/Asset 44.png" style="width: 28px; height: 28px; object-fit: contain;">
+            <img src="assets/asset-44.png" style="width: 28px; height: 28px; object-fit: contain;">
           </div>
           <div id="preview-medallion-jump" onclick="app.toggleAbility('jump')" title="Pegasus Jump"
             style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(145deg, #4A2E1B, #20120B); border: 2px solid #C99700; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
-            <img src="/assets/Asset 46.png" style="width: 28px; height: 28px; object-fit: contain;">
+            <img src="assets/asset-46.png" style="width: 28px; height: 28px; object-fit: contain;">
           </div>
           <div id="preview-medallion-freeze" onclick="app.toggleAbility('freeze')" title="Piece Freeze"
             style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(145deg, #4A2E1B, #20120B); border: 2px solid #C99700; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
-            <img src="/assets/Asset 43.png" style="width: 28px; height: 28px; object-fit: contain;">
+            <img src="assets/asset-43.png" style="width: 28px; height: 28px; object-fit: contain;">
           </div>
           <div id="preview-medallion-swap" onclick="app.toggleAbility('swap')" title="Tactical Swap"
             style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(145deg, #4A2E1B, #20120B); border: 2px solid #C99700; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
-            <img src="/assets/Asset 42.png" style="width: 28px; height: 28px; object-fit: contain;">
+            <img src="assets/asset-42.png" style="width: 28px; height: 28px; object-fit: contain;">
           </div>
           <div id="preview-medallion-shield" onclick="app.toggleAbility('shield')" title="Divine Shield"
             style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(145deg, #4A2E1B, #20120B); border: 2px solid #C99700; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.5); cursor: pointer; transition: all 0.2s ease;">
-            <img src="/assets/Asset 45.png" style="width: 28px; height: 28px; object-fit: contain;">
+            <img src="assets/asset-45.png" style="width: 28px; height: 28px; object-fit: contain;">
           </div>
         </div>
         <h3 class="abilities-heading"
@@ -884,7 +884,7 @@
         <div class="ability-card" id="ability-card-second" onclick="app.toggleAbility('second')">
           <div class="ability-left">
             <div class="ability-icon-circle" style="background: transparent; border: none; box-shadow: none;"><img
-                src="/assets/Asset 44.png" alt="Second Chance" style="width: 40px; height: 40px; object-fit: contain;">
+                src="assets/asset-44.png" alt="Second Chance" style="width: 40px; height: 40px; object-fit: contain;">
             </div>
             <div class="ability-info">
               <span class="ability-name">Second Chance</span>
@@ -900,7 +900,7 @@
         <div class="ability-card" id="ability-card-jump" onclick="app.toggleAbility('jump')">
           <div class="ability-left">
             <div class="ability-icon-circle" style="background: transparent; border: none; box-shadow: none;"><img
-                src="/assets/Asset 46.png" alt="Pegasus Jump" style="width: 40px; height: 40px; object-fit: contain;">
+                src="assets/asset-46.png" alt="Pegasus Jump" style="width: 40px; height: 40px; object-fit: contain;">
             </div>
             <div class="ability-info">
               <span class="ability-name">Pegasus Jump</span>
@@ -916,7 +916,7 @@
         <div class="ability-card" id="ability-card-freeze" onclick="app.toggleAbility('freeze')">
           <div class="ability-left">
             <div class="ability-icon-circle" style="background: transparent; border: none; box-shadow: none;"><img
-                src="/assets/Asset 43.png" alt="Piece Freeze" style="width: 40px; height: 40px; object-fit: contain;">
+                src="assets/asset-43.png" alt="Piece Freeze" style="width: 40px; height: 40px; object-fit: contain;">
             </div>
             <div class="ability-info">
               <span class="ability-name">Piece Freeze</span>
@@ -932,7 +932,7 @@
         <div class="ability-card" id="ability-card-swap" onclick="app.toggleAbility('swap')">
           <div class="ability-left">
             <div class="ability-icon-circle" style="background: transparent; border: none; box-shadow: none;"><img
-                src="/assets/Asset 42.png" alt="Tactical Swap" style="width: 40px; height: 40px; object-fit: contain;">
+                src="assets/asset-42.png" alt="Tactical Swap" style="width: 40px; height: 40px; object-fit: contain;">
             </div>
             <div class="ability-info">
               <span class="ability-name">Tactical Swap</span>
@@ -948,7 +948,7 @@
         <div class="ability-card" id="ability-card-shield" onclick="app.toggleAbility('shield')">
           <div class="ability-left">
             <div class="ability-icon-circle" style="background: transparent; border: none; box-shadow: none;"><img
-                src="/assets/Asset 45.png" alt="Divine Shield" style="width: 40px; height: 40px; object-fit: contain;">
+                src="assets/asset-45.png" alt="Divine Shield" style="width: 40px; height: 40px; object-fit: contain;">
             </div>
             <div class="ability-info">
               <span class="ability-name">Divine Shield</span>
@@ -1002,7 +1002,7 @@
               <circle cx="28" cy="17" r="2.5" fill="#1C1008" />
               <path d="M23 25C25 26 28 26.5 31 26" stroke="#1C1008" stroke-width="2" stroke-linecap="round" />
             </svg>
-            <img id="profile-hero-avatar" src="/assets/avatar-default.svg" alt="Player" class="profile-hero-avatar-img"
+            <img id="profile-hero-avatar" src="assets/avatar-default.svg" alt="Player" class="profile-hero-avatar-img"
               style="display:none;"
               onload="this.style.display='block'; document.getElementById('profile-knight-fallback').style.display='none';">
           </div>
@@ -1114,7 +1114,7 @@
             </svg></span><span class="nav-label">Shop</span></button>
         <button class="nav-tab nav-profile-btn" onclick="app.showProfileScreen()">
           <span class="nav-icon">
-            <img src="/assets/avatar-default.svg" class="nav-profile-avatar-img" alt="Profile" style="display:none;">
+            <img src="assets/avatar-default.svg" class="nav-profile-avatar-img" alt="Profile" style="display:none;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="8" r="4" />
@@ -1299,7 +1299,7 @@
       </button>
       <button class="nav-tab nav-profile-btn" onclick="app.showProfileScreen()">
         <span class="nav-icon">
-          <img src="/assets/avatar-default.svg" class="nav-profile-avatar-img" alt="Profile" style="display:none;">
+          <img src="assets/avatar-default.svg" class="nav-profile-avatar-img" alt="Profile" style="display:none;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="8" r="4" />
@@ -1714,7 +1714,7 @@
   <div id="screen-victory" class="screen">
     <div class="victory-shell">
       <div class="victory-hero-wrap">
-        <img id="victory-hero-img" src="/assets/victory.jpg" alt="Victory" class="victory-crowned-hero">
+        <img id="victory-hero-img" src="assets/victory.jpg" alt="Victory" class="victory-crowned-hero">
         <h2 class="victory-heading" id="victory-title-heading">VICTORY</h2>
         <span class="victory-subheading" id="victory-subheading">Checkmate</span>
       </div>
@@ -1722,7 +1722,7 @@
       <div class="victory-recap-card">
         <div class="match-vs-score-row">
           <div class="recap-player-col">
-            <img id="victory-player-avatar" src="/assets/avatar-default.svg" alt="Player" class="recap-player-avatar">
+            <img id="victory-player-avatar" src="assets/avatar-default.svg" alt="Player" class="recap-player-avatar">
             <span id="victory-player-name" style="font-size: 12px; font-weight: 700; color: #fff;">Player</span>
             <span id="victory-player-rating" style="font-size: 10px; color: #94a3b8;">1240</span>
           </div>
@@ -1731,7 +1731,7 @@
 
           <div class="recap-player-col">
             <div style="position: relative; display: inline-block;">
-              <img id="victory-opp-avatar" src="/assets/avatar-default.svg" alt="Opponent" class="recap-player-avatar">
+              <img id="victory-opp-avatar" src="assets/avatar-default.svg" alt="Opponent" class="recap-player-avatar">
             </div>
             <span style="font-size: 12px; font-weight: 700; color: #fff;" id="victory-opp-name">Opponent</span>
             <span style="font-size: 10px; color: #94a3b8;" id="victory-opp-rating">1180</span>
@@ -1804,15 +1804,16 @@
   </div>
 
   <!-- --------------- SCRIPTS --------------- -->
-  <script src="/js/chess-engine.js?v=1793155000000"></script>
-  <script src="/js/multiplayer.js?v=1793317333204"></script>
-  <script src="/js/ai-engine.js?v=1792715271864"></script>
-  <script src="/js/pieces.js?v=1792976860981"></script>
-  <script src="/js/ad-service.js?v=1793153000000"></script>
-  <script src="/js/platform.js?v=1793153000000"></script>
-  <script src="/js/storage-service.js?v=1793153000000"></script>
-  <script src="/js/economy-config.js?v=1793065000000"></script>
-  <script src="/js/app.js?v=1793406562487"></script>
+  <script src="js/chess-engine.js?v=1793155000000"></script>
+  <script src="js/multiplayer.js?v=1793317333204"></script>
+  <script src="js/ai-engine.js?v=1792715271864"></script>
+  <script src="js/pieces.js?v=1792976860981"></script>
+  <script src="js/ad-service.js?v=1793153000000"></script>
+  <script src="js/platform.js?v=1793153000000"></script>
+  <script src="js/save-store.js?v=1793500000000"></script>
+  <script src="js/storage-service.js?v=1793153000000"></script>
+  <script src="js/economy-config.js?v=1793065000000"></script>
+  <script src="js/app.js?v=1793500000000"></script>
   <!-- Lucky Tavern Wheel Modal -->
   <div id="modal-lucky-wheel" class="modal hidden"
     style="position: fixed; inset: 0; background: rgba(10, 5, 2, 0.88); backdrop-filter: blur(3px); z-index: 99999; display: none; align-items: center; justify-content: center;">

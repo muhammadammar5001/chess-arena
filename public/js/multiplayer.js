@@ -40,69 +40,82 @@ class MultiplayerClient {
   }
 
   getWebSocketUrl() {
-    // 1. Explicit override via window.CHESS_WS_URL or meta tag
+    // 1. Explicit override via window.CHESS_WS_URL
     if (typeof window !== 'undefined' && window.CHESS_WS_URL) {
       return window.CHESS_WS_URL;
     }
 
-    // 2. Local development check
-    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-    const isLocal = (
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname.startsWith('192.168.') ||
-      hostname.startsWith('10.') ||
-      hostname.endsWith('.local')
-    );
-    const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    // 2. Self-hosted / local builds serve the WebSocket from the same origin.
+    if (typeof window === 'undefined' || !window.location || !window.location.host) return null;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}`;
+  }
 
-    if (isLocal) {
-      return `${protocol}//${window.location.host}`;
-    }
-
-    // 3. When the game is served by Render, use the same origin so the
-    // WebSocket follows the deployed service URL automatically.
-    if (hostname.endsWith('.onrender.com')) {
-      return `${protocol}//${window.location.host}`;
-    }
-
-    // 4. YouTube Playables / Playgama CDN production environment
-    // Fallback to our Free Cloud WebSocket Server (Render.com free tier)
-    return 'wss://chess-arena-262t.onrender.com';
+  isSupported() {
+    try {
+      const platform = window.ChessArenaPlatform;
+      if (platform && typeof platform.isExternalCallsSupported === 'function' &&
+          platform.isExternalCallsSupported() === false) {
+        return false;
+      }
+    } catch (e) { /* assume supported when the platform is unknown */ }
+    return !!this.getWebSocketUrl();
   }
 
   connect() {
     return new Promise((resolve, reject) => {
+      if (!this.isSupported()) {
+        reject(new Error('Online play is not available on this platform'));
+        return;
+      }
       const wsUrl = this.getWebSocketUrl();
-      console.log(`[Multiplayer] Connecting to: ${wsUrl}`);
       let settled = false;
       let authTimer = null;
+      let connectTimer = null;
 
       const finish = (error) => {
         if (settled) return;
         settled = true;
         if (authTimer) clearTimeout(authTimer);
+        if (connectTimer) clearTimeout(connectTimer);
         authTimer = null;
+        connectTimer = null;
         if (error) reject(error);
         else resolve();
       };
       this._authComplete = () => finish();
 
-      this.ws = new WebSocket(wsUrl);
+      try {
+        this.ws = new WebSocket(wsUrl);
+      } catch (e) {
+        finish(e instanceof Error ? e : new Error('Connection failed'));
+        return;
+      }
+
+      // A dead endpoint can leave the socket in CONNECTING forever. Fail fast
+      // so the lobby shows a usable error instead of hanging.
+      connectTimer = setTimeout(() => {
+        if (!settled) {
+          try { this.ws.close(); } catch (e) { /* ignore */ }
+          finish(new Error('Connection timed out'));
+        }
+      }, 8000);
 
       this.ws.onopen = () => {
-        if (window.app && window.app.playerId) {
-          const displayName = typeof window.app.getPreferredDisplayName === 'function'
-            ? window.app.getPreferredDisplayName()
+        if (connectTimer) { clearTimeout(connectTimer); connectTimer = null; }
+        const app = window.app;
+        if (app && app.playerId) {
+          const displayName = typeof app.getPreferredDisplayName === 'function'
+            ? app.getPreferredDisplayName()
             : null;
           this.send({
             type: 'authenticate',
-            playerId: window.app.playerId,
+            playerId: app.playerId,
             displayName: displayName || undefined,
-            avatarId: (window.app && window.app.avatarId) ? window.app.avatarId : undefined,
-            playerLevel: Math.max(1, Number(window.app.playerLevel) || 1),
-            rating: window.app.cloudProfile && Number.isFinite(Number(window.app.cloudProfile.rating))
-              ? Number(window.app.cloudProfile.rating)
+            avatarId: (app && app.avatarId) ? app.avatarId : undefined,
+            playerLevel: Math.max(1, Number(app.playerLevel) || 1),
+            rating: app.cloudProfile && Number.isFinite(Number(app.cloudProfile.rating))
+              ? Number(app.cloudProfile.rating)
               : undefined
           });
         }
@@ -119,7 +132,9 @@ class MultiplayerClient {
       };
 
       this.ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+        let data;
+        try { data = JSON.parse(event.data); } catch (e) { return; }
+        if (!data || typeof data !== 'object') return;
         this.handleMessage(data);
         if (data.type === 'auth_success' || data.type === 'auth_offline' || data.type === 'auth_require_username') {
           finish();
@@ -170,24 +185,22 @@ class MultiplayerClient {
   }
 
   handleMessage(data) {
-    console.log('[Multiplayer] received event:', data.type);
     switch (data.type) {
       
       case 'auth_require_username':
-        if (app && app.handleAuthRequireUsername) app.handleAuthRequireUsername(data.playerId);
+        if (window.app && window.app.handleAuthRequireUsername) window.app.handleAuthRequireUsername(data.playerId);
         break;
       case 'auth_success':
-        if (app && app.handleAuthSuccess) app.handleAuthSuccess(data.user, data.created);
+        if (window.app && window.app.handleAuthSuccess) window.app.handleAuthSuccess(data.user, data.created);
         break;
       case 'auth_offline':
-        if (app && app.showToast) app.showToast('Playing as guest — online stats stay on this device.');
+        if (window.app && window.app.showToast) window.app.showToast('Playing as guest — online stats stay on this device.');
         break;
       case 'room_created':
         this.roomCode = data.roomCode;
         this.playerColor = data.color;
         this.gameId = data.gameId;
         this.abilities = data.abilities || { self: [], opponent: [] };
-          localStorage.setItem('chessarena_active_match', JSON.stringify({ roomCode: data.roomCode, gameId: data.gameId, color: data.color }));
           if (this.onRoomCreated) this.onRoomCreated(data.roomCode, data.color);
         break;
 
@@ -204,7 +217,6 @@ class MultiplayerClient {
         this.playerColor = data.color;
         this.gameId = data.gameId;
         this.abilities = data.abilities || { self: [], opponent: [] };
-        localStorage.setItem('chessarena_active_match', JSON.stringify({ roomCode: this.roomCode, gameId: data.gameId, color: data.color }));
           if (this.onGameStart) this.onGameStart(data.color, data.opponent, data.timerMinutes, data);
         break;
 
@@ -227,7 +239,6 @@ class MultiplayerClient {
         break;
 
       case 'game_over':
-          localStorage.removeItem('chessarena_active_match');
           if (this.onGameOver) this.onGameOver(data.reason, data.winner, data.settlement);
         break;
 
@@ -362,6 +373,7 @@ class MultiplayerClient {
   startKeepAlive() {
     this.stopKeepAlive();
     this.keepAliveInterval = setInterval(() => {
+      if (window.app && window.app.platformPaused) return;
       this.send({ type: 'ping' });
     }, 20000);
   }

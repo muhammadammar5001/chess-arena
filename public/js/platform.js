@@ -11,10 +11,6 @@
 (function () {
   'use strict';
 
-  const CACHE_KEY = 'chessarena_platform_profile_v1';
-  const BRIDGE_SRC = 'https://bridge.playgama.com/v2/stable/playgama-bridge.js';
-  const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-
   let bridgeRef = null;
   let gameReadySent = false;
   let readyResolved = false;
@@ -41,13 +37,6 @@
   };
 
   let cachedProfile = null;
-  try {
-    const stored = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-    if (stored && stored.ts && (Date.now() - stored.ts) < CACHE_TTL_MS &&
-        String(stored.platform || '').toLowerCase() !== 'mock') {
-      cachedProfile = stored;
-    }
-  } catch (e) { /* ignore malformed cache */ }
 
   let resolveReady;
   const whenReady = new Promise((resolve) => { resolveReady = resolve; });
@@ -61,38 +50,22 @@
   }
 
   function loadBridgeScript() {
+    // The Bridge SDK is the first script in <head> (a PlayGama requirement), so
+    // it is already present here. Wait briefly for it rather than injecting it
+    // late, which the host rejects during moderation.
     return new Promise((resolve) => {
       if (window.bridge) return resolve(window.bridge);
-
-      const existing = document.querySelector('script[data-platform-bridge]');
-      if (existing) {
-        let done = false;
-        const finish = () => {
-          if (done) return;
-          done = true;
-          resolve(window.bridge || null);
-        };
-        existing.addEventListener('load', finish, { once: true });
-        existing.addEventListener('error', finish, { once: true });
-        // In case the script already finished loading before we attached.
-        const poll = setInterval(() => {
-          if (window.bridge) {
-            clearInterval(poll);
-            finish();
-          }
-        }, 100);
-        setTimeout(() => { clearInterval(poll); finish(); }, 8000);
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = BRIDGE_SRC;
-      script.async = true;
-      script.dataset.platformBridge = '1';
-      script.onload = () => resolve(window.bridge || null);
-      script.onerror = () => resolve(null);
-      document.head.appendChild(script);
-      setTimeout(() => resolve(window.bridge || null), 8000);
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        clearInterval(poll);
+        resolve(window.bridge || null);
+      };
+      const poll = setInterval(() => {
+        if (window.bridge) finish();
+      }, 50);
+      setTimeout(finish, 6000);
     });
   }
 
@@ -234,7 +207,12 @@
       : 'en';
     lifecycle.audioEnabled = platform.isAudioEnabled !== false;
     lifecycle.paused = platform.isPaused === true;
-    lifecycle.externalCallsSupported = platform.isExternalCallsSupported !== false;
+    // External networking (the optional online chess backend) is only allowed
+    // when the host explicitly supports it. On YouTube Playables it is blocked,
+    // so the game must stay fully playable offline. The local mock adapter is
+    // development-only and keeps the self-hosted server usable.
+    const isMock = !lifecycle.platformId || lifecycle.platformId.toLowerCase() === 'mock';
+    lifecycle.externalCallsSupported = isMock ? true : platform.isExternalCallsSupported === true;
 
     try {
       document.documentElement.lang = lifecycle.language;
@@ -272,7 +250,6 @@
       const profile = readPlayer(bridge);
       if (profile) {
         cachedProfile = profile;
-        try { localStorage.setItem(CACHE_KEY, JSON.stringify(profile)); } catch (e) {}
       }
       if (!readyResolved) {
         readyResolved = true;

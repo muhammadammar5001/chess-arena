@@ -16,7 +16,6 @@
   'use strict';
 
   const CLOUD_KEY = 'player_profile';
-  const MIRROR_KEY = 'chessarena_player_profile_mirror_v1';
   const MAX_HISTORY = 30;
   const MIN_WRITE_INTERVAL_MS = 1000;
   const MAX_CLOUD_RETRIES = 5;
@@ -25,13 +24,6 @@
     'classic-oak', 'ember', 'moonlit', 'sakura',
     'walnut-maple', 'cherry-rosewood', 'ebony-ivory'
   ]);
-
-  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-  function clone(value) {
-    try { return JSON.parse(JSON.stringify(value)); }
-    catch (e) { return value; }
-  }
 
   function toInt(value, fallback = 0) {
     if (value === null || value === undefined || value === '') return fallback;
@@ -84,7 +76,6 @@
   class ChessArenaStorageManager {
     constructor(options = {}) {
       this.cloudKey = options.cloudKey || CLOUD_KEY;
-      this.mirrorKey = options.mirrorKey || MIRROR_KEY;
       this.adapter = null;
       this.mode = 'local';
       this.current = null;
@@ -107,135 +98,37 @@
     }
 
     async _detectAdapter() {
-      const youtube = await this._waitForYouTubeStorage();
-      if (youtube) {
-        this.adapter = youtube;
-        this.mode = 'youtube';
+      // SaveStore is the single owner of persistence: it hydrates Bridge
+      // Storage before the game starts and batches writes back to the host.
+      // The profile is just one more value stored through it.
+      const store = window.SaveStore;
+      if (store && store.ready) {
+        try { await store.ready; } catch (e) { /* keep going */ }
+        this.mode = typeof store.getMode === 'function' ? store.getMode() : 'local';
+        this.adapter = {
+          getItem: async (key) => {
+            const value = store.getItem(key);
+            return value == null ? null : value;
+          },
+          setItem: async (key, value) => {
+            store.setItem(key, value);
+            return true;
+          }
+        };
         return this.mode;
       }
 
-      // On Playgama the bridge initializes asynchronously. Wait for its
-      // handshake before deciding the storage backend, otherwise the first
-      // profile read/write falls back to localStorage and cloud progress is
-      // lost on the next device/session.
-      const platformApi = window.ChessArenaPlatform;
-      if (platformApi && platformApi.whenReady) {
-        try {
-          await Promise.race([
-            Promise.resolve(platformApi.whenReady),
-            sleep(5000)
-          ]);
-        } catch (e) { /* local fallback */ }
-      }
-
-      const platform = this._playgamaAdapter();
-      if (platform) {
-        this.adapter = platform;
-        this.mode = 'platform';
-        return this.mode;
-      }
-
-      this.adapter = this._localAdapter();
-      this.mode = 'local';
+      // No SaveStore (should never happen in the shipped bundle): keep the
+      // in-memory profile alive for this session instead of touching
+      // localStorage on a host that forbids it.
+      this.mode = 'memory';
+      this.adapter = {
+        getItem: async () => null,
+        setItem: async () => true
+      };
       return this.mode;
     }
 
-    _isYouTubeHost() {
-      try {
-        const host = String(window.location.hostname || '').toLowerCase();
-        const referrer = String(document.referrer || '').toLowerCase();
-        return /(^|\.)youtube\.com$/.test(host) ||
-          /(^|\.)youtube-nocookie\.com$/.test(host) ||
-          referrer.includes('youtube.com');
-      } catch (e) {
-        return false;
-      }
-    }
-
-    _readYouTubeStorage() {
-      try {
-        const yt = window.YT;
-        if (!yt || typeof yt.getCloudStorage !== 'function') return null;
-        const storage = yt.getCloudStorage();
-        if (!storage || typeof storage.getItem !== 'function' || typeof storage.setItem !== 'function') return null;
-        return {
-          getItem: async (key) => {
-            const value = await storage.getItem(key);
-            return value == null ? null : value;
-          },
-          setItem: async (key, value) => await storage.setItem(key, value),
-          removeItem: typeof storage.removeItem === 'function'
-            ? async (key) => await storage.removeItem(key)
-            : null
-        };
-      } catch (e) {
-        this.lastError = e;
-        return null;
-      }
-    }
-
-    async _waitForYouTubeStorage() {
-      // YouTube injects the SDK asynchronously. Wait briefly on a YouTube host,
-      // but never delay local development or standalone deployments.
-      const deadline = Date.now() + (this._isYouTubeHost() ? 5000 : 0);
-      do {
-        const adapter = this._readYouTubeStorage();
-        if (adapter) return adapter;
-        if (!this._isYouTubeHost()) return null;
-        await sleep(150);
-      } while (Date.now() < deadline);
-      return null;
-    }
-
-    _playgamaAdapter() {
-      const platform = window.ChessArenaPlatform;
-      if (!platform || typeof platform.getStorage !== 'function' || typeof platform.setStorage !== 'function') return null;
-      try {
-        if (typeof platform.getPlatformId === 'function' && !platform.getPlatformId()) return null;
-      } catch (e) {
-        return null;
-      }
-      return {
-        getItem: async (key) => {
-          const value = await platform.getStorage(key);
-          if (Array.isArray(value)) return value[0] == null ? null : value[0];
-          if (value && typeof value === 'object' && !(value instanceof String)) {
-            if (value[key] !== undefined) return value[key];
-            if (value[0] !== undefined) return value[0];
-            return null;
-          }
-          return value == null ? null : value;
-        },
-        setItem: async (key, value) => await platform.setStorage(key, value)
-      };
-    }
-
-    _localAdapter() {
-      const memory = new Map();
-      const safeStorage = () => {
-        try { return window.localStorage; }
-        catch (e) { return null; }
-      };
-      return {
-        getItem: async (key) => {
-          const storage = safeStorage();
-          if (storage) {
-            try { return storage.getItem(key); }
-            catch (e) { /* fall through to memory */ }
-          }
-          return memory.has(key) ? memory.get(key) : null;
-        },
-        setItem: async (key, value) => {
-          const storage = safeStorage();
-          if (storage) {
-            try { storage.setItem(key, value); return true; }
-            catch (e) { /* fall through to memory */ }
-          }
-          memory.set(key, value);
-          return true;
-        }
-      };
-    }
 
     getStatus() {
       return {
@@ -366,14 +259,14 @@
       let stats = null;
       let rating = 1200;
       try {
-        const oldId = String(localStorage.getItem('chessarena_player_id') || '').toLowerCase();
+        const oldId = String(SaveStore.getItem('chessarena_player_id') || '').toLowerCase();
         let best = null;
         let bestTotal = -1;
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (!key || !key.startsWith('chessarena_stats_v1_')) continue;
+        for (let i = 0; i < SaveStore.length; i++) {
+          const key = SaveStore.key(i);
+          if (!key || (key !== 'chessarena_stats_v1' && !key.startsWith('chessarena_stats_v1_'))) continue;
           let parsed;
-          try { parsed = JSON.parse(localStorage.getItem(key) || 'null'); }
+          try { parsed = JSON.parse(SaveStore.getItem(key) || 'null'); }
           catch (e) { continue; }
           if (!parsed || typeof parsed !== 'object') continue;
           const ai = parsed.ai || {};
@@ -396,13 +289,13 @@
 
       let coins = 1000;
       try {
-        const savedCoins = parseInt(localStorage.getItem('chessarena_coins'), 10);
+        const savedCoins = parseInt(SaveStore.getItem('chessarena_coins'), 10);
         if (Number.isFinite(savedCoins) && savedCoins >= 0) coins = savedCoins;
       } catch (e) { /* ignore */ }
 
       let board = 'classic-oak';
       try {
-        const savedBoard = localStorage.getItem('chessarena_board_theme');
+        const savedBoard = SaveStore.getItem('chessarena_board_theme');
         if (savedBoard) board = sanitizeText(savedBoard, 32).toLowerCase().replace(/[^a-z0-9-]/g, '');
       } catch (e) { /* ignore */ }
 
@@ -418,16 +311,13 @@
 
     _mirrorLocal(profile) {
       try {
-        const json = JSON.stringify(profile);
-        localStorage.setItem(this.mirrorKey, json);
-        localStorage.setItem(this.cloudKey, json);
+        SaveStore.setItem(this.cloudKey, JSON.stringify(profile));
       } catch (e) { /* storage may be full or unavailable */ }
     }
 
     _readMirror() {
       try {
-        const raw = localStorage.getItem(this.mirrorKey) || localStorage.getItem(this.cloudKey);
-        return parseRaw(raw);
+        return parseRaw(SaveStore.getItem(this.cloudKey));
       } catch (e) {
         return null;
       }
@@ -594,7 +484,7 @@
         profile.coins = Math.max(0, Math.floor(Number(options.coins)));
       } else {
         try {
-          const savedCoins = parseInt(localStorage.getItem('chessarena_coins'), 10);
+          const savedCoins = parseInt(SaveStore.getItem('chessarena_coins'), 10);
           if (Number.isFinite(savedCoins) && savedCoins >= 0) {
             profile.coins = savedCoins;
           }
@@ -650,8 +540,7 @@
     async removeProfile() {
       this.current = null;
       try {
-        localStorage.removeItem(this.mirrorKey);
-        localStorage.removeItem(this.cloudKey);
+        SaveStore.removeItem(this.cloudKey);
       } catch (e) { /* ignore */ }
       if (this.adapter && typeof this.adapter.removeItem === 'function') {
         try { await this.adapter.removeItem(this.cloudKey); }

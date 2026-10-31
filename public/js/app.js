@@ -7,7 +7,7 @@ const AVATAR_ASSET_VERSION = '2';
 
 // Check cue: a short, seamless one-period loop of the supplied check sound.
 // Played through Web Audio so the loop seam is sample accurate (no gap/pause).
-const CHECK_LOOP_SRC = '/assets/sounds/check-loop.wav?v=1';
+const CHECK_LOOP_SRC = 'assets/sounds/check-loop.wav?v=1';
 const CHECK_VOLUME = 0.9;
 const CHECK_FADE_IN = 0.4;    // seconds — swells in when the king is checked
 const CHECK_FADE_OUT = 0.4;   // seconds — cuts away when the king escapes
@@ -24,7 +24,7 @@ const PLAYER_AVATARS = Array.from({ length: 18 }, (_, index) => {
   const number = String(index + 1).padStart(2, '0');
   return {
     id: `pfp-${number}`,
-    src: `/assets/avatars/pfp-${number}.webp?v=${AVATAR_ASSET_VERSION}`,
+    src: `assets/avatars/pfp-${number}.webp?v=${AVATAR_ASSET_VERSION}`,
     label: `Avatar ${index + 1}`
   };
 });
@@ -59,19 +59,20 @@ class App {
     this.soundMuted = false;
     this.musicEnabled = true;
     try {
-      const savedSettings = JSON.parse(localStorage.getItem('owl_settings') || 'null');
+      const savedSettings = JSON.parse(SaveStore.getItem('owl_settings') || 'null');
       if (savedSettings && typeof savedSettings === 'object') {
         if (typeof savedSettings.soundMuted === 'boolean') this.soundMuted = savedSettings.soundMuted;
         if (typeof savedSettings.musicEnabled === 'boolean') this.musicEnabled = savedSettings.musicEnabled;
       }
     } catch (e) {}
-    this.musicVolume = parseFloat(localStorage.getItem('chessarena_music_volume') || '0.25');
+    this.musicVolume = parseFloat(SaveStore.getItem('chessarena_music_volume') || '0.25');
     this.bgMusicRunning = false;
     this.bgMusicNodes = [];
     this.bgMusicGain = null;
     this.isAnimatingMove = false;
     this.platformAudioMuted = false;
     this.platformPaused = false;
+    this.adPlaying = false;
     this.platformStateReady = false;
     this.economyPersistenceReady = false;
     this.postGameBreak = false;
@@ -115,9 +116,9 @@ class App {
     this._profileRevision = 0;
     
     try {
-      let saved = JSON.parse(localStorage.getItem('owl_selected_abilities') || 'null');
+      let saved = JSON.parse(SaveStore.getItem('owl_selected_abilities') || 'null');
       if (!Array.isArray(saved) || saved.length === 0) {
-        saved = JSON.parse(localStorage.getItem('chessarena_abilities') || 'null');
+        saved = JSON.parse(SaveStore.getItem('chessarena_abilities') || 'null');
       }
       if (Array.isArray(saved)) {
         saved = saved.filter(s => ['swap', 'freeze', 'second', 'shield', 'jump'].includes(s));
@@ -309,7 +310,7 @@ class App {
     this.cloudProfile = clean;
     if (clean.playerId) {
       this.playerId = clean.playerId;
-      try { localStorage.setItem('chessarena_player_id', clean.playerId); } catch (e) { /* ignore */ }
+      try { SaveStore.setItem('chessarena_player_id', clean.playerId); } catch (e) { /* ignore */ }
     }
 
     const displayName = clean.username || (this.userProfile && this.userProfile.username) || '';
@@ -350,7 +351,7 @@ class App {
       clean.coins = this.coins;
     } else {
       let savedLocal = NaN;
-      try { savedLocal = parseInt(localStorage.getItem('chessarena_coins'), 10); } catch (e) {}
+      try { savedLocal = parseInt(SaveStore.getItem('chessarena_coins'), 10); } catch (e) {}
       if (Number.isFinite(savedLocal) && savedLocal >= 0) {
         clean.coins = savedLocal;
         this.coins = savedLocal;
@@ -364,11 +365,11 @@ class App {
       const cloudBoard = clean.equipped.board;
       document.body.dataset.boardTheme = cloudBoard;
       try {
-        localStorage.setItem('chessarena_board_theme', cloudBoard);
-        localStorage.setItem('owl_board_theme', cloudBoard);
+        SaveStore.setItem('chessarena_board_theme', cloudBoard);
+        SaveStore.setItem('owl_board_theme', cloudBoard);
         if (Array.isArray(this.unlockedBoards) && !this.unlockedBoards.includes(cloudBoard)) {
           this.unlockedBoards.push(cloudBoard);
-          localStorage.setItem('owl_unlocked_boards', JSON.stringify(this.unlockedBoards));
+          SaveStore.setItem('owl_unlocked_boards', JSON.stringify(this.unlockedBoards));
         }
       } catch (e) { /* ignore */ }
     }
@@ -477,7 +478,7 @@ class App {
     const titleBadge = this.getEloTitleBadgeHtml(rating);
     const totalLabel = total > 0 ? `<small>of ${total}</small>` : '';
     const crownHtml = rank === 1
-      ? `<div class="leaderboard-pinned-rank-crown" aria-label="1st Place Champion"><img src="/assets/crown-rank-1.webp" alt="Champion Crown" class="ranking-crown-img" /></div>`
+      ? `<div class="leaderboard-pinned-rank-crown" aria-label="1st Place Champion"><img src="assets/crown-rank-1.webp" alt="Champion Crown" class="ranking-crown-img" /></div>`
       : '';
 
     return `<div class="leaderboard-pinned-rank-badge" aria-hidden="true">
@@ -580,6 +581,7 @@ class App {
 
   async syncLeaderboardProfile(profile = this.cloudProfile, options = {}) {
     if (!profile || !profile.username) return false;
+    if (!this.externalCallsAllowed()) return false;
     if (this._leaderboardSyncInFlight) {
       this._leaderboardSyncQueued = true;
       return this._leaderboardSyncInFlight;
@@ -605,7 +607,7 @@ class App {
       try {
         controller = new AbortController();
         timeout = setTimeout(() => controller.abort(), 8000);
-        const response = await fetch('/api/leaderboard/sync', {
+        const response = await fetch('api/leaderboard/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify(snapshot),
@@ -728,15 +730,65 @@ class App {
     }
   }
 
-  onlinePlayAvailable() {
+  externalCallsAllowed() {
     try {
       const platform = window.ChessArenaPlatform;
-      if (platform && typeof platform.isExternalCallsSupported === 'function' &&
-          platform.isExternalCallsSupported() === false) {
-        this.showToast('Online play is unavailable on this platform. AI matches still work.');
-        return false;
+      if (platform && typeof platform.isExternalCallsSupported === 'function') {
+        return platform.isExternalCallsSupported() !== false;
       }
-    } catch (e) { /* allow local play */ }
+    } catch (e) { /* no platform → standalone web */ }
+    return true;
+  }
+
+  /**
+   * PlayGama requirement 1.2.5 / 3.3: everything that needs our own server is
+   * hidden on hosts that block external calls (YouTube Playables). The game
+   * stays fully playable against the AI and in local two-player mode.
+   */
+  applyPlatformCapabilities() {
+    const online = this.externalCallsAllowed();
+    try { document.body.classList.toggle('online-unavailable', !online); } catch (e) { /* ignore */ }
+    if (online) return;
+    const offlineHidden = [
+      '[onclick="app.findMatch()"]',
+      '[onclick="app.showRoomScreen()"]',
+      '[onclick="app.showLeaderboardScreen()"]'
+    ];
+    document.querySelectorAll(offlineHidden.join(',')).forEach((el) => {
+      el.style.display = 'none';
+      el.setAttribute('aria-hidden', 'true');
+    });
+  }
+
+  getApiBaseUrl() {
+    if (typeof window !== 'undefined' && window.CHESS_API_URL) {
+      return window.CHESS_API_URL;
+    }
+    if (this.multiplayer && typeof this.multiplayer.getWebSocketUrl === 'function') {
+      const wsUrl = this.multiplayer.getWebSocketUrl();
+      if (wsUrl.startsWith('wss://') || wsUrl.startsWith('ws://')) {
+        return wsUrl.replace('wss://', 'https://').replace('ws://', 'http://');
+      }
+    }
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+    const isLocal = (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.') ||
+      hostname.endsWith('.local')
+    );
+    if (isLocal || hostname.endsWith('.onrender.com')) {
+      return '';
+    }
+    return 'https://chess-arena-262t.onrender.com';
+  }
+
+  onlinePlayAvailable() {
+    if (!this.externalCallsAllowed()) {
+      this.showToast('Online play is unavailable on this platform. AI matches still work.');
+      return false;
+    }
     return true;
   }
 
@@ -752,8 +804,8 @@ class App {
 
   init() {
     if (!this.playerId) {
-      this.playerId = localStorage.getItem('chessarena_player_id') || this.createGuestId();
-      localStorage.setItem('chessarena_player_id', this.playerId);
+      this.playerId = SaveStore.getItem('chessarena_player_id') || this.createGuestId();
+      SaveStore.setItem('chessarena_player_id', this.playerId);
     }
     if (window.AdService) {
       window.AdService.init();
@@ -845,6 +897,20 @@ class App {
     if (platform && typeof platform.gameReady === 'function') {
       platform.gameReady().catch(() => {});
     }
+
+    // PlayGama 3.3.5: sound must stop whenever the page is hidden. Hosts emit
+    // Bridge pause events, but the standalone build needs this fallback too.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        this.setPlatformPaused(true);
+        return;
+      }
+      const hostPaused = platform && typeof platform.isPaused === 'function' && platform.isPaused();
+      if (!hostPaused && !this.adPlaying) this.setPlatformPaused(false);
+    });
+
+    // Hide features the host cannot support (external server, rewards).
+    this.applyPlatformCapabilities();
   }
 
   applyPlatformState(state) {
@@ -878,7 +944,12 @@ class App {
     this.lastMoveTime = Date.now();
 
     if (next) {
+      // Freeze everything that could keep running behind a host overlay/ad:
+      // music, check cue and droplets, the AI turn and pending audio.
       this.stopBgMusic();
+      this.cancelAIMove();
+      this.stopCheckTears();
+      this.stopCheckSound(0.2);
       try {
         if (this.audioCtx && this.audioCtx.state === 'running') {
           this.audioCtx.suspend().catch(() => {});
@@ -886,9 +957,54 @@ class App {
       } catch (e) { /* ignore */ }
     } else {
       this.lastMoveTime = Date.now();
-      if (!options.initial && this.musicEnabled && !this.platformAudioMuted && (!this.bgMusicRunning || (this.bgAudio && this.bgAudio.paused))) {
+      if (!options.initial && this.musicEnabled && !this.platformAudioMuted && !this.adPlaying &&
+          (!this.bgMusicRunning || (this.bgAudio && this.bgAudio.paused))) {
+        this.startBgMusic();
+      }
+      // Restore the check feedback if the king is still under attack and
+      // re-arm the AI when it was its turn.
+      if (this._checkAlertOn) {
+        this.startCheckSound();
+        this.startCheckTears();
+      }
+      if (this.gameMode === 'ai' && this.engine && !this.engine.gameOver &&
+          this.engine.currentTurn !== this.playerColor) {
+        this.scheduleAIMove(400);
+      }
+    }
+  }
+
+  /**
+   * Full-screen ads pause sound AND gameplay (PlayGama 2.1.6). The Bridge also
+   * emits its own pause event, but this keeps standalone/local flows correct.
+   */
+  setAdPlaying(playing) {
+    const next = playing === true;
+    if (this.adPlaying === next) return;
+    this.adPlaying = next;
+    if (next) {
+      this.stopBgMusic();
+      this.cancelAIMove();
+      this.stopCheckTears();
+      this.stopCheckSound(0.2);
+      try {
+        if (this.audioCtx && this.audioCtx.state === 'running') {
+          this.audioCtx.suspend().catch(() => {});
+        }
+      } catch (e) { /* ignore */ }
+      return;
+    }
+    if (!this.platformPaused && !this.platformAudioMuted && this.musicEnabled &&
+        (!this.bgMusicRunning || (this.bgAudio && this.bgAudio.paused))) {
       this.startBgMusic();
     }
+    if (this._checkAlertOn) {
+      this.startCheckSound();
+      this.startCheckTears();
+    }
+    if (this.gameMode === 'ai' && this.engine && !this.engine.gameOver &&
+        this.engine.currentTurn !== this.playerColor) {
+      this.scheduleAIMove(400);
     }
   }
 
@@ -908,128 +1024,21 @@ class App {
     }
   }
 
+  // Every cue is a shipped audio file. PlayGama rule 3.3.2 forbids
+  // synthesising sound with Web Audio at runtime, so there are no oscillators
+  // here — only pre-authored WAV/MP3 assets.
   playSound(type) {
     if (this.soundMuted || this.platformAudioMuted || this.platformPaused) return;
-    try {
-      this.initAudio();
-      const ctx = this.audioCtx;
-      if (!ctx) return;
-
-      switch (type) {
-
-        case 'freeze': {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(800, ctx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.3);
-          gain.gain.setValueAtTime(0, ctx.currentTime);
-          gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.05);
-          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(ctx.currentTime);
-          osc.stop(ctx.currentTime + 0.3);
-          break;
-        }
-
-          case 'tweet': {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(1200, ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(2000, ctx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.12);
-            break;
-          }
-        case 'move': {
-          // Satisfying wooden piece placement "tock"
-          const osc1 = ctx.createOscillator();
-          const gain1 = ctx.createGain();
-          osc1.type = 'sine';
-          osc1.frequency.setValueAtTime(460, ctx.currentTime);
-          osc1.frequency.exponentialRampToValueAtTime(140, ctx.currentTime + 0.075);
-          gain1.gain.setValueAtTime(0.18, ctx.currentTime);
-          gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.075);
-          osc1.connect(gain1);
-          gain1.connect(ctx.destination);
-          osc1.start(ctx.currentTime);
-          osc1.stop(ctx.currentTime + 0.075);
-
-          const osc2 = ctx.createOscillator();
-          const gain2 = ctx.createGain();
-          osc2.type = 'triangle';
-          osc2.frequency.setValueAtTime(280, ctx.currentTime);
-          osc2.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.06);
-          gain2.gain.setValueAtTime(0.12, ctx.currentTime);
-          gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
-          osc2.connect(gain2);
-          gain2.connect(ctx.destination);
-          osc2.start(ctx.currentTime);
-          osc2.stop(ctx.currentTime + 0.06);
-          break;
-        }
-
-        case 'capture': {
-          this.playShortSound('/assets/sounds/capture.mp3', 0.85);
-          break;
-        }
-
-        case 'check': {
-          this.startCheckSound();
-          break;
-        }
-
-        case 'gameover': {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.frequency.value = 320;
-          gain.gain.setValueAtTime(0.15, ctx.currentTime);
-          osc.frequency.linearRampToValueAtTime(140, ctx.currentTime + 0.6);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-          osc.start(ctx.currentTime);
-          osc.stop(ctx.currentTime + 0.6);
-          break;
-        }
-
-        case 'your-turn': {
-          const t0 = ctx.currentTime;
-          // Tone 1: D5 (587 Hz)
-          const osc1 = ctx.createOscillator();
-          const gain1 = ctx.createGain();
-          osc1.type = 'sine';
-          osc1.frequency.setValueAtTime(587.33, t0);
-          gain1.gain.setValueAtTime(0.24, t0);
-          gain1.gain.exponentialRampToValueAtTime(0.01, t0 + 0.12);
-          osc1.connect(gain1);
-          gain1.connect(ctx.destination);
-          osc1.start(t0);
-          osc1.stop(t0 + 0.12);
-
-          // Tone 2: A5 (880 Hz) - crisp notification bell
-          const osc2 = ctx.createOscillator();
-          const gain2 = ctx.createGain();
-          osc2.type = 'sine';
-          osc2.frequency.setValueAtTime(880, t0 + 0.08);
-          gain2.gain.setValueAtTime(0.26, t0 + 0.08);
-          gain2.gain.exponentialRampToValueAtTime(0.001, t0 + 0.35);
-          osc2.connect(gain2);
-          gain2.connect(ctx.destination);
-          osc2.start(t0 + 0.08);
-          osc2.stop(t0 + 0.35);
-          break;
-        }
-      }
-    } catch {
-      // Audio not available
+    switch (type) {
+      case 'check': this.startCheckSound(); return;
+      case 'capture': this.playShortSound('assets/sounds/capture.mp3', 0.85); return;
+      case 'move': this.playShortSound('assets/sounds/move.wav', 0.55); return;
+      case 'freeze': this.playShortSound('assets/sounds/freeze.wav', 0.6); return;
+      case 'tweet': this.playShortSound('assets/sounds/tweet.wav', 0.5); return;
+      case 'your-turn': this.playShortSound('assets/sounds/your-turn.wav', 0.6); return;
+      case 'defeat': this.playShortSound('assets/sounds/defeat.wav', 0.7); return;
+      case 'gameover': this.playShortSound('assets/sounds/gameover.wav', 0.7); return;
+      default: return;
     }
   }
 
@@ -1217,14 +1226,32 @@ class App {
 
     // If player is black, AI moves first
     if (this.playerColor === 'black') {
-      setTimeout(() => this.makeAIMove(), 500);
+      this.scheduleAIMove(500);
+    }
+  }
+
+  // Every AI turn goes through one cancellable timer so a host pause (tab
+  // switch, ad, system overlay) can stop the engine from moving behind the
+  // player's back.
+  scheduleAIMove(delay = 500) {
+    if (this._aiTimer) clearTimeout(this._aiTimer);
+    this._aiTimer = setTimeout(() => {
+      this._aiTimer = null;
+      this.makeAIMove();
+    }, delay);
+  }
+
+  cancelAIMove() {
+    if (this._aiTimer) {
+      clearTimeout(this._aiTimer);
+      this._aiTimer = null;
     }
   }
 
   makeAIMove() {
     if (!this.engine || this.engine.gameOver) return;
-    if (this.platformPaused) {
-      setTimeout(() => this.makeAIMove(), 250);
+    if (this.platformPaused || this.adPlaying) {
+      this.scheduleAIMove(250);
       return;
     }
     if (this.engine.currentTurn === this.playerColor) return;
@@ -1303,19 +1330,19 @@ class App {
 
   getSelectedAvatarSrc() {
     const avatar = this.getSelectedAvatar();
-    return avatar ? avatar.src : '/assets/avatar-default.svg';
+    return avatar ? avatar.src : 'assets/avatar-default.svg';
   }
 
   getRandomAvatarSrc() {
     const avatar = PLAYER_AVATARS.length
       ? PLAYER_AVATARS[Math.floor(Math.random() * PLAYER_AVATARS.length)]
       : null;
-    return avatar ? avatar.src : '/assets/avatar-default.svg';
+    return avatar ? avatar.src : 'assets/avatar-default.svg';
   }
 
   readStoredAvatarId() {
     try {
-      const saved = localStorage.getItem('chessarena_avatar_id');
+      const saved = SaveStore.getItem('chessarena_avatar_id');
       return this.normalizeAvatarId(saved);
     } catch (e) {
       return null;
@@ -1324,7 +1351,7 @@ class App {
 
   persistAvatarId(avatarId = this.avatarId) {
     try {
-      localStorage.setItem('chessarena_avatar_id', avatarId);
+      SaveStore.setItem('chessarena_avatar_id', avatarId);
     } catch (e) { /* localStorage may be unavailable */ }
   }
 
@@ -2292,11 +2319,11 @@ class App {
     if (!container) return;
 
     const skillIcons = {
-      swap: { src: '/assets/Asset 42.png', label: 'Tactical Swap' },
-      freeze: { src: '/assets/Asset 43.png', label: 'Piece Freeze' },
-      second: { src: '/assets/Asset 44.png', label: 'Second Chance' },
-      shield: { src: '/assets/Asset 45.png', label: 'Divine Shield' },
-      jump: { src: '/assets/Asset 46.png', label: 'Pegasus Jump' }
+      swap: { src: 'assets/asset-42.png', label: 'Tactical Swap' },
+      freeze: { src: 'assets/asset-43.png', label: 'Piece Freeze' },
+      second: { src: 'assets/asset-44.png', label: 'Second Chance' },
+      shield: { src: 'assets/asset-45.png', label: 'Divine Shield' },
+      jump: { src: 'assets/asset-46.png', label: 'Pegasus Jump' }
     };
 
     const equipped = (Array.isArray(abilities) ? abilities : [])
@@ -2440,19 +2467,19 @@ class App {
     btn.onclick = () => this.activateAbility(abilityId);
     
     if (abilityId === 'swap') {
-      btn.querySelector('.btn-icon').innerHTML = '<img src="/assets/Asset 42.png" style="width: 22px; height: 22px; object-fit: contain; transform: translateY(2px);">';
+      btn.querySelector('.btn-icon').innerHTML = '<img src="assets/asset-42.png" style="width: 22px; height: 22px; object-fit: contain; transform: translateY(2px);">';
       btn.querySelector('.btn-label').textContent = 'Swap';
     } else if (abilityId === 'freeze') {
-      btn.querySelector('.btn-icon').innerHTML = '<img src="/assets/Asset 43.png" style="width: 22px; height: 22px; object-fit: contain; transform: translateY(2px);">';
+      btn.querySelector('.btn-icon').innerHTML = '<img src="assets/asset-43.png" style="width: 22px; height: 22px; object-fit: contain; transform: translateY(2px);">';
       btn.querySelector('.btn-label').textContent = 'Freeze';
     } else if (abilityId === 'second') {
-      btn.querySelector('.btn-icon').innerHTML = '<img src="/assets/Asset 44.png" style="width: 22px; height: 22px; object-fit: contain; transform: translateY(2px);">';
+      btn.querySelector('.btn-icon').innerHTML = '<img src="assets/asset-44.png" style="width: 22px; height: 22px; object-fit: contain; transform: translateY(2px);">';
       btn.querySelector('.btn-label').textContent = '2nd Chance';
     } else if (abilityId === 'shield') {
-      btn.querySelector('.btn-icon').innerHTML = '<img src="/assets/Asset 45.png" style="width: 22px; height: 22px; object-fit: contain; transform: translateY(2px);">';
+      btn.querySelector('.btn-icon').innerHTML = '<img src="assets/asset-45.png" style="width: 22px; height: 22px; object-fit: contain; transform: translateY(2px);">';
       btn.querySelector('.btn-label').textContent = 'Shield';
     } else if (abilityId === 'jump') {
-      btn.querySelector('.btn-icon').innerHTML = '<img src="/assets/Asset 46.png" style="width: 22px; height: 22px; object-fit: contain; transform: translateY(2px);">';
+      btn.querySelector('.btn-icon').innerHTML = '<img src="assets/asset-46.png" style="width: 22px; height: 22px; object-fit: contain; transform: translateY(2px);">';
       btn.querySelector('.btn-label').textContent = 'Jump';
     }
     
@@ -2932,7 +2959,7 @@ class App {
                             this.showToast('🪽 Pegasus Jump executed!');
                             this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
                             if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
-                                setTimeout(() => this.makeAIMove(), 500);
+                                this.scheduleAIMove(500);
                             }
                         } else {
                             this.showToast('Cannot jump to that square');
@@ -3058,7 +3085,7 @@ class App {
                         this.markAbilityUsed('swap');
                         this.showToast('🔄 Tactical Swap executed!');
                         if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
-                            setTimeout(() => this.makeAIMove(), 500);
+                            this.scheduleAIMove(500);
                         }
                     } else {
                         this.showToast('Cannot swap those pieces');
@@ -3345,7 +3372,7 @@ class App {
 
       // AI response
       if (this.gameMode === 'ai') {
-        setTimeout(() => this.makeAIMove(), 320);
+        this.scheduleAIMove(320);
       }
     });
   }
@@ -3385,7 +3412,7 @@ class App {
           this.markAbilityUsed('swap');
           this.showToast('🔄 Tactical Swap executed!');
           if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
-            setTimeout(() => this.makeAIMove(), 500);
+            this.scheduleAIMove(500);
           }
         }
       }
@@ -3407,7 +3434,7 @@ class App {
 
       // Host pause (tab switch, ad, system pause): do not let the local clock
       // run down while the player cannot interact.
-      if (this.platformPaused) {
+      if (this.platformPaused || this.adPlaying) {
         this.lastMoveTime = Date.now();
         return;
       }
@@ -3776,7 +3803,7 @@ class App {
 
     if (!this.bgAudio) {
       try {
-        this.bgAudio = new Audio('/assets/audio/Chess-Arena-BGM.mp3');
+        this.bgAudio = new Audio('assets/audio/Chess-Arena-BGM.mp3');
         this.bgAudio.loop = true;
         this.bgAudio.volume = (typeof this.musicVolume === 'number') ? this.musicVolume : 0.25;
       } catch (e) {
@@ -3833,7 +3860,7 @@ class App {
     const volNum = Math.max(0, Math.min(100, parseInt(value, 10) || 0));
     this.musicVolume = volNum / 100;
     try {
-      localStorage.setItem('chessarena_music_volume', String(this.musicVolume));
+      SaveStore.setItem('chessarena_music_volume', String(this.musicVolume));
     } catch(e) {}
 
     if (this.bgAudio) {
@@ -3930,11 +3957,11 @@ class App {
     const heroImg = document.getElementById('victory-hero-img');
     if (heroImg) {
       if (isPlayerWin) {
-        heroImg.src = '/assets/victory.jpg';
+        heroImg.src = 'assets/victory.jpg';
       } else if (isDraw) {
-        heroImg.src = '/assets/draw.jpg';
+        heroImg.src = 'assets/draw.jpg';
       } else {
-        heroImg.src = '/assets/defeat.jpg';
+        heroImg.src = 'assets/defeat.jpg';
       }
     }
 
@@ -4125,7 +4152,7 @@ class App {
 
   getUserCoins() {
     if (this.coins !== undefined && this.coins !== null && Number.isFinite(Number(this.coins))) return this.coins;
-    let saved = localStorage.getItem('chessarena_coins');
+    let saved = SaveStore.getItem('chessarena_coins');
     if (saved !== null) {
       const parsed = parseInt(saved, 10);
       if (!isNaN(parsed)) return parsed;
@@ -4140,7 +4167,7 @@ class App {
       this._sessionCoinsModified = true;
     }
     try {
-      localStorage.setItem('chessarena_coins', String(amount));
+      SaveStore.setItem('chessarena_coins', String(amount));
     } catch(e) {}
 
     if (this.cloudProfile) {
@@ -4315,13 +4342,12 @@ class App {
   }
 
   // --- Player stats ---------------------------------
-  // Progression is stored locally first so it works in any webview (including
-  // YouTube Playables), then reconciled with the server profile when online.
+  // Progression is stored through SaveStore (Bridge Storage on a host) so it
+  // follows the player between sessions. A single key is enough: the profile
+  // belongs to the current account, and the cloud profile carries the
+  // authoritative stats when one exists.
   statsStorageKey() {
-    const identity = (this.userProfile && this.userProfile.username)
-      ? String(this.userProfile.username).toLowerCase()
-      : String(this.playerId || 'guest');
-    return 'chessarena_stats_v1_' + identity;
+    return 'chessarena_stats_v1';
   }
 
   loadPlayerStats() {
@@ -4330,7 +4356,7 @@ class App {
       return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
     };
     const stored = (() => {
-      try { return JSON.parse(localStorage.getItem(this.statsStorageKey()) || 'null'); }
+      try { return JSON.parse(SaveStore.getItem(this.statsStorageKey()) || 'null'); }
       catch (e) { return null; }
     })();
 
@@ -4374,7 +4400,7 @@ class App {
   savePlayerStats() {
     if (!this.playerStats) return;
     try {
-      localStorage.setItem(this.statsStorageKey(), JSON.stringify(this.playerStats));
+      SaveStore.setItem(this.statsStorageKey(), JSON.stringify(this.playerStats));
     } catch (e) { /* storage may be unavailable; keep in-memory stats */ }
     if (this.economyPersistenceReady) this.scheduleEconomyPersist();
   }
@@ -4729,18 +4755,9 @@ class App {
     const nextId = 'plat_' + platformId + '_' + accountId;
     if (nextId === this.playerId) return;
 
-    const previousId = this.playerId;
     this.playerId = nextId;
     try {
-      localStorage.setItem('chessarena_player_id', nextId);
-      // Preserve local progress when moving from a generated guest ID to the
-      // signed-in platform account for the first time.
-      if (previousId && previousId !== nextId) {
-        const oldKey = 'chessarena_stats_v1_' + String(previousId).toLowerCase();
-        const newKey = 'chessarena_stats_v1_' + nextId.toLowerCase();
-        const oldStats = localStorage.getItem(oldKey);
-        if (oldStats && !localStorage.getItem(newKey)) localStorage.setItem(newKey, oldStats);
-      }
+      SaveStore.setItem('chessarena_player_id', nextId);
     } catch (e) { /* ignore storage errors */ }
   }
 
@@ -4906,8 +4923,8 @@ class App {
     });
 
     try {
-      localStorage.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
-      localStorage.setItem('chessarena_abilities', JSON.stringify(this.selectedAbilities));
+      SaveStore.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
+      SaveStore.setItem('chessarena_abilities', JSON.stringify(this.selectedAbilities));
     } catch (e) { /* ignore */ }
 
     this.syncSlotUI();
@@ -4916,9 +4933,9 @@ class App {
 
   showAbilitiesScreen() {
     try {
-      let saved = JSON.parse(localStorage.getItem('owl_selected_abilities') || 'null');
+      let saved = JSON.parse(SaveStore.getItem('owl_selected_abilities') || 'null');
       if (!Array.isArray(saved) || saved.length === 0) {
-        saved = JSON.parse(localStorage.getItem('chessarena_abilities') || 'null');
+        saved = JSON.parse(SaveStore.getItem('chessarena_abilities') || 'null');
       }
       if (Array.isArray(saved) && saved.length > 0) {
         this.selectedAbilities = [...saved];
@@ -4964,8 +4981,8 @@ class App {
     }
 
     try {
-      localStorage.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
-      localStorage.setItem('chessarena_abilities', JSON.stringify(this.selectedAbilities));
+      SaveStore.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
+      SaveStore.setItem('chessarena_abilities', JSON.stringify(this.selectedAbilities));
     } catch (e) {}
 
     this.syncAbilitiesUI();
@@ -4977,11 +4994,11 @@ class App {
     if (!container) return;
     
     const iconMap = {
-      'swap': '/assets/Asset 42.png',
-      'freeze': '/assets/Asset 43.png',
-      'second': '/assets/Asset 44.png',
-      'shield': '/assets/Asset 45.png',
-      'jump': '/assets/Asset 46.png'
+      'swap': 'assets/asset-42.png',
+      'freeze': 'assets/asset-43.png',
+      'second': 'assets/asset-44.png',
+      'shield': 'assets/asset-45.png',
+      'jump': 'assets/asset-46.png'
     };
 
     const emojiMap = {
@@ -5006,8 +5023,8 @@ class App {
       return;
     }
     try {
-      localStorage.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
-      localStorage.setItem('chessarena_abilities', JSON.stringify(this.selectedAbilities));
+      SaveStore.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
+      SaveStore.setItem('chessarena_abilities', JSON.stringify(this.selectedAbilities));
     } catch(e) {}
     this.updateHomeAbilitiesDisplay();
     this.showToast('Loadout saved! Abilities equipped for battle ⚔️');
@@ -5403,7 +5420,6 @@ class App {
 
   handleAuthSuccess(user, created) {
     const cloud = this.cloudProfile;
-    const previousKey = this.statsStorageKey();
     const previousName = this.userProfile && this.userProfile.username;
     const displayName = (cloud && cloud.username) || (user && user.username) || 'Player';
 
@@ -5419,16 +5435,6 @@ class App {
     const nameChanged = previousName && previousName !== displayName;
     this.showToast(created || nameChanged ? `Playing as ${displayName}` : `Welcome back, ${displayName}!`);
 
-    const newKey = this.statsStorageKey();
-    if (previousKey !== newKey) {
-      try {
-        const guestStats = localStorage.getItem(previousKey);
-        if (guestStats && !localStorage.getItem(newKey)) {
-          localStorage.setItem(newKey, guestStats);
-        }
-      } catch (e) { /* ignore storage errors */ }
-    }
-
     if (cloud) {
       // The cloud profile is canonical; the server will be brought in line by
       // the sync request below instead of overwriting newer local progress.
@@ -5437,7 +5443,7 @@ class App {
     } else {
       if (user && user.playerId) {
         this.playerId = user.playerId;
-        try { localStorage.setItem('chessarena_player_id', this.playerId); } catch (e) { /* ignore */ }
+        try { SaveStore.setItem('chessarena_player_id', this.playerId); } catch (e) { /* ignore */ }
       }
       this.loadPlayerStats();
       this.renderProfileStats();
@@ -5497,8 +5503,8 @@ class App {
     if (type !== 'board') return;
     document.body.dataset.boardTheme = id;
     try {
-      localStorage.setItem('chessarena_board_theme', id);
-      localStorage.setItem('owl_board_theme', id);
+      SaveStore.setItem('chessarena_board_theme', id);
+      SaveStore.setItem('owl_board_theme', id);
     } catch (e) { /* ignore */ }
     if (this.cloudProfile) {
       this.cloudProfile.equipped = Object.assign({}, this.cloudProfile.equipped || {}, { board: id });
@@ -5531,6 +5537,10 @@ class App {
     this.syncShopUI();
   }
   async showLeaderboardScreen() {
+    if (!this.externalCallsAllowed()) {
+      this.showToast('Rankings need an online connection and are unavailable here.');
+      return;
+    }
     this.updateBottomNav('rankings');
     this.showScreen('screen-leaderboard');
     const list = document.getElementById('leaderboard-list');
@@ -5548,8 +5558,12 @@ class App {
   async loadLeaderboardData() {
     const list = document.getElementById('leaderboard-list');
     if (!list) return;
+    if (!this.externalCallsAllowed()) {
+      list.innerHTML = '<p style="color: #D6BD9B; text-align: center; margin: 24px 0;">Rankings are unavailable on this platform.</p>';
+      return;
+    }
     try {
-      const response = await fetch('/api/leaderboard', { headers: { Accept: 'application/json' } });
+      const response = await fetch('api/leaderboard', { headers: { Accept: 'application/json' } });
       if (!response.ok) throw new Error('Request failed');
       const data = await response.json();
       const players = Array.isArray(data.players) ? data.players : [];
@@ -5595,7 +5609,7 @@ class App {
     list.innerHTML = visiblePlayers.map((player, i) => {
       const rank = Number(player.rank) > 0 ? Math.floor(Number(player.rank)) : i + 1;
       const crownHtml = rank === 1
-        ? `<div class="ranking-crown" aria-label="1st Place Champion"><img src="/assets/crown-rank-1.webp" alt="Champion Crown" class="ranking-crown-img" /></div>`
+        ? `<div class="ranking-crown" aria-label="1st Place Champion"><img src="assets/crown-rank-1.webp" alt="Champion Crown" class="ranking-crown-img" /></div>`
         : '';
       let rankTierClass = '';
       if (rank === 1) rankTierClass = 'rank-gold rank-top-1';
@@ -5684,19 +5698,19 @@ class App {
 
   saveEconomyState() {
     try {
-      if (this.coins !== null && Number.isFinite(Number(this.coins))) { localStorage.setItem('chessarena_coins', String(this.coins)); }
-      localStorage.setItem('chessarena_avatar_id', this.avatarId);
-      localStorage.setItem('owl_player_level', String(this.playerLevel));
-      localStorage.setItem('owl_player_xp', String(this.playerXP));
-      localStorage.setItem('owl_slot2_unlocked', this.slot2Unlocked ? 'true' : 'false');
-      localStorage.setItem('owl_slot2_ads', String(this.slot2AdsWatched));
-      localStorage.setItem('owl_unlocked_skills', JSON.stringify(this.unlockedSkills));
-      localStorage.setItem('owl_skill_charges', JSON.stringify(this.skillCharges));
-      localStorage.setItem('owl_unlocked_boards', JSON.stringify(this.unlockedBoards));
-      localStorage.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
-      localStorage.setItem('chessarena_abilities', JSON.stringify(this.selectedAbilities));
-      localStorage.setItem('owl_ad_tracking', JSON.stringify(this.adTracking));
-      localStorage.setItem('owl_settings', JSON.stringify({
+      if (this.coins !== null && Number.isFinite(Number(this.coins))) { SaveStore.setItem('chessarena_coins', String(this.coins)); }
+      SaveStore.setItem('chessarena_avatar_id', this.avatarId);
+      SaveStore.setItem('owl_player_level', String(this.playerLevel));
+      SaveStore.setItem('owl_player_xp', String(this.playerXP));
+      SaveStore.setItem('owl_slot2_unlocked', this.slot2Unlocked ? 'true' : 'false');
+      SaveStore.setItem('owl_slot2_ads', String(this.slot2AdsWatched));
+      SaveStore.setItem('owl_unlocked_skills', JSON.stringify(this.unlockedSkills));
+      SaveStore.setItem('owl_skill_charges', JSON.stringify(this.skillCharges));
+      SaveStore.setItem('owl_unlocked_boards', JSON.stringify(this.unlockedBoards));
+      SaveStore.setItem('owl_selected_abilities', JSON.stringify(this.selectedAbilities));
+      SaveStore.setItem('chessarena_abilities', JSON.stringify(this.selectedAbilities));
+      SaveStore.setItem('owl_ad_tracking', JSON.stringify(this.adTracking));
+      SaveStore.setItem('owl_settings', JSON.stringify({
         soundMuted: this.soundMuted,
         musicEnabled: this.musicEnabled
       }));
@@ -5860,18 +5874,18 @@ class App {
         : null;
       let localCoins = NaN;
       try {
-        const raw = localStorage.getItem('chessarena_coins');
-        const oldKeyRaw = localStorage.getItem('owl_coins');
+        const raw = SaveStore.getItem('chessarena_coins');
+        const oldKeyRaw = SaveStore.getItem('owl_coins');
         if (raw !== null) {
           localCoins = parseInt(raw, 10);
         } else if (oldKeyRaw !== null) {
           // One-time migration from the removed legacy key, then delete it.
           localCoins = parseInt(oldKeyRaw, 10);
           if (Number.isFinite(localCoins)) {
-            localStorage.setItem('chessarena_coins', String(localCoins));
+            SaveStore.setItem('chessarena_coins', String(localCoins));
           }
         }
-        if (oldKeyRaw !== null) localStorage.removeItem('owl_coins');
+        if (oldKeyRaw !== null) SaveStore.removeItem('owl_coins');
       } catch (e) { /* ignore */ }
       if (!Number.isFinite(localCoins) || localCoins < 0) localCoins = startingCoins;
       let activeCoins;
@@ -5889,20 +5903,20 @@ class App {
         activeCoins = startingCoins;
       }
       this.coins = activeCoins;
-      try { localStorage.setItem('chessarena_coins', String(activeCoins)); } catch (e) {}
+      try { SaveStore.setItem('chessarena_coins', String(activeCoins)); } catch (e) {}
       if (this.cloudProfile) this.cloudProfile.coins = activeCoins;
 
-      const parsedLevel = parseInt(localStorage.getItem('owl_player_level'), 10);
+      const parsedLevel = parseInt(SaveStore.getItem('owl_player_level'), 10);
       this.playerLevel = Number.isFinite(parsedLevel) && parsedLevel > 0 ? parsedLevel : 1;
-      const parsedXp = parseInt(localStorage.getItem('owl_player_xp'), 10);
+      const parsedXp = parseInt(SaveStore.getItem('owl_player_xp'), 10);
       this.playerXP = Number.isFinite(parsedXp) && parsedXp > 0 ? parsedXp : 0;
-      this.slot2Unlocked = localStorage.getItem('owl_slot2_unlocked') === 'true';
-      this.slot2AdsWatched = Math.max(0, Math.min(3, parseInt(localStorage.getItem('owl_slot2_ads'), 10) || 0));
+      this.slot2Unlocked = SaveStore.getItem('owl_slot2_unlocked') === 'true';
+      this.slot2AdsWatched = Math.max(0, Math.min(3, parseInt(SaveStore.getItem('owl_slot2_ads'), 10) || 0));
       if (this.slot2AdsWatched >= 3) this.slot2Unlocked = true;
 
       const validSkills = ['jump', 'second', 'freeze', 'swap', 'shield'];
       let savedSkills = null;
-      try { savedSkills = JSON.parse(localStorage.getItem('owl_unlocked_skills') || 'null'); } catch (e) {}
+      try { savedSkills = JSON.parse(SaveStore.getItem('owl_unlocked_skills') || 'null'); } catch (e) {}
       if (Array.isArray(savedSkills) && savedSkills.length > 0) {
         this.unlockedSkills = [...new Set(savedSkills.map(s => s === 'undo' ? 'second' : s))]
           .filter(s => validSkills.includes(s));
@@ -5912,7 +5926,7 @@ class App {
       }
 
       let savedCharges = null;
-      try { savedCharges = JSON.parse(localStorage.getItem('owl_skill_charges') || 'null'); } catch (e) {}
+      try { savedCharges = JSON.parse(SaveStore.getItem('owl_skill_charges') || 'null'); } catch (e) {}
       const maxCharges = window.ECONOMY_CONFIG?.skills?.maxCharges || 5;
       const nextCharges = {};
       validSkills.forEach(id => {
@@ -5923,21 +5937,21 @@ class App {
 
       const validBoards = (window.ECONOMY_CONFIG?.boards || []).map(b => b.id);
       let savedBoards = null;
-      try { savedBoards = JSON.parse(localStorage.getItem('owl_unlocked_boards') || 'null'); } catch (e) {}
+      try { savedBoards = JSON.parse(SaveStore.getItem('owl_unlocked_boards') || 'null'); } catch (e) {}
       this.unlockedBoards = Array.isArray(savedBoards)
         ? [...new Set(savedBoards)].filter(id => validBoards.includes(id))
         : [];
       if (!this.unlockedBoards.includes('classic-oak')) this.unlockedBoards.unshift('classic-oak');
 
       let tracking = null;
-      try { tracking = JSON.parse(localStorage.getItem('owl_ad_tracking') || 'null'); } catch (e) {}
+      try { tracking = JSON.parse(SaveStore.getItem('owl_ad_tracking') || 'null'); } catch (e) {}
       this.adTracking = tracking && typeof tracking === 'object'
         ? tracking
         : this.createDefaultAdTracking();
       this.ensureDailyTracking();
 
       try {
-        const settings = JSON.parse(localStorage.getItem('owl_settings') || 'null');
+        const settings = JSON.parse(SaveStore.getItem('owl_settings') || 'null');
         if (settings && typeof settings === 'object') {
           this.soundMuted = settings.soundMuted === true;
           this.musicEnabled = settings.musicEnabled !== false;
@@ -5963,9 +5977,9 @@ class App {
 
       // Selected loadout: prefer the current key, fall back to the legacy key.
       let selected = null;
-      try { selected = JSON.parse(localStorage.getItem('owl_selected_abilities') || 'null'); } catch (e) {}
+      try { selected = JSON.parse(SaveStore.getItem('owl_selected_abilities') || 'null'); } catch (e) {}
       if (!Array.isArray(selected) || selected.length === 0) {
-        try { selected = JSON.parse(localStorage.getItem('chessarena_abilities') || 'null'); } catch (e) {}
+        try { selected = JSON.parse(SaveStore.getItem('chessarena_abilities') || 'null'); } catch (e) {}
       }
       if (!Array.isArray(selected)) selected = this.selectedAbilities;
       if (!Array.isArray(selected)) selected = [];
@@ -5983,11 +5997,11 @@ class App {
 
       // One-time migration: Second Chance is now the default Slot 1 skill.
       try {
-        if (!localStorage.getItem('owl_default_second_v1')) {
+        if (!SaveStore.getItem('owl_default_second_v1')) {
           if (this.selectedAbilities.length === 1 && this.selectedAbilities[0] === 'jump') {
             this.selectedAbilities = ['second'];
           }
-          localStorage.setItem('owl_default_second_v1', 'true');
+          SaveStore.setItem('owl_default_second_v1', 'true');
         }
       } catch (e) { /* ignore */ }
 
@@ -6003,7 +6017,7 @@ class App {
 
   saveAdTracking() {
     try {
-      localStorage.setItem('owl_ad_tracking', JSON.stringify(this.adTracking));
+      SaveStore.setItem('owl_ad_tracking', JSON.stringify(this.adTracking));
     } catch (e) {}
     if (this.economyPersistenceReady) this.scheduleEconomyPersist();
   }
@@ -6086,8 +6100,8 @@ class App {
 
   getEquippedBoard() {
     try {
-      return localStorage.getItem('chessarena_board_theme')
-        || localStorage.getItem('owl_board_theme')
+      return SaveStore.getItem('chessarena_board_theme')
+        || SaveStore.getItem('owl_board_theme')
         || 'classic-oak';
     } catch (e) {
       return 'classic-oak';
@@ -6314,12 +6328,12 @@ class App {
       'shield': 'Divine Shield'
     };
     const iconMap = {
-      'jump': '/assets/Asset 46.png',
-      'second': '/assets/Asset 44.png',
-      'undo': '/assets/Asset 44.png',
-      'freeze': '/assets/Asset 43.png',
-      'swap': '/assets/Asset 42.png',
-      'shield': '/assets/Asset 45.png'
+      'jump': 'assets/asset-46.png',
+      'second': 'assets/asset-44.png',
+      'undo': 'assets/asset-44.png',
+      'freeze': 'assets/asset-43.png',
+      'swap': 'assets/asset-42.png',
+      'shield': 'assets/asset-45.png'
     };
 
     if (slot1Display) {
@@ -6873,7 +6887,19 @@ class App {
 }
 
 
-// Initialize app
-const app = new App();
-// Other modules (multiplayer, ads, host integrations) use window.app.
-window.app = app;
+// Initialize the app once SaveStore has hydrated Bridge Storage (on a host) or
+// localStorage (standalone web). Every constructor read of saved progress must
+// see the real values, otherwise the first frame would overwrite cloud data
+// with defaults.
+function startApp() {
+  if (window.app) return window.app;
+  const app = new App();
+  window.app = app;
+  return app;
+}
+
+const saveStoreReady = (window.SaveStore && window.SaveStore.ready)
+  ? window.SaveStore.ready
+  : Promise.resolve();
+
+saveStoreReady.then(startApp, startApp);

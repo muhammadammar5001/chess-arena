@@ -3984,19 +3984,19 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 }
 
 .stat-icon-rating {
-  --stat-icon: url('/assets/icons/Elo-Rating-icon.svg');
+  --stat-icon: url('../assets/icons/Elo-Rating-icon.svg');
 }
 
 .stat-icon-wins {
-  --stat-icon: url('/assets/icons/Wins-Icon.svg');
+  --stat-icon: url('../assets/icons/Wins-Icon.svg');
 }
 
 .stat-icon-losses {
-  --stat-icon: url('/assets/icons/Losses-icon.svg');
+  --stat-icon: url('../assets/icons/Losses-icon.svg');
 }
 
 .stat-icon-winrate {
-  --stat-icon: url('/assets/icons/Win-Rate-icon.svg');
+  --stat-icon: url('../assets/icons/Win-Rate-icon.svg');
 }
 
 .quad-stat-item .quad-stat-num {

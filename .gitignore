@@ -5,3 +5,5 @@
 .graphify*
 graphify-out/
 *.log
+
+dist/
