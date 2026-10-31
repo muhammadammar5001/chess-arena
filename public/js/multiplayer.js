@@ -45,10 +45,25 @@ class MultiplayerClient {
       return window.CHESS_WS_URL;
     }
 
-    // 2. Self-hosted / local builds serve the WebSocket from the same origin.
-    if (typeof window === 'undefined' || !window.location || !window.location.host) return null;
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${window.location.host}`;
+    if (typeof window === 'undefined' || !window.location) return null;
+    const hostname = window.location.hostname || '';
+    const isLocal = (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.') ||
+      hostname.endsWith('.local') ||
+      hostname.endsWith('.onrender.com')
+    );
+
+    if (isLocal && window.location.host) {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${protocol}//${window.location.host}`;
+    }
+
+    // Hosted on PlayGama CDN, YouTube Playables, iframe, or external domain:
+    // Route to our production Render backend.
+    return 'wss://chess-arena-262t.onrender.com';
   }
 
   isSupported() {
