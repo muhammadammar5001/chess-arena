@@ -2706,15 +2706,17 @@ class App {
 
   startCheckTears() {
     this.stopCheckTears();
-    for (let i = 0; i < 3; i++) {
+    // Spawn 4 droplets immediately so 4-5 are visible right away
+    for (let i = 0; i < 4; i++) {
       this.spawnCheckTear();
     }
     const loop = () => {
       this.spawnCheckTear();
-      const delay = 230 + Math.random() * 90;
+      // Spawning every 160-210ms with 800-1000ms duration keeps 4-5 active droplets concurrently
+      const delay = 160 + Math.random() * 50;
       this._tearTimer = setTimeout(loop, delay);
     };
-    this._tearTimer = setTimeout(loop, 240);
+    this._tearTimer = setTimeout(loop, 180);
   }
 
   stopCheckTears() {
@@ -2783,13 +2785,13 @@ class App {
         { transform: T(0.45, 1.15), opacity: 1, offset: 0.45, easing: 'ease-out' },
         { transform: T(1, 0.05), opacity: 0, offset: 1, easing: 'ease-in' }
       ], {
-        duration: reduce ? 1200 : rnd(750, 950), // smooth, well-paced cartoon burst
+        duration: reduce ? 1200 : rnd(800, 1000), // 800ms - 1000ms duration per user request
         easing: 'cubic-bezier(.25,.6,.3,1)',
         fill: 'both'
       });
       an.onfinish = () => drop.remove();
     } else {
-      setTimeout(() => drop.remove(), 1100);
+      setTimeout(() => drop.remove(), 1200);
     }
   }
 
