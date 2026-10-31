@@ -362,8 +362,8 @@ body, html, .screen, .fantasy-home-screen, #screen-home, #screen-profile, .shop-
 
 #chess-board.check-alert .square.is-check .piece,
 #chess-board.check-alert .square.check .piece {
-  animation: king-check-shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) 3 !important;
-  transform-origin: 50% 78% !important;
+  /* Disabled transform shake so king glides smoothly when moving out of check */
+  animation: none !important;
 }
 
 @keyframes king-check-shake {
@@ -1927,7 +1927,14 @@ body, html, .screen, .fantasy-home-screen, #screen-home, #screen-profile, .shop-
   overflow: visible !important;
 }
 
-.piece.piece-gliding {
+.piece.piece-gliding,
+.square .piece.piece-gliding,
+#chess-board .square .piece.piece-gliding,
+#chess-board.check-alert .square .piece.piece-gliding,
+#chess-board.check-alert .square.is-check .piece.piece-gliding,
+#chess-board.check-alert .square.check .piece.piece-gliding {
+  animation: none !important;
+  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1) !important;
   z-index: 1001 !important;
   pointer-events: none !important;
   will-change: transform;

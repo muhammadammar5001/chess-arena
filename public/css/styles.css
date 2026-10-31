@@ -1203,10 +1203,16 @@ body {
 
 /* ─── Piece Animations & Combat Kill FX ────────────── */
 
-.piece.piece-gliding {
+.piece.piece-gliding,
+.square .piece.piece-gliding,
+#chess-board .square .piece.piece-gliding,
+#chess-board.check-alert .square .piece.piece-gliding,
+#chess-board.check-alert .square.is-check .piece.piece-gliding,
+#chess-board.check-alert .square.check .piece.piece-gliding {
+  animation: none !important;
   transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1) !important;
   z-index: 120 !important;
-  pointer-events: none;
+  pointer-events: none !important;
   will-change: transform;
 }
 

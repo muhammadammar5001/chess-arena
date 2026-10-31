@@ -3218,6 +3218,13 @@ class App {
 
     // Check if we can animate DOM pieces
     if (movingPieceEl && fromSq && toSq) {
+      // Clear check-alert and shake from moving piece so king glides smoothly without teleporting
+      const boardEl = document.getElementById('chess-board') || document.getElementById('board');
+      if (boardEl) boardEl.classList.remove('check-alert');
+      fromSq.classList.remove('check', 'is-check');
+      movingPieceEl.style.animation = 'none';
+      void movingPieceEl.offsetWidth; // flush styles so transition starts from exact current origin
+
       const dx = toSq.offsetLeft - fromSq.offsetLeft;
       const dy = toSq.offsetTop - fromSq.offsetTop;
 
