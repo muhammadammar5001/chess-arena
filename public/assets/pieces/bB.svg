@@ -1,9 +1,9 @@
 <svg class="chess-piece new-style-piece black-bishop" data-color="b" viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="52" cy="91" rx="34" ry="4.5" fill="rgba(0,0,0,0.32)" />
-          <g fill="none" stroke="rgba(255, 236, 200, 0.45)" stroke-width="4.2" stroke-linejoin="round"><path d="M18 91C18 86 21 83 26 83H74C79 83 82 86 82 91Z"/><path d="M25 83C25 79 28 77 32 77H68C72 77 75 79 75 83Z"/><path d="M36 77C38 68 42 62 44 59H56C58 62 62 68 64 77Z"/><rect x="37" y="53" width="26" height="8" rx="4"/><path d="M50 14C61 23 67 34 63 44C61 49 57 51 57 54H43C43 51 39 49 37 44C33 34 39 23 50 14Z"/><circle cx="50" cy="12" r="5"/></g>
-          <g fill="#2B1D16" stroke="#0D0704" stroke-width="1.8" stroke-linejoin="round">
+          <ellipse cx="52" cy="91" rx="34" ry="4.5" fill="rgba(0,0,0,0.28)" />
+          <g fill="none" stroke="#EAD5B3" stroke-width="3.6" stroke-linejoin="round"><path d="M18 91C18 86 21 83 26 83H74C79 83 82 86 82 91Z"/><path d="M25 83C25 79 28 77 32 77H68C72 77 75 79 75 83Z"/><path d="M36 77C38 68 42 62 44 59H56C58 62 62 68 64 77Z"/><rect x="37" y="53" width="26" height="8" rx="4"/><path d="M50 14C61 23 67 34 63 44C61 49 57 51 57 54H43C43 51 39 49 37 44C33 34 39 23 50 14Z"/><circle cx="50" cy="12" r="5"/></g>
+          <g fill="#22140D" stroke="#000000" stroke-width="2.2" stroke-linejoin="round">
             <path d="M18 91C18 86 21 83 26 83H74C79 83 82 86 82 91Z"/><path d="M25 83C25 79 28 77 32 77H68C72 77 75 79 75 83Z"/><path d="M36 77C38 68 42 62 44 59H56C58 62 62 68 64 77Z"/><rect x="37" y="53" width="26" height="8" rx="4"/><path d="M50 14C61 23 67 34 63 44C61 49 57 51 57 54H43C43 51 39 49 37 44C33 34 39 23 50 14Z"/><circle cx="50" cy="12" r="5"/>
           </g>
-          <path d="M46 29L56 39" fill="none" stroke="#0D0704" stroke-width="2.6" stroke-linecap="round"/>
-          <rect x="35" y="72" width="30" height="3.2" rx="1.6" fill="#4A3428" stroke="#0D0704" stroke-width=".8"/><rect x="24" y="80" width="52" height="3.2" rx="1.6" fill="#4A3428" stroke="#0D0704" stroke-width=".8"/>
+          <path d="M46 29L56 39" fill="none" stroke="#EAD5B3" stroke-width="2.4" stroke-linecap="round"/>
+          <rect x="35" y="72" width="30" height="3.2" rx="1.6" fill="#3B2418" stroke="#000000" stroke-width=".8"/><rect x="24" y="80" width="52" height="3.2" rx="1.6" fill="#3B2418" stroke="#000000" stroke-width=".8"/>
         </svg>

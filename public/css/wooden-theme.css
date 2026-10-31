@@ -538,9 +538,7 @@ body, html, .screen, .fantasy-home-screen, #screen-home, #screen-profile, .shop-
 }
 
 .chess-piece[data-color="b"] {
-  filter: drop-shadow(0 7px 5px rgba(25, 12, 3, 0.46))
-    drop-shadow(0 0 0.5px rgba(255, 229, 190, 0.5))
-    drop-shadow(0 0 2px rgba(255, 205, 145, 0.2)) !important;
+  filter: drop-shadow(0 4px 4px rgba(20, 10, 3, 0.35)) !important;
 }
 
 .chess-piece[data-color="b"] .piece-base,
