@@ -885,8 +885,10 @@ class App {
       this.setupAudioAutoplayUnlock();
     // Global button click haptic sound delegate
     document.addEventListener('pointerdown', (e) => {
-      const btn = e.target && e.target.closest('button, [role="button"], .play-mode-card, .nav-tab, .back-circle-btn, .setting-switch');
-      if (btn && !btn.disabled) {
+      const el = e.target && e.target.closest(
+        'button, [role="button"], .play-mode-card, .nav-tab, .back-circle-btn, .setting-switch, .ability-card, [id^="preview-medallion-"], .home-abilities-card, .fantasy-menu-card, .difficulty-card, .color-btn, .btn-game-pill, [onclick]'
+      );
+      if (el && !el.disabled) {
         this.playSound('click');
       }
     }, { passive: true, capture: true });
