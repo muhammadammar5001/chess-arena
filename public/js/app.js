@@ -883,6 +883,13 @@ class App {
     if (this.musicEnabled) {
       try { this.startBgMusic(); } catch(e) {}
       this.setupAudioAutoplayUnlock();
+    // Global button click haptic sound delegate
+    document.addEventListener('pointerdown', (e) => {
+      const btn = e.target && e.target.closest('button, [role="button"], .play-mode-card, .nav-tab, .back-circle-btn, .setting-switch');
+      if (btn && !btn.disabled) {
+        this.playSound('click');
+      }
+    }, { passive: true, capture: true });
     }
 
     // PlayGama lifecycle: apply the initial audio/pause state and react to
@@ -1030,6 +1037,13 @@ class App {
   playSound(type) {
     if (this.soundMuted || this.platformAudioMuted || this.platformPaused) return;
     switch (type) {
+      case 'click': {
+        this.playShortSound('assets/sounds/ui-click.wav', 0.55);
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          try { navigator.vibrate(12); } catch (e) {}
+        }
+        return;
+      }
       case 'check': this.startCheckSound(); return;
       case 'roulette': this.playShortSound('assets/sounds/roulette-tick.wav', 0.50); return;
       case 'match-found': this.playShortSound('assets/sounds/match-found.wav', 0.9); return;
@@ -5049,6 +5063,8 @@ class App {
   }
 
   showMatchmakingScreen(mode = 'matchmaking') {
+    // Stop BGM when entering Play Now / Matchmaking mode
+    this.stopBgMusic();
     this.updateBottomNav('play');
     this.showScreen('screen-matchmaking');
     this.updateRoulettePlayerAvatar();
