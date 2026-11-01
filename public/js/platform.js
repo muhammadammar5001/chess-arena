@@ -256,12 +256,10 @@
         resolveReady(profile);
       }
 
-      // Send game_ready after the first playable document is interactive. The
-      // app also calls gameReady() after its own init as a safety net; the
-      // bridge message is intentionally sent only once.
-      const fireReady = () => setTimeout(() => { sendGameReady(); }, 50);
-      if (document.readyState === 'complete') fireReady();
-      else window.addEventListener('load', fireReady, { once: true });
+      // game_ready is sent by App.init() once the first playable frame is on
+      // screen (PlayGama required step 6). If the app never boots we still
+      // release the host's loading screen after a generous safety delay.
+      setTimeout(() => { sendGameReady(); }, 15000);
     } catch (e) {
       if (!readyResolved) {
         readyResolved = true;

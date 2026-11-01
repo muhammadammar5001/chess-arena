@@ -46,24 +46,14 @@ class MultiplayerClient {
     }
 
     if (typeof window === 'undefined' || !window.location) return null;
-    const hostname = window.location.hostname || '';
-    const isLocal = (
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname.startsWith('192.168.') ||
-      hostname.startsWith('10.') ||
-      hostname.endsWith('.local') ||
-      hostname.endsWith('.onrender.com')
-    );
+    const host = window.location.host;
+    if (!host) return null;
 
-    if (isLocal && window.location.host) {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      return `${protocol}//${window.location.host}`;
-    }
-
-    // Hosted on PlayGama CDN, YouTube Playables, iframe, or external domain:
-    // Route to our production Render backend.
-    return 'wss://chess-arena-262t.onrender.com';
+    // Same-origin only: the Node server that serves the game also hosts the
+    // WebSocket endpoint. On hosts that block external calls the platform
+    // capability gate hides multiplayer entirely (PlayGama 1.2.5 / 3.3).
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${host}`;
   }
 
   isSupported() {

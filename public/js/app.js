@@ -203,16 +203,6 @@ class App {
     if (profile && storage.isValidUsername(profile.username)) {
       this.applyCloudProfile(profile);
       this.initEconomy();
-
-    // Pre-warm cloud multiplayer server if running on YouTube Playables / CDN
-    try {
-      if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        const wsUrl = (window.CHESS_WS_URL || 'wss://chess-arena-262t.onrender.com');
-        const httpUrl = wsUrl.replace('wss://', 'https://').replace('ws://', 'http://');
-        fetch(`${httpUrl}/health`, { mode: 'no-cors' }).catch(() => {});
-      }
-    } catch (e) {}
-
       this.syncLeaderboardProfile(profile, { silent: true, reason: 'startup' });
       return profile;
     }
@@ -760,30 +750,6 @@ class App {
     });
   }
 
-  getApiBaseUrl() {
-    if (typeof window !== 'undefined' && window.CHESS_API_URL) {
-      return window.CHESS_API_URL;
-    }
-    if (this.multiplayer && typeof this.multiplayer.getWebSocketUrl === 'function') {
-      const wsUrl = this.multiplayer.getWebSocketUrl();
-      if (wsUrl.startsWith('wss://') || wsUrl.startsWith('ws://')) {
-        return wsUrl.replace('wss://', 'https://').replace('ws://', 'http://');
-      }
-    }
-    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-    const isLocal = (
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname.startsWith('192.168.') ||
-      hostname.startsWith('10.') ||
-      hostname.endsWith('.local')
-    );
-    if (isLocal || hostname.endsWith('.onrender.com')) {
-      return '';
-    }
-    return 'https://chess-arena-262t.onrender.com';
-  }
-
   onlinePlayAvailable() {
     if (!this.externalCallsAllowed()) {
       this.showToast('Online play is unavailable on this platform. AI matches still work.');
@@ -1054,6 +1020,8 @@ class App {
       case 'freeze': this.playShortSound('assets/sounds/freeze.wav', 0.6); return;
       case 'tweet': this.playShortSound('assets/sounds/tweet.wav', 0.5); return;
       case 'your-turn': this.playShortSound('assets/sounds/your-turn.wav', 0.6); return;
+      case 'match-found': this.playShortSound('assets/sounds/your-turn.wav', 0.65); return;
+      case 'roulette': this.playShortSound('assets/sounds/move.wav', 0.22); return;
       case 'defeat': this.playShortSound('assets/sounds/defeat.wav', 0.7); return;
       case 'gameover': this.playShortSound('assets/sounds/gameover.wav', 0.7); return;
       default: return;
@@ -1368,6 +1336,21 @@ class App {
     return avatar ? avatar.src : 'assets/avatar-default.svg';
   }
 
+  /** Escape untrusted strings before they are placed into innerHTML. */
+  escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch]));
+  }
+
+  /** Only allow local assets or plain image/data URLs as an <img> source. */
+  safeImageSrc(value) {
+    const src = String(value || '');
+    return /^(?:assets\/|\.\.?\/|https?:\/\/|data:image\/)/i.test(src)
+      ? src
+      : 'assets/avatar-default.svg';
+  }
+
   readStoredAvatarId() {
     try {
       const saved = SaveStore.getItem('chessarena_avatar_id');
@@ -1518,7 +1501,7 @@ class App {
     avatars.forEach((src, index) => {
       const item = document.createElement('div');
       item.className = 'slot-avatar-item';
-      item.innerHTML = `<img src="${src}" alt="Opponent ${index}" style="object-fit:cover; border-radius:50%; width:100%; height:100%;">`;
+      item.innerHTML = `<img src="${this.safeImageSrc(src)}" alt="Opponent ${index}" style="object-fit:cover; border-radius:50%; width:100%; height:100%;">`;
       machine.appendChild(item);
     });
 
@@ -1588,7 +1571,7 @@ class App {
       this.slotStopTimeout = setTimeout(() => {
         machine.style.transition = 'none';
         machine.style.transform = 'translateY(0px)';
-        machine.innerHTML = `<div class="slot-avatar-item matched"><img src="${finalAvatar}" alt="${opponentName || 'Opponent'}" style="object-fit:cover; border-radius:50%; width:100%; height:100%;"></div>`;
+        machine.innerHTML = `<div class="slot-avatar-item matched"><img src="${this.safeImageSrc(finalAvatar)}" alt="${this.escapeHtml(opponentName || 'Opponent')}" style="object-fit:cover; border-radius:50%; width:100%; height:100%;"></div>`;
       }, 400);
     }
 
@@ -2940,12 +2923,12 @@ class App {
                 this.pendingAbilityCharge = 'shield';
                   this.markAbilityUsed('shield');
                   this.multiplayer.send({ type: 'use_ability', ability: 'shield', args: { row, col } });
-                this.showToast('🛡️ Divine Shield sent!');
+                this.showToast('Divine Shield sent!');
             } else {
                 const ok = this.engine.validateAbility('shield', { row, col }, this.playerColor);
                 if (ok) {
                     this.markAbilityUsed('shield');
-                    this.showToast('🛡️ Divine Shield active on ' + piece.type + '!');
+                    this.showToast('Divine Shield active on ' + piece.type + '!');
                     this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
                 } else {
                     this.showToast('Cannot shield that piece');
@@ -2984,12 +2967,12 @@ class App {
                         this.pendingAbilityCharge = 'jump';
                           this.markAbilityUsed('jump');
                           this.multiplayer.send({ type: 'use_ability', ability: 'jump', args: jumpArgs });
-                        this.showToast('🪽 Pegasus Jump sent!');
+                        this.showToast('Pegasus Jump sent!');
                     } else {
                         const ok = this.engine.validateAbility('jump', jumpArgs, this.playerColor);
                         if (ok) {
                             this.markAbilityUsed('jump');
-                            this.showToast('🪽 Pegasus Jump executed!');
+                            this.showToast('Pegasus Jump executed!');
                             this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
                             if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
                                 this.scheduleAIMove(500);
@@ -3041,12 +3024,12 @@ class App {
                 this.pendingAbilityCharge = 'freeze';
                   this.markAbilityUsed('freeze');
                   this.multiplayer.send({ type: 'use_ability', ability: 'freeze', args: { row, col } });
-                this.showToast('❄️ Freeze sent!');
+                this.showToast('Freeze sent!');
             } else {
                 const ok = this.engine.validateAbility('freeze', { row, col }, this.playerColor);
                 if (ok) {
                     this.markAbilityUsed('freeze');
-                    this.showToast('❄️ Piece Frozen for its next full turn!');
+                    this.showToast('Piece frozen for its next full turn!');
                 } else {
                     this.showToast('Cannot freeze that piece');
                 }
@@ -3111,12 +3094,12 @@ class App {
                           ability: 'swap',
                         args: swapArgs
                     });
-                    this.showToast('🔄 Tactical Swap sent!');
+                    this.showToast('Tactical Swap sent!');
                 } else {
                     const ok = this.engine.validateAbility('swap', swapArgs, this.playerColor);
                     if (ok) {
                         this.markAbilityUsed('swap');
-                        this.showToast('🔄 Tactical Swap executed!');
+                        this.showToast('Tactical Swap executed!');
                         if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
                             this.scheduleAIMove(500);
                         }
@@ -3443,7 +3426,7 @@ class App {
         const ok = this.engine.validateAbility('swap', swapArgs, this.playerColor);
         if (ok) {
           this.markAbilityUsed('swap');
-          this.showToast('🔄 Tactical Swap executed!');
+          this.showToast('Tactical Swap executed!');
           if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
             this.scheduleAIMove(500);
           }
@@ -3937,7 +3920,7 @@ class App {
     const earnedCoins = Math.max(0, Number(this.lastMatchCoinsEarned) || 0);
     const coinsMeta = document.getElementById('victory-meta-coins');
     if (coinsMeta) {
-      coinsMeta.textContent = `+${earnedCoins.toLocaleString()} 🪙`;
+      coinsMeta.innerHTML = `+${earnedCoins.toLocaleString()} <img class="ui-ic" src="assets/icons/coin.svg" alt="">`;
     }
     const doublerBtn = document.getElementById('victory-btn-doubler');
     const doublerText = document.getElementById('victory-btn-doubler-text');
@@ -3947,9 +3930,9 @@ class App {
     }
     if (doublerText) {
       if (this.lastMatchDoubled) {
-        doublerText.textContent = '🌟 3X Bonus Claimed!';
+        doublerText.textContent = '3X Bonus Claimed!';
       } else if (earnedCoins > 0) {
-        doublerText.textContent = `🎬 Watch Ad for 3X Coins (+${(earnedCoins * 2).toLocaleString()} 🪙)`;
+        doublerText.textContent = `Watch Ad for 3X Coins (+${(earnedCoins * 2).toLocaleString()} Coins)`;
       } else {
         doublerText.textContent = 'No match reward to boost';
       }
@@ -4163,7 +4146,7 @@ class App {
     const files = 'abcdefgh';
     const fromCoord = `${files[bestMove.fromCol]}${8 - bestMove.fromRow}`;
     const toCoord = `${files[bestMove.col]}${8 - bestMove.row}`;
-    this.showToast(`💡 Hint: Move ${fromCoord} to ${toCoord}`);
+    this.showToast(`Hint: Move ${fromCoord} to ${toCoord}`);
 
     setTimeout(() => {
       if (fromSquare) fromSquare.classList.remove('hint-move');
@@ -4179,7 +4162,7 @@ class App {
     if (idx >= costs.length) {
       label.textContent = 'Hint limit';
     } else {
-      label.innerHTML = `Hint <span style="color:#FFD54F;font-size:11px;font-weight:700;">🪙${costs[idx]}</span>`;
+      label.innerHTML = `Hint <span style="color:#FFD54F;font-size:11px;font-weight:700;"><img class="ui-ic" src="assets/icons/coin.svg" alt="">${costs[idx]}</span>`;
     }
   }
 
@@ -5034,16 +5017,11 @@ class App {
       'jump': 'assets/asset-46.png'
     };
 
-    const emojiMap = {
-      'swap': '🔄', 'freeze': '❄️', 'second': '⏪', 'shield': '🛡️', 'jump': '🪽'
-    };
     let html = '';
     const abilities = this.selectedAbilities || ['second'];
     abilities.forEach(ab => {
       if (iconMap[ab]) {
         html += `<div style="width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #C99700; background: #2A170B; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.4);"><img src="${iconMap[ab]}" style="width: 17px; height: 17px; object-fit: contain;"></div>`;
-      } else if (emojiMap[ab]) {
-        html += `<div style="width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #C99700; background: #2A170B; display: flex; align-items: center; justify-content: center; font-size: 13px; box-shadow: 0 2px 5px rgba(0,0,0,0.4);">${emojiMap[ab]}</div>`;
       }
     });
     container.innerHTML = html;
@@ -5060,7 +5038,7 @@ class App {
       SaveStore.setItem('chessarena_abilities', JSON.stringify(this.selectedAbilities));
     } catch(e) {}
     this.updateHomeAbilitiesDisplay();
-    this.showToast('Loadout saved! Abilities equipped for battle ⚔️');
+    this.showToast('Loadout saved! Abilities equipped for battle.');
     this.goHome();
   }
 
@@ -5519,7 +5497,7 @@ class App {
     const labels = document.querySelectorAll('.coord-label');
     labels.forEach(l => l.style.display = this.showCoords ? '' : 'none');
     const btn = document.getElementById('btn-toggle-coords');
-    if (btn) btn.textContent = this.showCoords ? '🧭 Coords: On' : '🧭 Coords: Off';
+    if (btn) btn.textContent = this.showCoords ? 'Coords: On' : 'Coords: Off';
   }
 
   showToast(message) {
@@ -5623,7 +5601,7 @@ class App {
 
     if (this.leaderboardTopPlayers.length === 0) {
       list.innerHTML = '<div style="text-align: center; padding: 36px 18px; color: #D6BD9B;">' +
-        '<div style="font-size: 34px; margin-bottom: 10px;">♟️</div>' +
+        '<div style="margin-bottom: 10px;"><img src="assets/icons/crown.svg" alt="" style="width: 34px; height: 34px;"></div>' +
         '<p style="margin: 0 0 6px; color: #FDF7EC; font-weight: 700;">No ranked players yet</p>' +
         '<p style="margin: 0; font-size: 13px;">Play a match to claim the first spot.</p></div>';
       this.renderLeaderboardMyRank();
@@ -6097,7 +6075,7 @@ class App {
     if (homeEl) homeEl.textContent = `${val} Coins`;
 
     const shopEl = document.getElementById('shop-coin-balance');
-    if (shopEl) shopEl.textContent = `🪙 ${val} Coins`;
+    if (shopEl) shopEl.textContent = `${val} Coins`;
 
     const shopLvl = document.getElementById('shop-player-level');
     if (shopLvl) shopLvl.textContent = this.playerLevel || 1;
@@ -6136,7 +6114,7 @@ class App {
     const reward = this.adTracking?.firstAdClaimed
       ? (window.ECONOMY_CONFIG?.ads?.rewardCoins || 100)
       : (window.ECONOMY_CONFIG?.ads?.firstAdOfDayBonus || 150);
-    btn.textContent = `🎬 Watch Ad · +${reward} 🪙`;
+    btn.textContent = `Watch Ad · +${reward} Coins`;
   }
 
   getEquippedBoard() {
@@ -6179,7 +6157,7 @@ class App {
     this.updateProfileXP();
 
     if (leveledUp) {
-      this.showToast(`🎉 Level Up! You reached Level ${this.playerLevel}! Check Shop for new boards & skills.`);
+      this.showToast(`Level Up! You reached Level ${this.playerLevel}! Check Shop for new boards & skills.`);
       this.updateCoinsDisplay();
       this.syncShopUI();
     }
@@ -6203,7 +6181,7 @@ class App {
       this.adTracking.dailyAdsWatched++;
       this.saveAdTracking();
       this.addCoins(reward, 'daily_gold_vault_ad');
-      this.showToast(`🪙 +${reward} Coins added to your balance! (${this.adTracking.dailyAdsWatched}/${maxDaily} today)`);
+      this.showToast(`+${reward} Coins added to your balance! (${this.adTracking.dailyAdsWatched}/${maxDaily} today)`);
     } else {
       this.showToast('Ad was not completed. No coins awarded.');
     }
@@ -6292,7 +6270,7 @@ class App {
     this.skillCharges[id] = Math.min(max, current + count);
     this.saveEconomyState();
     this.syncAbilitiesUI();
-    this.showToast(`✨ Refilled ${count} charge(s)! Current: ${this.skillCharges[id]}/${max}`);
+    this.showToast(`Refilled ${count} charge(s)! Current: ${this.skillCharges[id]}/${max}`);
   }
 
   async refillSkillViaAd(abilityId) {
@@ -6315,7 +6293,7 @@ class App {
       this.skillCharges[id] = Math.min(max, current + add);
       this.saveEconomyState();
       this.syncAbilitiesUI();
-      this.showToast(`✨ Ad complete! +${add} Charges added! Current: ${this.skillCharges[id]}/${max}`);
+      this.showToast(`Ad complete! +${add} charges added! Current: ${this.skillCharges[id]}/${max}`);
     } else {
       this.showToast('Ad was not completed.');
     }
@@ -6348,7 +6326,7 @@ class App {
           this.skillCharges[id] = 3;
           this.saveEconomyState();
           this.syncAbilitiesUI();
-          this.showToast(`🎉 ${skill.name} unlocked with 3 free charges!`);
+          this.showToast(`${skill.name} unlocked with 3 free charges!`);
         }
       }
     );
@@ -6403,7 +6381,7 @@ class App {
 
         slot2Header.textContent = `SLOT 2 · ${watched}/${requiredAds}`;
         slot2Content.innerHTML = `
-          <button type="button" class="slot-unlock-btn" onclick="app.promptUnlockSlot2()" title="${remaining} more ad${remaining === 1 ? '' : 's'} to unlock Slot 2">Unlock</button>
+          <button type="button" class="slot-unlock-btn" onclick="app.promptUnlockSlot2()" title="${remaining} more ad${remaining === 1 ? '' : 's'} to unlock Slot 2">Unlock with Ads</button>
           <span class="slot-progress">${dots}</span>`;
       }
     }
@@ -6436,11 +6414,11 @@ class App {
       this.slot2Unlocked = true;
       this.saveEconomyState();
       this.syncSlotUI();
-      this.showToast(`🎉 Slot 2 Unlocked! (${requiredAds}/${requiredAds} ads watched). You can now equip 2 abilities!`);
+      this.showToast(`Slot 2 unlocked! (${requiredAds}/${requiredAds} ads watched). You can now equip 2 abilities!`);
     } else {
       this.saveEconomyState();
       this.syncSlotUI();
-      this.showToast(`🎬 Ad watched! Progress: ${this.slot2AdsWatched}/${requiredAds}. Watch ${requiredAds - this.slot2AdsWatched} more to unlock Slot 2.`);
+      this.showToast(`Ad watched! Progress: ${this.slot2AdsWatched}/${requiredAds}. Watch ${requiredAds - this.slot2AdsWatched} more to unlock Slot 2.`);
     }
   }
 
@@ -6478,7 +6456,7 @@ class App {
           this.saveEconomyState();
           this.equipCosmetic('board', boardId);
           this.syncShopUI();
-          this.showToast(`🎉 Unlocked and equipped ${board.name}!`);
+          this.showToast(`Unlocked and equipped ${board.name}!`);
         }
       }
     );
@@ -6524,7 +6502,7 @@ class App {
         if (btn && bConfig) {
           btn.classList.remove('equipped');
           const meetsLvl = this.playerLevel >= bConfig.reqLevel;
-          btn.textContent = `Unlock · ${bConfig.cost.toLocaleString()} 🪙`;
+          btn.textContent = `Unlock · ${bConfig.cost.toLocaleString()} Coins`;
           btn.style.opacity = meetsLvl ? '1' : '0.55';
           btn.title = meetsLvl
             ? `Unlock for ${bConfig.cost.toLocaleString()} coins`
@@ -6557,7 +6535,7 @@ class App {
 
       const coinsMeta = document.getElementById('victory-meta-coins');
       if (coinsMeta) {
-        coinsMeta.textContent = `+${(this.lastMatchCoinsEarned * 3).toLocaleString()} 🪙 (3X Boosted!)`;
+        coinsMeta.innerHTML = `+${(this.lastMatchCoinsEarned * 3).toLocaleString()} <img class="ui-ic" src="assets/icons/coin.svg" alt=""> (3X Boosted!)`;
       }
 
       const doublerBtn = document.getElementById('victory-btn-doubler');
@@ -6567,9 +6545,9 @@ class App {
         doublerBtn.style.opacity = '0.7';
       }
       if (doublerText) {
-        doublerText.textContent = `🌟 3X Bonus Claimed (+${bonus} 🪙)!`;
+        doublerText.textContent = `3X Bonus Claimed (+${bonus} Coins)!`;
       }
-      this.showToast(`🎉 3X Match Bonus Claimed! +${bonus} Coins added!`);
+      this.showToast(`3X Match Bonus claimed! +${bonus} Coins added!`);
     } else {
       this.showToast('Ad was not completed.');
     }
@@ -6589,7 +6567,7 @@ class App {
     } else {
       const adSpinsLeft = Math.max(0, 3 - (this.adTracking.wheelSpinsToday || 0));
       if (adSpinsLeft > 0) {
-        badge.textContent = `🎬 ${adSpinsLeft} Extra Spins Available`;
+        badge.textContent = `${adSpinsLeft} Extra Spins Available`;
         badge.style.color = '#4ade80';
       } else {
         badge.textContent = 'Spins used today';
@@ -6626,12 +6604,12 @@ class App {
     const hasFreeSpin = (this.adTracking.lastWheelDate !== today);
     if (hasFreeSpin) {
       btn.disabled = false;
-      text.textContent = 'Spin for Free! 🎡';
+      text.textContent = 'Spin for Free!';
     } else {
       const spinsLeft = Math.max(0, 3 - (this.adTracking.wheelSpinsToday || 0));
       if (spinsLeft > 0) {
         btn.disabled = false;
-        text.textContent = `🎬 Watch Ad to Spin (${spinsLeft}/3 left)`;
+        text.textContent = `Watch Ad to Spin (${spinsLeft}/3 left)`;
       } else {
         btn.disabled = true;
         text.textContent = 'All spins used today. Come back tomorrow!';
@@ -6822,16 +6800,16 @@ class App {
     if (btn) btn.disabled = true;
 
     const resEl = document.getElementById('lucky-wheel-result');
-    if (resEl) resEl.textContent = 'Spinning... 🍀';
+    if (resEl) resEl.textContent = 'Spinning...';
 
     // Slices config (at top pointer 3*PI/2)
     const rewards = [
-      { type: 'coins', amount: 50, label: '50 Coins 🪙' },
-      { type: 'charges_random', amount: 2, label: '+2 Skill Charges ⚡' },
-      { type: 'coins', amount: 100, label: '100 Coins 🪙' },
-      { type: 'charges_all', amount: 1, label: '+1 Charge to All Skills ✨' },
-      { type: 'coins', amount: 200, label: '200 Coins 🪙' },
-      { type: 'coins', amount: 500, label: 'JACKPOT: 500 Coins 🪙⭐' }
+      { type: 'coins', amount: 50, label: '50 Coins' },
+      { type: 'charges_random', amount: 2, label: '+2 Skill Charges' },
+      { type: 'coins', amount: 100, label: '100 Coins' },
+      { type: 'charges_all', amount: 1, label: '+1 Charge to All Skills' },
+      { type: 'coins', amount: 200, label: '200 Coins' },
+      { type: 'coins', amount: 500, label: 'JACKPOT: 500 Coins' }
     ];
 
     // Pick outcome with weighted probabilities (Jackpot is 8%, others balanced)
@@ -6915,8 +6893,8 @@ class App {
           }
         }
 
-        if (resEl) resEl.textContent = `Won: ${awardedLabel}! 🎉`;
-        this.showToast(`🎉 Lucky Wheel: Won ${awardedLabel}!`);
+        if (resEl) resEl.textContent = `Won: ${awardedLabel}!`;
+        this.showToast(`Lucky Wheel: Won ${awardedLabel}!`);
         this.updateLuckyWheelButtonUI();
         this.updateLuckyWheelBadge();
       }

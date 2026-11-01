@@ -313,6 +313,22 @@ body {
   flex-shrink: 0;
 }
 
+.btn-icon img.btn-ic {
+  width: 20px;
+  height: 20px;
+  display: block;
+  margin: 0 auto;
+  object-fit: contain;
+}
+
+img.ui-ic {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: -0.15em;
+  object-fit: contain;
+}
+
 .btn-label {
   font-weight: 600;
   font-size: 16px;
@@ -391,6 +407,16 @@ body {
 
 .diff-icon {
   font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.diff-icon img.diff-ic {
+  width: 32px;
+  height: 32px;
+  display: block;
+  object-fit: contain;
 }
 
 .diff-name {

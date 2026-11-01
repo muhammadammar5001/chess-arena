@@ -257,21 +257,21 @@
 
       <div class="difficulty-cards">
         <button class="difficulty-card" onclick="app.startAIGame('easy')">
-          <div class="diff-icon">🌱</div>
+          <div class="diff-icon"><img class="diff-ic" src="assets/icons/sprout.svg" alt=""></div>
           <div class="diff-name">Easy</div>
           <div class="diff-desc">Beginner friendly</div>
           <div class="diff-depth">Depth 1</div>
         </button>
 
         <button class="difficulty-card" onclick="app.startAIGame('medium')">
-          <div class="diff-icon">⚔️</div>
+          <div class="diff-icon"><img class="diff-ic" src="assets/icons/swords.svg" alt=""></div>
           <div class="diff-name">Medium</div>
           <div class="diff-desc">Casual challenge</div>
           <div class="diff-depth">Depth 3</div>
         </button>
 
         <button class="difficulty-card" onclick="app.startAIGame('hard')">
-          <div class="diff-icon">👑</div>
+          <div class="diff-icon"><img class="diff-ic" src="assets/icons/crown.svg" alt=""></div>
           <div class="diff-name">Hard</div>
           <div class="diff-desc">Expert level</div>
           <div class="diff-depth">Depth 4</div>
@@ -682,11 +682,11 @@
         <!-- In-game Action Bar (Abilities + Undo/Draw + Resign) -->
         <div class="ingame-action-bar">
           <button class="btn-game-pill" id="btn-ability-1" style="display: none;" title="Tactical Ability 1">
-            <span class="btn-icon">⚡</span>
+            <span class="btn-icon"><img class="btn-ic" src="assets/icons/bolt.svg" alt=""></span>
             <span class="btn-label">Ability 1</span>
           </button>
           <button class="btn-game-pill" id="btn-ability-2" style="display: none;" title="Tactical Ability 2">
-            <span class="btn-icon">✨</span>
+            <span class="btn-icon"><img class="btn-ic" src="assets/icons/sparkle.svg" alt=""></span>
             <span class="btn-label">Ability 2</span>
           </button>
           <button class="btn-game-pill" id="btn-ingame-undo" onclick="app.undoMove()" title="Undo Last Move (50 Coins)">
@@ -700,7 +700,7 @@
             <span class="btn-label" id="btn-ingame-undo-label"
               style="display: flex; align-items: center; justify-content: center; gap: 4px;">Undo
               <span class="undo-cost-badge"
-                style="color: #FFD54F; font-size: 11px; font-weight: 700;">🪙50</span></span>
+                style="color: #FFD54F; font-size: 11px; font-weight: 700;"><img class="ui-ic" src="assets/icons/coin.svg" alt="">50</span></span>
           </button>
           <button class="btn-game-pill" id="btn-ingame-hint" onclick="app.getHint()" title="Get a Hint (AI only)"
             style="display: none;">
@@ -714,7 +714,7 @@
             </span>
             <span class="btn-label" id="btn-ingame-hint-label"
               style="display: flex; align-items: center; justify-content: center; gap: 4px;">Hint
-              <span style="color: #FFD54F; font-size: 11px; font-weight: 700;">🪙25</span></span>
+              <span style="color: #FFD54F; font-size: 11px; font-weight: 700;"><img class="ui-ic" src="assets/icons/coin.svg" alt="">25</span></span>
           </button>
           <button class="btn-game-pill" id="btn-ingame-draw" style="display: none;" onclick="app.offerDraw()"
             title="Offer Draw">
@@ -771,14 +771,13 @@
         <!-- Preset Emote Medallions -->
         <div class="emote-buttons-grid"
           style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px;">
-          <button class="btn-plank" onclick="app.sendEmote('⚔️ Good luck!')" style="font-size: 12px; padding: 10px;">⚔️
-            Good luck!</button>
-          <button class="btn-plank" onclick="app.sendEmote('👏 Nice move!')" style="font-size: 12px; padding: 10px;">👏
-            Nice move!</button>
-          <button class="btn-plank" onclick="app.sendEmote('😅 Oops!')" style="font-size: 12px; padding: 10px;">😅
-            Oops!</button>
-          <button class="btn-plank" onclick="app.sendEmote('🤝 Good Game!')" style="font-size: 12px; padding: 10px;">🤝
-            Good Game!</button>
+          <button class="btn-plank" onclick="app.sendEmote('Good luck!')" style="font-size: 12px; padding: 10px;">Good
+            luck!</button>
+          <button class="btn-plank" onclick="app.sendEmote('Nice move!')" style="font-size: 12px; padding: 10px;">Nice
+            move!</button>
+          <button class="btn-plank" onclick="app.sendEmote('Oops!')" style="font-size: 12px; padding: 10px;">Oops!</button>
+          <button class="btn-plank" onclick="app.sendEmote('Good Game!')" style="font-size: 12px; padding: 10px;">Good
+            Game!</button>
         </div>
         <div class="chat-messages" id="chat-messages"
           style="max-height: 140px; min-height: 80px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 8px; border: 1px solid #5A351D; font-size: 12px; color: #EBD2A5;">
@@ -863,7 +862,7 @@
             style="margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 5px;">
             <button onclick="app.promptUnlockSlot2()"
               style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; border: none; border-radius: 5px; font-weight: 900; font-size: 9px; padding: 4px 8px; cursor: pointer; box-shadow: 0 1px 0 #8A6500; white-space: nowrap;"
-              title="Watch 3 ads to unlock Slot 2">🎬 Unlock</button>
+              title="Watch 3 ads to unlock Slot 2">Unlock with Ads</button>
             <span style="display: flex; gap: 3px;">
               <span
                 style="width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: #3A2315; border: 1px solid #8C6538;"></span>
@@ -1150,7 +1149,7 @@
           <span style="font-family: var(--font-serif); font-weight: 700; color: #FDF7EC;">Your Coins</span>
           <span style="display: flex; align-items: center; gap: 10px;">
             <span id="shop-coin-balance"
-              style="font-family: var(--font-serif); font-weight: 800; color: #FFD54F; font-size: 16px;">🪙 1,000
+              style="font-family: var(--font-serif); font-weight: 800; color: #FFD54F; font-size: 16px;"><img class="ui-ic" src="assets/icons/coin.svg" alt=""> 1,000
               Coins</span>
             <span title="Your player level. It unlocks boards and skills."
               style="font-size: 11px; font-weight: 800; color: #4ade80; background: rgba(74, 222, 128, 0.12); border: 1px solid rgba(74, 222, 128, 0.4); border-radius: 999px; padding: 3px 8px;">Player
@@ -1163,14 +1162,14 @@
           style="background: linear-gradient(180deg, #2B160B 0%, #170904 100%); border: 1.5px dashed #8C6538; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
           <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
             <div style="flex: 1 1 190px; min-width: 0;">
-              <div style="font-family: var(--font-serif); font-weight: 800; color: #FFD54F;">🪙 Free Coins</div>
+              <div style="font-family: var(--font-serif); font-weight: 800; color: #FFD54F;"><img class="ui-ic" src="assets/icons/coin.svg" alt=""> Free Coins</div>
               <div style="font-size: 11px; color: #C9B18F; margin-top: 3px; line-height: 1.35;">Watch an optional ad and
                 the bonus coins are added to your balance.</div>
             </div>
             <div style="text-align: right;">
               <button id="shop-gold-vault-btn" onclick="app.claimFreeAdCoins()"
                 style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; border: none; border-radius: 8px; padding: 8px 12px; font-size: 11px; font-weight: 900; cursor: pointer; box-shadow: 0 3px 0 #8A6500; white-space: nowrap;">
-                🎬 Watch Ad · +150 🪙
+                <img class="ui-ic" src="assets/icons/ad.svg" alt=""> Watch Ad · +150 <img class="ui-ic" src="assets/icons/coin.svg" alt="">
               </button>
               <div id="shop-gold-vault-coins"
                 style="font-size: 10px; color: #C9B18F; margin-top: 5px; font-weight: 700;">Today: 0/6 ads</div>
@@ -1210,8 +1209,8 @@
                   <div class="shop-board-preview-grid board-preview-ember"></div>
                 </div>
                 <div class="shop-item-name">Emberwood</div>
-                <div class="shop-item-meta"><span class="shop-item-level">🔒 Lv 2</span></div>
-                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('ember')">Unlock · 1,000 🪙</button>
+                <div class="shop-item-meta"><span class="shop-item-level"><img class="ui-ic" src="assets/icons/lock.svg" alt=""> Lv 2</span></div>
+                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('ember')">Unlock · 1,000 <img class="ui-ic" src="assets/icons/coin.svg" alt=""></button>
               </article>
 
               <!-- Moonlit Grove Board -->
@@ -1221,8 +1220,8 @@
                   <div class="shop-board-preview-grid board-preview-moonlit"></div>
                 </div>
                 <div class="shop-item-name">Moonlit Grove</div>
-                <div class="shop-item-meta"><span class="shop-item-level">🔒 Lv 5</span></div>
-                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('moonlit')">Unlock · 2,500 🪙</button>
+                <div class="shop-item-meta"><span class="shop-item-level"><img class="ui-ic" src="assets/icons/lock.svg" alt=""> Lv 5</span></div>
+                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('moonlit')">Unlock · 2,500 <img class="ui-ic" src="assets/icons/coin.svg" alt=""></button>
               </article>
 
               <!-- Sakurawood Board -->
@@ -1232,8 +1231,8 @@
                   <div class="shop-board-preview-grid board-preview-sakura"></div>
                 </div>
                 <div class="shop-item-name">Sakurawood</div>
-                <div class="shop-item-meta"><span class="shop-item-level">🔒 Lv 9</span></div>
-                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('sakura')">Unlock · 4,000 🪙</button>
+                <div class="shop-item-meta"><span class="shop-item-level"><img class="ui-ic" src="assets/icons/lock.svg" alt=""> Lv 9</span></div>
+                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('sakura')">Unlock · 4,000 <img class="ui-ic" src="assets/icons/coin.svg" alt=""></button>
               </article>
 
               <!-- Walnut & Maple -->
@@ -1243,8 +1242,8 @@
                   <div class="shop-board-preview-grid board-preview-walnut"></div>
                 </div>
                 <div class="shop-item-name">Walnut & Maple</div>
-                <div class="shop-item-meta"><span class="shop-item-level">🔒 Lv 12</span></div>
-                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('walnut-maple')">Unlock · 6,000 🪙</button>
+                <div class="shop-item-meta"><span class="shop-item-level"><img class="ui-ic" src="assets/icons/lock.svg" alt=""> Lv 12</span></div>
+                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('walnut-maple')">Unlock · 6,000 <img class="ui-ic" src="assets/icons/coin.svg" alt=""></button>
               </article>
 
               <!-- Royal Ebony & Ivory -->
@@ -1254,8 +1253,8 @@
                   <div class="shop-board-preview-grid board-preview-ebony"></div>
                 </div>
                 <div class="shop-item-name">Ebony & Ivory</div>
-                <div class="shop-item-meta"><span class="shop-item-level">🔒 Lv 15</span></div>
-                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('ebony-ivory')">Unlock · 9,000 🪙</button>
+                <div class="shop-item-meta"><span class="shop-item-level"><img class="ui-ic" src="assets/icons/lock.svg" alt=""> Lv 15</span></div>
+                <button class="btn-shop-action" onclick="app.buyOrEquipBoard('ebony-ivory')">Unlock · 9,000 <img class="ui-ic" src="assets/icons/coin.svg" alt=""></button>
               </article>
             </div>
           </div>
@@ -1332,12 +1331,12 @@
 
       <div class="howto-sections">
         <div class="howto-section">
-          <h3>🎯 Objective</h3>
+          <h3><img class="ui-ic" src="assets/icons/target.svg" alt=""> Objective</h3>
           <p>Checkmate your opponent's king — trap it so it cannot escape capture.</p>
         </div>
 
         <div class="howto-section">
-          <h3>♟️ Pieces</h3>
+          <h3>♟ Pieces</h3>
           <div class="pieces-grid">
             <div class="piece-info"><span class="piece-symbol">♔</span><strong>King</strong> — 1 square any direction
             </div>
@@ -1353,19 +1352,19 @@
         </div>
 
         <div class="howto-section">
-          <h3>✨ Special Moves</h3>
+          <h3><img class="ui-ic" src="assets/icons/sparkle.svg" alt=""> Special Moves</h3>
           <p><strong>Castling:</strong> King moves 2 squares toward a rook; the rook jumps over.</p>
           <p><strong>En Passant:</strong> Capture a pawn that just double-moved past your pawn.</p>
           <p><strong>Promotion:</strong> A pawn reaching the far rank becomes a Queen, Rook, Bishop, or Knight.</p>
         </div>
 
         <div class="howto-section">
-          <h3>🎮 Controls</h3>
+          <h3><img class="ui-ic" src="assets/icons/controller.svg" alt=""> Controls</h3>
           <p>Tap a piece to select it, then tap a highlighted square to move.</p>
         </div>
 
         <div class="howto-section">
-          <h3>⏱️ Match Timers &amp; Fair Play</h3>
+          <h3><img class="ui-ic" src="assets/icons/timer.svg" alt=""> Match Timers &amp; Fair Play</h3>
           <p><strong>10-Minute Clock:</strong> Total match time per player.</p>
           <p><strong>45-Second Move Timer:</strong> You have 45 seconds to make each move. While your opponent considers
             their move, <em>"Opponent is thinking..."</em> with their countdown is displayed.</p>
@@ -1451,7 +1450,7 @@
   <div id="modal-tournaments" class="modal hidden">
     <div class="modal-overlay" onclick="app.hideModal('modal-tournaments')"></div>
     <div class="modal-content confirm-modal" style="max-width: 360px;">
-      <div style="font-size: 32px; margin-bottom: 8px;">🏆</div>
+      <div style="font-size: 32px; margin-bottom: 8px;"><img class="ui-ic" src="assets/icons/trophy.svg" alt=""></div>
       <h3 style=" font-size: 20px; color: #caa674; margin-bottom: 6px;">Chess Arena Open</h3>
       <p style="color: #94a3b8; font-size: 13px; line-height: 1.5; margin-bottom: 16px;">
         Season 1 Championship with a <strong style="color: #f1dfbe;">50,000 Coins</strong> prize pool opens soon!
@@ -1460,7 +1459,7 @@
       <div class="confirm-buttons" style="flex-direction: column; gap: 8px;">
         <button class="btn btn-secondary btn-small" style="width: 100%;"
           onclick="app.hideModal('modal-tournaments'); app.showAIDifficultySelect();">
-          🤖 Practice with AI
+          <img class="ui-ic" src="assets/icons/robot.svg" alt=""> Practice with AI
         </button>
         <button class="btn btn-tertiary btn-small" style="width: 100%;" onclick="app.hideModal('modal-tournaments')">
           Close
@@ -1760,7 +1759,7 @@
           <div class="recap-meta-row">
             <span class="recap-meta-label">Coins Earned</span>
             <span class="recap-meta-value" style="color: #FFD54F; font-weight: 800;" id="victory-meta-coins">+0
-              🪙</span>
+              <img class="ui-ic" src="assets/icons/coin.svg" alt=""></span>
           </div>
           <div class="recap-meta-row">
             <span class="recap-meta-label">Rating Change</span>
@@ -1773,7 +1772,7 @@
         <button id="victory-btn-doubler" class="btn-lime"
           style="background: linear-gradient(180deg, #F5D36C 0%, #C99700 100%); color: #20120B; font-weight: 800; margin-bottom: 8px;"
           onclick="app.claim3XMatchCoins()">
-          <span id="victory-btn-doubler-text">🎬 Watch Ad for 3X Coins (+180 🪙)</span>
+          <span id="victory-btn-doubler-text"><img class="ui-ic" src="assets/icons/ad.svg" alt=""> Watch Ad for 3X Coins (+180 <img class="ui-ic" src="assets/icons/coin.svg" alt="">)</span>
         </button>
         <button id="victory-btn-rematch" class="btn-lime" style="margin-bottom: 8px; display: none;"
           onclick="app.requestRematch()">
@@ -1825,10 +1824,10 @@
       <p style="font-size: 11px; color: #D6BD9B; margin: 0 0 10px 0;">1 free spin daily · then up to 3 ad spins</p>
       <div style="display: flex; justify-content: center; gap: 6px; margin-bottom: 12px;">
         <span
-          style="font-size: 9px; font-weight: 800; color: #FFD54F; background: rgba(201,151,0,0.13); border: 1px solid rgba(201,151,0,0.4); border-radius: 999px; padding: 3px 8px;">🪙
+          style="font-size: 9px; font-weight: 800; color: #FFD54F; background: rgba(201,151,0,0.13); border: 1px solid rgba(201,151,0,0.4); border-radius: 999px; padding: 3px 8px;"><img class="ui-ic" src="assets/icons/coin.svg" alt="">
           Coins</span>
         <span
-          style="font-size: 9px; font-weight: 800; color: #9EE6FF; background: rgba(80,180,235,0.12); border: 1px solid rgba(80,180,235,0.35); border-radius: 999px; padding: 3px 8px;">⚡
+          style="font-size: 9px; font-weight: 800; color: #9EE6FF; background: rgba(80,180,235,0.12); border: 1px solid rgba(80,180,235,0.35); border-radius: 999px; padding: 3px 8px;"><img class="ui-ic" src="assets/icons/bolt.svg" alt="">
           Skill Charges</span>
       </div>
       <div style="position: relative; width: 240px; height: 240px; margin: 0 auto 12px auto;">
@@ -1840,10 +1839,10 @@
       </div>
       <div id="lucky-wheel-result"
         style="min-height: 34px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.22); border: 1px solid rgba(245,211,108,0.18); border-radius: 9px; font-weight: 800; color: #FFD54F; font-size: 12px; margin-bottom: 10px; padding: 5px 8px;">
-        Tap spin to begin 🍀</div>
+        Tap spin to begin</div>
       <button id="btn-spin-wheel" onclick="app.spinLuckyWheel()" class="btn-lime"
         style="font-weight: 900; font-size: 15px; width: 100%; padding: 12px 0; letter-spacing: 0.2px;">
-        <span id="btn-spin-wheel-text">Spin for Free! 🎡</span>
+        <span id="btn-spin-wheel-text">Spin for Free!</span>
       </button>
       <p style="font-size: 9px; color: #A58463; line-height: 1.4; margin: 9px 0 0 0;">Skill charges are added to Your
         Abilities. Equip the skill there, then use it in online PvP.</p>

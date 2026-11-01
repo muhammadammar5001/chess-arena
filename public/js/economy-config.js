@@ -51,11 +51,11 @@ const ECONOMY_CONFIG = {
     startingUnlocked: ['second', 'jump'],
     // Ordered from the most standard ability to the most advanced, and by cost.
     catalog: [
-      { id: 'second', name: 'Second Chance', icon: '↺', reqLevel: 1, cost: 0, isDefault: true },
-      { id: 'jump', name: 'Pegasus Jump', icon: '🐴', reqLevel: 1, cost: 0, isDefault: true },
-      { id: 'freeze', name: 'Piece Freeze', icon: '❄️', reqLevel: 4, cost: 600 },
-      { id: 'swap', name: 'Tactical Swap', icon: '⚡', reqLevel: 7, cost: 1200 },
-      { id: 'shield', name: 'Divine Shield', icon: '🛡️', reqLevel: 10, cost: 2000 }
+      { id: 'second', name: 'Second Chance', icon: 'assets/asset-44.png', reqLevel: 1, cost: 0, isDefault: true },
+      { id: 'jump', name: 'Pegasus Jump', icon: 'assets/asset-46.png', reqLevel: 1, cost: 0, isDefault: true },
+      { id: 'freeze', name: 'Piece Freeze', icon: 'assets/asset-43.png', reqLevel: 4, cost: 600 },
+      { id: 'swap', name: 'Tactical Swap', icon: 'assets/asset-42.png', reqLevel: 7, cost: 1200 },
+      { id: 'shield', name: 'Divine Shield', icon: 'assets/asset-45.png', reqLevel: 10, cost: 2000 }
     ],
     maxCharges: 5,
     refillSingleCost: 50,    // +1 Charge
