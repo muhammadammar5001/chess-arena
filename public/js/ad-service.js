@@ -133,7 +133,7 @@ class AdServiceClass {
 
   async showRewarded(rewardId) {
     await this.ensureAdapter();
-    if (this.adapterType === 'playgama' && window.bridge && window.bridge.advertisement) {
+    if (!this._usingLocalMock() && window.bridge && window.bridge.advertisement) {
       return this._showPlayGamaRewarded(rewardId);
     }
     return this._showLocalRewarded();
@@ -214,7 +214,7 @@ class AdServiceClass {
 
   async showInterstitial(placement = 'game_completed') {
     await this.ensureAdapter();
-    if (this.adapterType === 'playgama' && window.bridge && window.bridge.advertisement) {
+    if (!this._usingLocalMock() && window.bridge && window.bridge.advertisement) {
       return this._showPlayGamaInterstitial(placement);
     }
     return this._showLocalInterstitial();
