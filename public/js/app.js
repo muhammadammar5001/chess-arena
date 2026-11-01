@@ -1032,6 +1032,7 @@ class App {
     switch (type) {
       case 'check': this.startCheckSound(); return;
       case 'roulette': this.playShortSound('assets/sounds/roulette-tick.wav', 0.85); return;
+      case 'match-found': this.playShortSound('assets/sounds/match-found.wav', 0.9); return;
       case 'capture': this.playShortSound('assets/sounds/capture.mp3', 0.85); return;
       case 'move': this.playShortSound('assets/sounds/move.wav', 0.55); return;
       case 'freeze': this.playShortSound('assets/sounds/freeze.wav', 0.6); return;
@@ -1556,6 +1557,7 @@ class App {
 
     const finalAvatar = opponentAvatarSrc || this.opponentAvatarSrc || (opponentName ? this.buildUserAvatar(opponentName) : this.getRandomAvatarSrc());
     this.opponentAvatarSrc = finalAvatar;
+    this.playSound('match-found');
 
     const machine = document.getElementById('avatar-slot-machine');
     if (machine) {
