@@ -1031,7 +1031,7 @@ class App {
     if (this.soundMuted || this.platformAudioMuted || this.platformPaused) return;
     switch (type) {
       case 'check': this.startCheckSound(); return;
-      case 'roulette': this.playShortSound('assets/sounds/roulette-tick.wav', 0.45); return;
+      case 'roulette': this.playShortSound('assets/sounds/roulette-tick.wav', 0.85); return;
       case 'capture': this.playShortSound('assets/sounds/capture.mp3', 0.85); return;
       case 'move': this.playShortSound('assets/sounds/move.wav', 0.55); return;
       case 'freeze': this.playShortSound('assets/sounds/freeze.wav', 0.6); return;
@@ -1048,12 +1048,22 @@ class App {
   playShortSound(url, volume = 0.8) {
     if (this.soundMuted || this.platformAudioMuted || this.platformPaused) return;
     try {
-      if (!this._shortSoundCache) this._shortSoundCache = new Map();
-      let audio = this._shortSoundCache.get(url);
+      if (!this._shortSoundPool) this._shortSoundPool = new Map();
+      let pool = this._shortSoundPool.get(url);
+      if (!pool) {
+        pool = [];
+        this._shortSoundPool.set(url, pool);
+      }
+      // Find an idle audio element or allocate up to 5 elements for rapid clicks
+      let audio = pool.find(a => a.paused || a.ended);
       if (!audio) {
-        audio = new Audio(url);
-        audio.preload = 'auto';
-        this._shortSoundCache.set(url, audio);
+        if (pool.length < 5) {
+          audio = new Audio(url);
+          audio.preload = 'auto';
+          pool.push(audio);
+        } else {
+          audio = pool[0]; // reuse first
+        }
       }
       audio.volume = volume;
       audio.currentTime = 0;
@@ -1502,11 +1512,15 @@ class App {
     machine.style.transition = 'none';
     machine.style.transform = 'translateY(0px)';
 
+    // Pause ambient BGM while roulette is rolling
+    this.stopBgMusic();
+
     machine.classList.add('spinning');
     this.slotInterval = setInterval(() => {
       idx = Math.floor(Math.random() * (total - 1));
       machine.style.transition = 'transform 0.08s linear';
       machine.style.transform = `translateY(-${idx * itemH}px)`;
+      this.playSound('roulette');
     }, 110);
 
     // Cycle status messages
