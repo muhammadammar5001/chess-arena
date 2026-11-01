@@ -65,7 +65,7 @@ class App {
         if (typeof savedSettings.musicEnabled === 'boolean') this.musicEnabled = savedSettings.musicEnabled;
       }
     } catch (e) {}
-    this.musicVolume = parseFloat(SaveStore.getItem('chessarena_music_volume') || '0.25');
+    this.musicVolume = parseFloat(SaveStore.getItem('chessarena_music_volume') || '0.15');
     this.bgMusicRunning = false;
     this.bgMusicNodes = [];
     this.bgMusicGain = null;
@@ -1031,6 +1031,7 @@ class App {
     if (this.soundMuted || this.platformAudioMuted || this.platformPaused) return;
     switch (type) {
       case 'check': this.startCheckSound(); return;
+      case 'roulette': this.playShortSound('assets/sounds/roulette-tick.wav', 0.45); return;
       case 'capture': this.playShortSound('assets/sounds/capture.mp3', 0.85); return;
       case 'move': this.playShortSound('assets/sounds/move.wav', 0.55); return;
       case 'freeze': this.playShortSound('assets/sounds/freeze.wav', 0.6); return;
@@ -3805,14 +3806,14 @@ class App {
       try {
         this.bgAudio = new Audio('assets/audio/Chess-Arena-BGM.mp3');
         this.bgAudio.loop = true;
-        this.bgAudio.volume = (typeof this.musicVolume === 'number') ? this.musicVolume : 0.25;
+        this.bgAudio.volume = (typeof this.musicVolume === 'number') ? this.musicVolume : 0.15;
       } catch (e) {
         console.warn('Audio element creation error:', e);
         return null;
       }
     }
 
-    this.bgAudio.volume = (typeof this.musicVolume === 'number') ? this.musicVolume : 0.25;
+    this.bgAudio.volume = (typeof this.musicVolume === 'number') ? this.musicVolume : 0.15;
     this.bgMusicRunning = true;
     try {
       const playPromise = this.bgAudio.play();
@@ -5281,7 +5282,7 @@ class App {
 
     const volumeSlider = document.getElementById('input-music-volume');
     const volumeLabel = document.getElementById('music-volume-label');
-    const currentVol = (typeof this.musicVolume === 'number') ? this.musicVolume : 0.25;
+    const currentVol = (typeof this.musicVolume === 'number') ? this.musicVolume : 0.15;
     const volPct = Math.round(currentVol * 100);
     if (volumeSlider) {
       volumeSlider.value = volPct;
