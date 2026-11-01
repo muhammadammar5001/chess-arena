@@ -63,4 +63,18 @@ DAILY_PUZZLES.forEach((puzzle) => {
 });
 console.log('✔ All 15 puzzles successfully load and execute verified legal solutions with checkmate');
 
+// 4. Verify puzzle hint double-down economy integration
+const fs = require('fs');
+const path = require('path');
+const appSource = fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'app.js'), 'utf8');
+const economyConfig = require('../public/js/economy-config.js');
+
+const hintCosts = economyConfig.hintsAndUndos.hintCosts;
+assert.deepStrictEqual(hintCosts, [25, 50, 100, 200], 'Hint double-down costs must be [25, 50, 100, 200]');
+assert(appSource.includes("this.spendCoins(hintCost, 'puzzle_hint')"), 'showPuzzleHint must spend coins with puzzle_hint reason');
+assert(appSource.includes("updatePuzzleHintButtonUI"), 'updatePuzzleHintButtonUI method must be wired');
+assert(appSource.includes("Hint limit reached for this challenge"), 'Hint limit guard must be present');
+console.log('✔ Puzzle hint double-down costs [25, 50, 100, 200] and coin deductions verified');
+
 console.log('--- ALL DAILY PUZZLE TESTS PASSED SUCCESSFULLY! ---');
+

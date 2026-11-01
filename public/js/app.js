@@ -1228,6 +1228,7 @@ class App {
         setTimeout(() => this.startBgMusic(), 500);
     this.renderBoard();
     this.updatePlayerBars();
+    this.updatePuzzleHintButtonUI();
 
     // If player is black, AI moves first
     if (this.playerColor === 'black') {
@@ -2434,6 +2435,7 @@ class App {
       if (hintBtn) { hintBtn.style.display = 'none'; hintBtn.classList.add('hidden'); }
       if (drawBtn) { drawBtn.style.display = 'none'; drawBtn.classList.add('hidden'); }
       if (resignBtn) { resignBtn.style.display = 'none'; resignBtn.classList.add('hidden'); }
+      this.updatePuzzleHintButtonUI();
       return;
     }
 
@@ -7106,9 +7108,50 @@ class App {
     }
   }
 
+  updatePuzzleHintButtonUI() {
+    const label = document.getElementById('btn-puzzle-hint-label');
+    if (!label) return;
+    const costs = (window.ECONOMY_CONFIG && window.ECONOMY_CONFIG.hintsAndUndos && window.ECONOMY_CONFIG.hintsAndUndos.hintCosts) || [25, 50, 100, 200];
+    const idx = this.hintCountInMatch || 0;
+    if (idx >= costs.length) {
+      label.textContent = 'Hint limit';
+    } else {
+      label.innerHTML = `Hint <span style="color:#FFD54F;font-size:11px;font-weight:700;"><img class="ui-ic" src="assets/icons/coin.svg" alt="">${costs[idx]}</span>`;
+    }
+  }
+
   showPuzzleHint() {
     if (!this.currentPuzzle) return;
+    const hintCosts = (window.ECONOMY_CONFIG && window.ECONOMY_CONFIG.hintsAndUndos && window.ECONOMY_CONFIG.hintsAndUndos.hintCosts) || [25, 50, 100, 200];
+    const hintIdx = this.hintCountInMatch || 0;
+    if (hintIdx >= hintCosts.length) {
+      this.showToast('Hint limit reached for this challenge');
+      return;
+    }
+    const hintCost = hintCosts[hintIdx];
+    if (!this.spendCoins(hintCost, 'puzzle_hint')) {
+      this.showToast(`Not enough coins for a hint! (${hintCost} Coins needed)`);
+      return;
+    }
+    this.hintCountInMatch = hintIdx + 1;
+    this.updatePuzzleHintButtonUI();
     this.playSound('click');
+
+    // Highlight the piece to move
+    const nextMove = this.currentPuzzle.solution[this.puzzleStepIndex || 0];
+    if (nextMove) {
+      const from = ChessEngine.fromAlgebraic(nextMove.slice(0, 2));
+      const to = ChessEngine.fromAlgebraic(nextMove.slice(2, 4));
+      const fromSquare = document.querySelector(`.square[data-row="${from.row}"][data-col="${from.col}"]`);
+      const toSquare = document.querySelector(`.square[data-row="${to.row}"][data-col="${to.col}"]`);
+      if (fromSquare) fromSquare.classList.add('hint-move');
+      if (toSquare) toSquare.classList.add('hint-move');
+      setTimeout(() => {
+        if (fromSquare) fromSquare.classList.remove('hint-move');
+        if (toSquare) toSquare.classList.remove('hint-move');
+      }, 3000);
+    }
+
     this.showToast(`💡 Hint: ${this.currentPuzzle.hint}`);
   }
 
