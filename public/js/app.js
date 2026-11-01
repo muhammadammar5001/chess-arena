@@ -96,6 +96,12 @@ class App {
     this.avatarIdFromStorage = false;
     this.avatarId = this.resolveInitialAvatarId();
 
+    // Daily Legal Puzzle Challenges state
+    this.puzzleLevel = 1;
+    this.lastPuzzleDate = null;
+    this.currentPuzzle = null;
+    this.puzzleStepIndex = 0;
+
     // Cloud-backed player profile (YouTube Playables / PlayGama / localStorage).
     this.cloudProfile = null;
     this.profileReady = null;
@@ -1159,6 +1165,9 @@ class App {
   showScreen(screenId) {
     if (screenId !== 'screen-game' && this._checkAlertOn) {
       this.stopCheckAlert();
+    }
+    if (screenId === 'screen-home') {
+      this.updatePuzzleHomeCard();
     }
     document.querySelectorAll('.screen').forEach(s => {
       s.classList.remove('active');
@@ -2409,6 +2418,24 @@ class App {
     const hintBtn = document.getElementById('btn-ingame-hint');
     const drawBtn = document.getElementById('btn-ingame-draw');
     const resignBtn = document.getElementById('btn-ingame-resign');
+    const pHintBtn = document.getElementById('btn-puzzle-hint');
+    const pResetBtn = document.getElementById('btn-puzzle-reset');
+    const pExitBtn = document.getElementById('btn-puzzle-exit');
+
+    const isPuzzle = this.gameMode === 'puzzle';
+    if (pHintBtn) pHintBtn.style.display = isPuzzle ? '' : 'none';
+    if (pResetBtn) pResetBtn.style.display = isPuzzle ? '' : 'none';
+    if (pExitBtn) pExitBtn.style.display = isPuzzle ? '' : 'none';
+
+    if (isPuzzle) {
+      if (ab1Btn) { ab1Btn.style.display = 'none'; ab1Btn.classList.add('hidden'); }
+      if (ab2Btn) { ab2Btn.style.display = 'none'; ab2Btn.classList.add('hidden'); }
+      if (undoBtn) { undoBtn.style.display = 'none'; undoBtn.classList.add('hidden'); }
+      if (hintBtn) { hintBtn.style.display = 'none'; hintBtn.classList.add('hidden'); }
+      if (drawBtn) { drawBtn.style.display = 'none'; drawBtn.classList.add('hidden'); }
+      if (resignBtn) { resignBtn.style.display = 'none'; resignBtn.classList.add('hidden'); }
+      return;
+    }
 
     if (this.gameMode === 'online') {
       const abs = (this.multiplayer && this.multiplayer.abilities && this.multiplayer.abilities.self && this.multiplayer.abilities.self.length > 0)
@@ -3356,6 +3383,10 @@ class App {
   }
 
   executeMove(fromRow, fromCol, toRow, toCol, promotion) {
+    if (this.gameMode === 'puzzle') {
+      this.handlePuzzleMove(fromRow, fromCol, toRow, toCol, promotion);
+      return;
+    }
     const result = this.engine.makeMove(fromRow, fromCol, toRow, toCol, promotion);
     if (!result) return;
 
@@ -5138,6 +5169,7 @@ class App {
     // Hide all possible open modals
     this.hideModal('modal-confirm');
     this.hideModal('modal-draw-offer');
+    this.hideModal('modal-puzzle-victory');
     
     this.engine = null;
     this.ai = null;
@@ -5721,6 +5753,8 @@ class App {
       SaveStore.setItem('chessarena_avatar_id', this.avatarId);
       SaveStore.setItem('owl_player_level', String(this.playerLevel));
       SaveStore.setItem('owl_player_xp', String(this.playerXP));
+      SaveStore.setItem('owl_puzzle_level', String(this.puzzleLevel || 1));
+      if (this.lastPuzzleDate) SaveStore.setItem('owl_last_puzzle_date', this.lastPuzzleDate);
       SaveStore.setItem('owl_slot2_unlocked', this.slot2Unlocked ? 'true' : 'false');
       SaveStore.setItem('owl_slot2_ads', String(this.slot2AdsWatched));
       SaveStore.setItem('owl_unlocked_skills', JSON.stringify(this.unlockedSkills));
@@ -5745,6 +5779,8 @@ class App {
       avatarId: this.avatarId,
       level: Math.max(1, Math.floor(Number(this.playerLevel) || 1)),
       xp: Math.max(0, Math.floor(Number(this.playerXP) || 0)),
+      puzzleLevel: Math.max(1, Math.floor(Number(this.puzzleLevel) || 1)),
+      lastPuzzleDate: this.lastPuzzleDate || null,
       slot2Unlocked: this.slot2Unlocked === true,
       slot2AdsWatched: Math.max(0, Math.min(3, Math.floor(Number(this.slot2AdsWatched) || 0))),
       unlockedSkills: Array.isArray(this.unlockedSkills) ? this.unlockedSkills.slice(0, 12) : [],
@@ -5811,6 +5847,9 @@ class App {
     if (Number.isFinite(level) && level > 0) this.playerLevel = Math.min(100, level);
     const xp = parseInt(data.xp, 10);
     if (Number.isFinite(xp) && xp >= 0) this.playerXP = xp;
+    const pLvl = parseInt(data.puzzleLevel, 10);
+    if (Number.isFinite(pLvl) && pLvl > 0) this.puzzleLevel = Math.max(this.puzzleLevel || 1, pLvl);
+    if (data.lastPuzzleDate) this.lastPuzzleDate = data.lastPuzzleDate;
     this.slot2AdsWatched = Math.max(0, Math.min(3, parseInt(data.slot2AdsWatched, 10) || 0));
     this.slot2Unlocked = data.slot2Unlocked === true || this.slot2AdsWatched >= 3;
 
@@ -5929,6 +5968,9 @@ class App {
       this.playerLevel = Number.isFinite(parsedLevel) && parsedLevel > 0 ? parsedLevel : 1;
       const parsedXp = parseInt(SaveStore.getItem('owl_player_xp'), 10);
       this.playerXP = Number.isFinite(parsedXp) && parsedXp > 0 ? parsedXp : 0;
+      const parsedPuzzleLevel = parseInt(SaveStore.getItem('owl_puzzle_level'), 10);
+      this.puzzleLevel = Number.isFinite(parsedPuzzleLevel) && parsedPuzzleLevel > 0 ? parsedPuzzleLevel : 1;
+      this.lastPuzzleDate = SaveStore.getItem('owl_last_puzzle_date') || null;
       this.slot2Unlocked = SaveStore.getItem('owl_slot2_unlocked') === 'true';
       this.slot2AdsWatched = Math.max(0, Math.min(3, parseInt(SaveStore.getItem('owl_slot2_ads'), 10) || 0));
       if (this.slot2AdsWatched >= 3) this.slot2Unlocked = true;
@@ -6029,6 +6071,7 @@ class App {
       this.syncAbilitiesUI();
       this.syncShopUI();
       this.updateLuckyWheelBadge();
+      this.updatePuzzleHomeCard();
     } catch (e) {
       console.warn('initEconomy error:', e);
     }
@@ -6901,6 +6944,234 @@ class App {
     };
 
     requestAnimationFrame(animateWheel);
+  }
+
+  // --- Daily Legal Puzzle Challenges ------------------
+
+  updatePuzzleHomeCard() {
+    const titleEl = document.getElementById('home-puzzle-title');
+    const descEl = document.getElementById('home-puzzle-desc');
+    const badgeEl = document.getElementById('home-puzzle-badge');
+    if (!titleEl || !descEl || !badgeEl) return;
+
+    const puzzles = (typeof DAILY_PUZZLES !== 'undefined' ? DAILY_PUZZLES : (window.DAILY_PUZZLES || []));
+    const lvl = Math.max(1, Math.min(puzzles.length, Math.floor(Number(this.puzzleLevel) || 1)));
+    const puzzle = puzzles.find(p => p.level === lvl) || puzzles[0];
+
+    const today = this.getEconomyDateKey();
+    const completedToday = this.lastPuzzleDate === today;
+
+    titleEl.textContent = `Daily Puzzle · Level ${lvl}`;
+
+    if (completedToday) {
+      descEl.textContent = `Today's challenge complete! Replay Level ${lvl} for practice`;
+      badgeEl.textContent = 'DONE';
+      badgeEl.style.background = 'rgba(76, 175, 80, 0.22)';
+      badgeEl.style.color = '#81C784';
+      badgeEl.style.borderColor = 'rgba(129, 199, 132, 0.45)';
+    } else {
+      descEl.textContent = puzzle ? `Solve to earn +${puzzle.xpReward} XP & +${puzzle.coinsReward} Coins` : 'Solve daily tactical puzzles for XP & Coins';
+      badgeEl.textContent = 'READY';
+      badgeEl.style.background = 'rgba(255, 213, 79, 0.18)';
+      badgeEl.style.color = '#FFD54F';
+      badgeEl.style.borderColor = 'rgba(255, 213, 79, 0.35)';
+    }
+  }
+
+  startDailyPuzzle(level = null) {
+    const puzzles = (typeof DAILY_PUZZLES !== 'undefined' ? DAILY_PUZZLES : (window.DAILY_PUZZLES || []));
+    if (!puzzles || puzzles.length === 0) {
+      this.showToast('Daily puzzles currently unavailable');
+      return;
+    }
+
+    const currentLvl = Math.max(1, Math.min(puzzles.length, Math.floor(Number(this.puzzleLevel) || 1)));
+    const targetLevel = level ? Math.max(1, Math.min(puzzles.length, Math.floor(Number(level)))) : currentLvl;
+    let puzzle = puzzles.find(p => p.level === targetLevel) || puzzles[0];
+
+    this.opponentAvatarSrc = null;
+    this.gameMode = 'puzzle';
+    this.currentPuzzle = puzzle;
+    this.puzzleStepIndex = 0;
+    this.playerColor = puzzle.playerColor || 'white';
+    this.boardFlipped = this.playerColor === 'black';
+    this.engine = new ChessEngine();
+    this.engine.loadFEN(puzzle.fen);
+    this.lastMove = null;
+    this.gameStartTime = Date.now();
+    this.timers = { white: null, black: null };
+    this.statsRecordedForGame = null;
+    this.lastMatchCoinsEarned = 0;
+    this.lastMatchDoubled = false;
+    this.abilitiesActivatedThisMatch = new Set();
+    this.hintCountInMatch = 0;
+    this.undoCountInMatch = 0;
+    this.hasUndoneCurrentMove = false;
+
+    this.setupGameUI(
+      this.getPreferredDisplayName() || 'You',
+      `Puzzle Lv.${puzzle.level}`,
+      false,
+      this.getGameHeaderSelfMeta(),
+      { username: puzzle.title, rating: 1000 + (puzzle.level * 40), level: puzzle.level }
+    );
+
+    this.showScreen('screen-game');
+    setTimeout(() => this.startBgMusic(), 500);
+    this.renderBoard();
+    this.updatePlayerBars();
+
+    // In-game puzzle indicators
+    const badge = document.getElementById('turn-status-badge');
+    if (badge) {
+      badge.className = 'turn-status-badge your-turn';
+      badge.textContent = `${puzzle.playerColor === 'black' ? 'Black' : 'White'} to Move · ${puzzle.subtitle}`;
+    }
+    const bTimer = document.getElementById('bottom-timer');
+    if (bTimer) bTimer.textContent = `+${puzzle.xpReward} XP`;
+    const tTimer = document.getElementById('top-timer');
+    if (tTimer) tTimer.textContent = `Lv.${puzzle.level}`;
+  }
+
+  handlePuzzleMove(fromRow, fromCol, toRow, toCol, promotion) {
+    if (!this.currentPuzzle) return;
+    const from = ChessEngine.toAlgebraic(fromRow, fromCol);
+    const to = ChessEngine.toAlgebraic(toRow, toCol);
+    const promoStr = promotion ? promotion[0].toLowerCase() : '';
+    const playedMove = (from + to + promoStr).toLowerCase();
+
+    // Check if legal in engine
+    const legalMoves = this.engine.getLegalMoves(fromRow, fromCol);
+    const isLegal = legalMoves.some(m => m.row === toRow && m.col === toCol);
+    if (!isLegal) return;
+
+    const result = this.engine.makeMove(fromRow, fromCol, toRow, toCol, promotion);
+    if (!result) return;
+
+    this.selectedSquare = null;
+    this.legalMoves = [];
+    document.querySelectorAll('.square.selected, .square.legal-move, .square.legal-capture').forEach(sq => {
+      sq.classList.remove('selected', 'legal-move', 'legal-capture');
+    });
+
+    const expectedMove = (this.currentPuzzle.solution[this.puzzleStepIndex || 0] || '').toLowerCase();
+
+    this.animateMoveAndApply(result, () => {
+      if (playedMove === expectedMove) {
+        this.puzzleStepIndex = (this.puzzleStepIndex || 0) + 1;
+        if (this.puzzleStepIndex >= this.currentPuzzle.solution.length) {
+          this.playSound('gameover');
+          this.onPuzzleSolved();
+        } else {
+          // Multi-step puzzle reply
+          const reply = this.currentPuzzle.solution[this.puzzleStepIndex];
+          this.puzzleStepIndex++;
+          setTimeout(() => {
+            const rf = ChessEngine.fromAlgebraic(reply.slice(0, 2));
+            const rt = ChessEngine.fromAlgebraic(reply.slice(2, 4));
+            const rp = reply[4] || null;
+            const oppResult = this.engine.makeMove(rf.row, rf.col, rt.row, rt.col, rp);
+            if (oppResult) {
+              this.animateMoveAndApply(oppResult, () => {
+                this.updatePlayerBars();
+              });
+            }
+          }, 350);
+        }
+      } else {
+        this.playSound('defeat');
+        this.showToast('Incorrect move! Try again.');
+        setTimeout(() => {
+          this.resetCurrentPuzzle();
+        }, 850);
+      }
+    });
+  }
+
+  resetCurrentPuzzle() {
+    if (!this.currentPuzzle) return;
+    this.puzzleStepIndex = 0;
+    this.engine.loadFEN(this.currentPuzzle.fen);
+    this.selectedSquare = null;
+    this.legalMoves = [];
+    this.lastMove = null;
+    this.clearMoveHistory();
+    this.clearCapturedPieces();
+    this.renderBoard();
+    this.updatePlayerBars();
+    const badge = document.getElementById('turn-status-badge');
+    if (badge) {
+      badge.className = 'turn-status-badge your-turn';
+      badge.textContent = `${this.currentPuzzle.playerColor === 'black' ? 'Black' : 'White'} to Move · ${this.currentPuzzle.subtitle}`;
+    }
+  }
+
+  showPuzzleHint() {
+    if (!this.currentPuzzle) return;
+    this.playSound('click');
+    this.showToast(`💡 Hint: ${this.currentPuzzle.hint}`);
+  }
+
+  onPuzzleSolved() {
+    const puzzle = this.currentPuzzle;
+    const today = this.getEconomyDateKey();
+    const isFirstToday = this.lastPuzzleDate !== today;
+    const xpReward = Number(puzzle.xpReward) || 40;
+    const coinsReward = Number(puzzle.coinsReward) || 60;
+    const puzzles = (typeof DAILY_PUZZLES !== 'undefined' ? DAILY_PUZZLES : (window.DAILY_PUZZLES || []));
+
+    let rewardText = '';
+    if (isFirstToday) {
+      this.addXP(xpReward);
+      this.addCoins(coinsReward, 'daily_puzzle_win');
+      this.lastPuzzleDate = today;
+
+      if (this.puzzleLevel === puzzle.level) {
+        this.puzzleLevel = Math.min(puzzles.length, this.puzzleLevel + 1);
+      }
+      this.saveEconomyState();
+      rewardText = `+${xpReward} EXP & +${coinsReward} Coins earned!`;
+    } else {
+      this.addXP(15);
+      rewardText = `Puzzle solved! (+15 EXP practice bonus)`;
+      if (this.puzzleLevel === puzzle.level) {
+        this.puzzleLevel = Math.min(puzzles.length, this.puzzleLevel + 1);
+        this.saveEconomyState();
+      }
+    }
+
+    this.updatePuzzleHomeCard();
+    const nextLevel = puzzle.level < puzzles.length ? puzzle.level + 1 : null;
+
+    setTimeout(() => {
+      this.showPuzzleVictoryModal(puzzle, rewardText, nextLevel);
+    }, 450);
+  }
+
+  showPuzzleVictoryModal(puzzle, rewardText, nextLevel) {
+    const titleEl = document.getElementById('puzzle-victory-title');
+    const subEl = document.getElementById('puzzle-victory-sub');
+    const rewardsEl = document.getElementById('puzzle-victory-rewards');
+    const nextBtn = document.getElementById('btn-puzzle-next');
+
+    if (titleEl) titleEl.textContent = `Level ${puzzle.level} Cleared!`;
+    if (subEl) subEl.textContent = `Brilliant tactic: "${puzzle.title}"`;
+    if (rewardsEl) rewardsEl.textContent = rewardText;
+
+    if (nextBtn) {
+      if (nextLevel) {
+        nextBtn.style.display = '';
+        nextBtn.textContent = `Level ${nextLevel} →`;
+        nextBtn.onclick = () => {
+          this.hideModal('modal-puzzle-victory');
+          this.startDailyPuzzle(nextLevel);
+        };
+      } else {
+        nextBtn.style.display = 'none';
+      }
+    }
+
+    this.showModal('modal-puzzle-victory');
   }
 
 }

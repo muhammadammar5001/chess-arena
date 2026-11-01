@@ -34,6 +34,70 @@ class ChessEngine {
     this.frozenPieces = [];
   }
 
+/**
+   * Load board position and state from a standard FEN string.
+   */
+  loadFEN(fen) {
+    if (!fen || typeof fen !== 'string') return false;
+    const parts = fen.trim().split(/\s+/);
+    if (!parts || parts.length < 1) return false;
+
+    const rows = parts[0].split('/');
+    if (rows.length !== 8) return false;
+
+    const newBoard = Array(8).fill(null).map(() => Array(8).fill(null));
+    const charToType = { p: 'pawn', r: 'rook', n: 'knight', b: 'bishop', q: 'queen', k: 'king' };
+    const kingPositions = { white: null, black: null };
+
+    for (let r = 0; r < 8; r++) {
+      let c = 0;
+      for (const ch of rows[r]) {
+        if (ch >= '1' && ch <= '8') {
+          c += parseInt(ch, 10);
+        } else {
+          const color = ch === ch.toUpperCase() ? 'white' : 'black';
+          const type = charToType[ch.toLowerCase()];
+          if (!type || c >= 8) return false;
+          newBoard[r][c] = { type, color };
+          if (type === 'king') kingPositions[color] = { row: r, col: c };
+          c++;
+        }
+      }
+      if (c !== 8) return false;
+    }
+
+    if (!kingPositions.white || !kingPositions.black) return false;
+
+    this.reset();
+    this.board = newBoard;
+    this.kingPositions = kingPositions;
+    this.currentTurn = (parts[1] && parts[1].toLowerCase() === 'b') ? 'black' : 'white';
+
+    // Castling rights
+    const castling = parts[2] || '-';
+    this.castlingRights = {
+      white: { kingSide: castling.includes('K'), queenSide: castling.includes('Q') },
+      black: { kingSide: castling.includes('k'), queenSide: castling.includes('q') }
+    };
+
+    // En passant target
+    if (parts[3] && parts[3] !== '-') {
+      try {
+        const ep = ChessEngine.fromAlgebraic(parts[3]);
+        this.enPassantTarget = ep;
+      } catch (e) {
+        this.enPassantTarget = null;
+      }
+    } else {
+      this.enPassantTarget = null;
+    }
+
+    this.halfMoveClock = parseInt(parts[4], 10) || 0;
+    this.fullMoveNumber = parseInt(parts[5], 10) || 1;
+    this.positionHistory = [this.getBoardHash()];
+    return true;
+  }
+
   createInitialBoard() {
     const board = Array(8).fill(null).map(() => Array(8).fill(null));
     const backRank = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
