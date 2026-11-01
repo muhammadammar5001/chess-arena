@@ -6381,7 +6381,7 @@ class App {
 
         slot2Header.textContent = `SLOT 2 · ${watched}/${requiredAds}`;
         slot2Content.innerHTML = `
-          <button type="button" class="slot-unlock-btn" onclick="app.promptUnlockSlot2()" title="${remaining} more ad${remaining === 1 ? '' : 's'} to unlock Slot 2">Unlock with Ads</button>
+          <button type="button" class="slot-unlock-btn" onclick="app.promptUnlockSlot2()" title="Watch 3 ads to unlock Slot 2">Watch 3 ads to unlock</button>
           <span class="slot-progress">${dots}</span>`;
       }
     }
