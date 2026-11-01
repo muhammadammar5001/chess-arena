@@ -329,6 +329,45 @@ img.ui-ic {
   object-fit: contain;
 }
 
+img.ui-piece-ic {
+  width: 1.25em;
+  height: 1.25em;
+  display: inline-block;
+  vertical-align: -0.2em;
+  object-fit: contain;
+}
+
+.promo-piece img.ui-piece-ic {
+  width: 46px;
+  height: 46px;
+  vertical-align: middle;
+}
+
+.color-btn img.color-piece {
+  width: 20px;
+  height: 20px;
+  vertical-align: -0.18em;
+  margin-right: 4px;
+}
+
+#screen-howto .piece-symbol img.howto-piece {
+  width: 26px;
+  height: 26px;
+  vertical-align: middle;
+}
+
+.shop-shelf-icon img.shelf-piece {
+  width: 24px;
+  height: 24px;
+}
+
+#screen-howto img.howto-head-piece {
+  width: 22px;
+  height: 22px;
+  vertical-align: -0.22em;
+  margin-right: 2px;
+}
+
 .btn-label {
   font-weight: 600;
   font-size: 16px;

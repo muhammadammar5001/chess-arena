@@ -14,11 +14,11 @@
   <title>Chess Arena • Tactical PvP Chess</title>
   <!-- PlayGama Bridge (bundles the YouTube Playables adapter) -->
   <script src="https://bridge.playgama.com/v2/stable/playgama-bridge.js"></script>
-  <link rel="stylesheet" href="css/tokens.css">
-  <link rel="stylesheet" href="css/styles.css?v=1793406562487">
-  <link rel="stylesheet" href="css/wooden-theme.css?v=1793406046872">
-  <link rel="stylesheet" href="css/home-lobby.css?v=1793225700000">
-  <link rel="stylesheet" href="css/abilities-screen.css?v=1793228570000">
+  <link rel="stylesheet" href="css/tokens.css?v=1793602000000">
+  <link rel="stylesheet" href="css/styles.css?v=1793602000000">
+  <link rel="stylesheet" href="css/wooden-theme.css?v=1793602000000">
+  <link rel="stylesheet" href="css/home-lobby.css?v=1793602000000">
+  <link rel="stylesheet" href="css/abilities-screen.css?v=1793602000000">
   <style>
     #username-modal.hidden {
       display: none !important;
@@ -281,8 +281,8 @@
       <div class="color-select">
         <p class="color-label">Play as</p>
         <div class="color-options">
-          <button id="color-white" class="color-btn active" onclick="app.selectColor('white')">♔ White</button>
-          <button id="color-black" class="color-btn" onclick="app.selectColor('black')">♚ Black</button>
+          <button id="color-white" class="color-btn active" onclick="app.selectColor('white')"><img class="color-piece ui-piece-ic" src="assets/pieces/wK.svg" alt=""> White</button>
+          <button id="color-black" class="color-btn" onclick="app.selectColor('black')"><img class="color-piece ui-piece-ic" src="assets/pieces/bK.svg" alt=""> Black</button>
         </div>
       </div>
     </div>
@@ -1184,7 +1184,7 @@
           <div class="shop-shelf">
             <div class="shop-shelf-head">
               <div>
-                <div class="shop-shelf-ti tle"><span class="shop-shelf-icon">♜</span> Wooden Boards Collection</div>
+                <div class="shop-shelf-ti tle"><span class="shop-shelf-icon"><img class="shelf-piece ui-piece-ic" src="assets/pieces/wR.svg" alt=""></span> Wooden Boards Collection</div>
                 <div class="shop-shelf-subtitle">Cosmetic board skins · Unlock with coins and player level "More Boards
                   Coming Soon"</div>
               </div>
@@ -1336,17 +1336,17 @@
         </div>
 
         <div class="howto-section">
-          <h3>♟ Pieces</h3>
+          <h3><img class="howto-head-piece" src="assets/pieces/wP.svg" alt=""> Pieces</h3>
           <div class="pieces-grid">
-            <div class="piece-info"><span class="piece-symbol">♔</span><strong>King</strong> — 1 square any direction
+            <div class="piece-info"><span class="piece-symbol"><img class="howto-piece ui-piece-ic" src="assets/pieces/wK.svg" alt=""></span><strong>King</strong> — 1 square any direction
             </div>
-            <div class="piece-info"><span class="piece-symbol">♕</span><strong>Queen</strong> — Any direction, any
+            <div class="piece-info"><span class="piece-symbol"><img class="howto-piece ui-piece-ic" src="assets/pieces/wQ.svg" alt=""></span><strong>Queen</strong> — Any direction, any
               distance</div>
-            <div class="piece-info"><span class="piece-symbol">♖</span><strong>Rook</strong> — Horizontal & vertical
+            <div class="piece-info"><span class="piece-symbol"><img class="howto-piece ui-piece-ic" src="assets/pieces/wR.svg" alt=""></span><strong>Rook</strong> — Horizontal & vertical
             </div>
-            <div class="piece-info"><span class="piece-symbol">♗</span><strong>Bishop</strong> — Diagonals only</div>
-            <div class="piece-info"><span class="piece-symbol">♘</span><strong>Knight</strong> — L-shape, can jump</div>
-            <div class="piece-info"><span class="piece-symbol">♙</span><strong>Pawn</strong> — Forward 1 (2 from start),
+            <div class="piece-info"><span class="piece-symbol"><img class="howto-piece ui-piece-ic" src="assets/pieces/wB.svg" alt=""></span><strong>Bishop</strong> — Diagonals only</div>
+            <div class="piece-info"><span class="piece-symbol"><img class="howto-piece ui-piece-ic" src="assets/pieces/wN.svg" alt=""></span><strong>Knight</strong> — L-shape, can jump</div>
+            <div class="piece-info"><span class="piece-symbol"><img class="howto-piece ui-piece-ic" src="assets/pieces/wP.svg" alt=""></span><strong>Pawn</strong> — Forward 1 (2 from start),
               captures diagonally</div>
           </div>
         </div>
@@ -1381,14 +1381,10 @@
     <div class="modal-content promotion-modal">
       <h3>Promote Pawn</h3>
       <div class="promotion-pieces">
-        <button class="promo-piece" onclick="app.selectPromotion('queen')"><span class="promo-white">♕</span><span
-            class="promo-black">♛</span></button>
-        <button class="promo-piece" onclick="app.selectPromotion('rook')"><span class="promo-white">♖</span><span
-            class="promo-black">♜</span></button>
-        <button class="promo-piece" onclick="app.selectPromotion('bishop')"><span class="promo-white">♗</span><span
-            class="promo-black">♝</span></button>
-        <button class="promo-piece" onclick="app.selectPromotion('knight')"><span class="promo-white">♘</span><span
-            class="promo-black">♞</span></button>
+        <button class="promo-piece" onclick="app.selectPromotion('queen')"><img class="promo-white ui-piece-ic" src="assets/pieces/wQ.svg" alt=""><img class="promo-black ui-piece-ic" src="assets/pieces/bQ.svg" alt=""></button>
+        <button class="promo-piece" onclick="app.selectPromotion('rook')"><img class="promo-white ui-piece-ic" src="assets/pieces/wR.svg" alt=""><img class="promo-black ui-piece-ic" src="assets/pieces/bR.svg" alt=""></button>
+        <button class="promo-piece" onclick="app.selectPromotion('bishop')"><img class="promo-white ui-piece-ic" src="assets/pieces/wB.svg" alt=""><img class="promo-black ui-piece-ic" src="assets/pieces/bB.svg" alt=""></button>
+        <button class="promo-piece" onclick="app.selectPromotion('knight')"><img class="promo-white ui-piece-ic" src="assets/pieces/wN.svg" alt=""><img class="promo-black ui-piece-ic" src="assets/pieces/bN.svg" alt=""></button>
       </div>
     </div>
   </div>
@@ -1849,16 +1845,16 @@
     </div>
   </div>
   <!-- --------------- SCRIPTS --------------- -->
-  <script src="js/chess-engine.js?v=1793155000000"></script>
-  <script src="js/multiplayer.js?v=1793317333204"></script>
-  <script src="js/ai-engine.js?v=1792715271864"></script>
-  <script src="js/pieces.js?v=1792976860981"></script>
-  <script src="js/ad-service.js?v=1793153000000"></script>
-  <script src="js/platform.js?v=1793153000000"></script>
-  <script src="js/save-store.js?v=1793500000000"></script>
-  <script src="js/storage-service.js?v=1793153000000"></script>
-  <script src="js/economy-config.js?v=1793065000000"></script>
-  <script src="js/app.js?v=1793500000000"></script>
+  <script src="js/chess-engine.js?v=1793602000000"></script>
+  <script src="js/multiplayer.js?v=1793602000000"></script>
+  <script src="js/ai-engine.js?v=1793602000000"></script>
+  <script src="js/pieces.js?v=1793602000000"></script>
+  <script src="js/ad-service.js?v=1793602000000"></script>
+  <script src="js/platform.js?v=1793602000000"></script>
+  <script src="js/save-store.js?v=1793602000000"></script>
+  <script src="js/storage-service.js?v=1793602000000"></script>
+  <script src="js/economy-config.js?v=1793602000000"></script>
+  <script src="js/app.js?v=1793602000000"></script>
 </body>
 
 </html>
