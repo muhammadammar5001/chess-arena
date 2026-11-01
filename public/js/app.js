@@ -1031,7 +1031,7 @@ class App {
     if (this.soundMuted || this.platformAudioMuted || this.platformPaused) return;
     switch (type) {
       case 'check': this.startCheckSound(); return;
-      case 'roulette': this.playShortSound('assets/sounds/roulette-tick.wav', 0.85); return;
+      case 'roulette': this.playShortSound('assets/sounds/roulette-tick.wav', 0.50); return;
       case 'match-found': this.playShortSound('assets/sounds/match-found.wav', 0.9); return;
       case 'capture': this.playShortSound('assets/sounds/capture.mp3', 0.85); return;
       case 'move': this.playShortSound('assets/sounds/move.wav', 0.55); return;
