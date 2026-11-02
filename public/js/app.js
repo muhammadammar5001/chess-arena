@@ -4479,7 +4479,7 @@ class App {
         losses,
         draws,
         total,
-        winRate: total > 0 ? Math.round((wins / total) * 100) : 0
+        winRate: (wins + losses) > 0 ? Math.round((wins / (wins + losses)) * 100) : (total > 0 ? 50 : 0)
       };
     }
 
@@ -4494,7 +4494,7 @@ class App {
       losses,
       draws,
       total,
-      winRate: total > 0 ? Math.round((wins / total) * 100) : 0
+      winRate: (wins + losses) > 0 ? Math.round((wins / (wins + losses)) * 100) : (total > 0 ? 50 : 0)
     };
   }
 
@@ -6913,6 +6913,8 @@ class App {
     const startTime = performance.now();
     const duration = 3500; // 3.5s
 
+    let lastTickIndex = -1;
+
     const animateWheel = (now) => {
       const elapsed = now - startTime;
       const progress = Math.min(1, elapsed / duration);
@@ -6921,10 +6923,21 @@ class App {
       const currentAngle = ease * finalAngle;
       this.drawLuckyWheel(currentAngle);
 
+      // Play satisfying peg tick as each slice divider passes the top pointer
+      const currentTick = Math.floor(currentAngle / sliceAngle);
+      if (currentTick !== lastTickIndex) {
+        lastTickIndex = currentTick;
+        this.playShortSound('assets/sounds/roulette-tick.wav', 0.45);
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          try { navigator.vibrate(6); } catch (e) {}
+        }
+      }
+
       if (progress < 1) {
         requestAnimationFrame(animateWheel);
       } else {
         this.isSpinningWheel = false;
+        this.playSound('match-found');
         const reward = rewards[targetSlice];
         const maxCharges = window.ECONOMY_CONFIG?.skills?.maxCharges || 5;
         const unlocked = this.unlockedSkills || ['second'];
