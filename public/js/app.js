@@ -2415,6 +2415,13 @@ class App {
     // Show/hide online-only controls
     document.getElementById('btn-ingame-draw').style.display = isOnline ? '' : 'none';
     document.getElementById('btn-ingame-resign').style.display = isOnline ? '' : 'none';
+    const chatBtn = document.getElementById('btn-toggle-chat');
+    if (chatBtn) chatBtn.style.display = isOnline ? '' : 'none';
+    const chatContainer = document.querySelector('.chat-container');
+    if (chatContainer) {
+      chatContainer.style.display = isOnline ? '' : 'none';
+      if (!isOnline) chatContainer.classList.remove('chat-open');
+    }
 
     this.clearMoveHistory();
     this.clearCapturedPieces();
@@ -3754,6 +3761,7 @@ class App {
 
 
   toggleChat() {
+    if (this.gameMode !== 'online') return;
     const chat = document.querySelector('.chat-container');
     if (chat) {
       chat.classList.toggle('chat-open');
@@ -6554,6 +6562,20 @@ class App {
       const btn = card.querySelector('.btn-shop-action');
       const isUnlocked = this.unlockedBoards && this.unlockedBoards.includes(id);
       const isEquipped = (id === savedBoard);
+
+      const levelEl = card.querySelector('.shop-item-level');
+      if (levelEl && bConfig) {
+        if (bConfig.isDefault) {
+          levelEl.className = 'shop-item-level is-starter';
+          levelEl.textContent = 'Starter';
+        } else if (isUnlocked || isEquipped) {
+          levelEl.className = 'shop-item-level is-unlocked';
+          levelEl.textContent = `Lv ${bConfig.reqLevel}`;
+        } else {
+          levelEl.className = 'shop-item-level';
+          levelEl.innerHTML = `<img class="ui-ic" src="assets/icons/lock.svg" alt=""> Lv ${bConfig.reqLevel}`;
+        }
+      }
 
       if (isEquipped) {
         card.classList.add('equipped');
