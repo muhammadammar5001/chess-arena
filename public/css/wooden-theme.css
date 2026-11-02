@@ -5183,7 +5183,7 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   aspect-ratio: 1 / 1 !important;
 }
 
-/* SLEEK, COMPACT ACTION BAR: REDUCED HEIGHT (34px) & ZERO OVERLAP */
+/* SLEEK, COMPACT ACTION BAR: STRICT MODE-SPECIFIC BUTTON VISIBILITY (NEVER OVERRIDE DISPLAY: NONE) */
 #screen-game .ingame-action-bar {
   flex: 0 0 auto !important;
   display: flex !important;
@@ -5200,13 +5200,19 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   box-sizing: border-box !important;
 }
 
+/* NEVER display buttons that are marked hidden by app.js mode logic */
+#screen-game .btn-game-pill[style*="display: none"],
+#screen-game .btn-game-pill.hidden {
+  display: none !important;
+}
+
 #screen-game .btn-game-pill {
   flex: 1 1 0 !important;
   height: 34px !important;
   min-height: 34px !important;
   max-height: 34px !important;
   padding: 0 8px !important;
-  display: inline-flex !important;
+  display: inline-flex; /* NO !important so style="display: none" from app.js always wins */
   flex-direction: row !important;
   align-items: center !important;
   justify-content: center !important;
