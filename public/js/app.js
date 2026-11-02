@@ -6433,7 +6433,9 @@ class App {
 
     if (slot1Display) {
       const s1 = this.selectedAbilities[0];
-      slot1Display.textContent = s1 ? (nameMap[s1] || s1) : 'None';
+      slot1Display.innerHTML = s1
+        ? `<div class="loadout-slot-skill"><img src="${iconMap[s1] || ''}" alt=""><span>${nameMap[s1] || s1}</span></div>`
+        : `<div class="loadout-slot-empty">Empty</div>`;
     }
 
     if (slot2Box && slot2Header && slot2Content) {

@@ -234,6 +234,7 @@
   box-shadow: 0 0 6px rgba(74, 222, 128, 0.42) !important;
 }
 
+#screen-abilities #slot-1-display .loadout-slot-skill,
 #screen-abilities #slot-2-content .loadout-slot-skill {
   display: flex !important;
   align-items: center !important;
@@ -246,6 +247,7 @@
   line-height: 1.1 !important;
 }
 
+#screen-abilities #slot-1-display .loadout-slot-skill img,
 #screen-abilities #slot-2-content .loadout-slot-skill img {
   width: 20px !important;
   height: 20px !important;
@@ -253,12 +255,14 @@
   flex: 0 0 20px !important;
 }
 
+#screen-abilities #slot-1-display .loadout-slot-skill span,
 #screen-abilities #slot-2-content .loadout-slot-skill span {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
 }
 
+#screen-abilities #slot-1-display .loadout-slot-empty,
 #screen-abilities #slot-2-content .loadout-slot-empty {
   color: #C9B18F !important;
   font-family: var(--font-sans) !important;
