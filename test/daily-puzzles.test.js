@@ -1,12 +1,16 @@
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 const ChessEngine = require('../public/js/chess-engine.js');
 const { DAILY_PUZZLES } = require('../public/js/puzzles-config.js');
 
-console.log('--- RUNNING DAILY CHESS PUZZLE SUITE ---');
+console.log('--- RUNNING DAILY CHESS PUZZLE SUITE (50 PUZZLES & AD FEATURES) ---');
 
-// 1. Verify puzzle catalog length and levels
+const promoMap = { q: 'queen', r: 'rook', b: 'bishop', n: 'knight' };
+
+// 1. Verify puzzle catalog length and levels (50 curated levels)
 assert(Array.isArray(DAILY_PUZZLES), 'DAILY_PUZZLES must be an array');
-assert.strictEqual(DAILY_PUZZLES.length, 15, 'Must contain exactly 15 curated levels');
+assert.strictEqual(DAILY_PUZZLES.length, 50, 'Must contain exactly 50 curated levels');
 
 DAILY_PUZZLES.forEach((puzzle, idx) => {
   const expectedLevel = idx + 1;
@@ -20,7 +24,7 @@ DAILY_PUZZLES.forEach((puzzle, idx) => {
   assert(puzzle.xpReward > 0, `Puzzle ${puzzle.id} xpReward must be positive`);
   assert(puzzle.coinsReward > 0, `Puzzle ${puzzle.id} coinsReward must be positive`);
 });
-console.log('✔ Catalog metadata, 15 levels, rewards and hints verified');
+console.log('✔ Catalog metadata, 50 levels, rewards and hints verified');
 
 // 2. Verify reward progression scales with level difficulty
 for (let i = 1; i < DAILY_PUZZLES.length; i++) {
@@ -29,9 +33,9 @@ for (let i = 1; i < DAILY_PUZZLES.length; i++) {
   assert(DAILY_PUZZLES[i].coinsReward >= DAILY_PUZZLES[i - 1].coinsReward,
     `Coins reward should scale with level: level ${i+1} (${DAILY_PUZZLES[i].coinsReward}) vs level ${i} (${DAILY_PUZZLES[i-1].coinsReward})`);
 }
-console.log('✔ Escalating XP and Coin progression verified (Level 1: 40 XP / 60 Coins -> Level 15: 150 XP / 200 Coins)');
+console.log('✔ Escalating XP and Coin progression verified (Level 1: 40 XP / 60 Coins -> Level 50: 330 XP / 414 Coins)');
 
-// 3. Verify every FEN loads into ChessEngine, matches turn, and solution is 100% legal
+// 3. Verify every single FEN loads into ChessEngine, matches turn, and solution is 100% legal checkmate
 DAILY_PUZZLES.forEach((puzzle) => {
   const engine = new ChessEngine();
   const loaded = engine.loadFEN(puzzle.fen);
@@ -42,39 +46,47 @@ DAILY_PUZZLES.forEach((puzzle) => {
   const firstMove = puzzle.solution[0];
   const fromCoord = firstMove.slice(0, 2);
   const toCoord = firstMove.slice(2, 4);
-  const promo = firstMove[4] || null;
+  const promo = firstMove[4] ? promoMap[firstMove[4]] : null;
 
   const from = ChessEngine.fromAlgebraic(fromCoord);
   const to = ChessEngine.fromAlgebraic(toCoord);
 
   const legalMoves = engine.getLegalMoves(from.row, from.col);
-  const isLegal = legalMoves.some(m => m.row === to.row && m.col === to.col);
+  const isLegal = legalMoves.some(m => m.row === to.row && m.col === to.col && (!promo || m.promotion === promo));
   assert(isLegal, `Solution move ${firstMove} must be strictly LEGAL in Puzzle ${puzzle.level} (${puzzle.title})`);
 
   const result = engine.makeMove(from.row, from.col, to.row, to.col, promo);
   assert(result, `makeMove must succeed for solution move in Puzzle ${puzzle.level}`);
 
-  // In our 15 checkmate puzzles, verify checkmate or check
-  if (puzzle.solution.length === 1) {
-    assert(engine.gameOver, `Single-move puzzle ${puzzle.level} must result in checkmate/gameover`);
-    assert.strictEqual(engine.gameResult.winner, puzzle.playerColor,
-      `Puzzle ${puzzle.level} solution must declare ${puzzle.playerColor} as the winner`);
-  }
+  assert(engine.gameOver, `Single-move puzzle ${puzzle.level} (${puzzle.title}) must result in checkmate/gameover`);
+  assert.strictEqual(engine.gameResult.winner, puzzle.playerColor,
+    `Puzzle ${puzzle.level} solution must declare ${puzzle.playerColor} as the winner`);
+  assert.strictEqual(engine.gameResult.reason, 'checkmate',
+    `Puzzle ${puzzle.level} must conclude with reason checkmate`);
 });
-console.log('✔ All 15 puzzles successfully load and execute verified legal solutions with checkmate');
+console.log('✔ All 50 puzzles successfully load and execute verified legal solutions with checkmate');
 
-// 4. Verify puzzle hint double-down economy integration
-const fs = require('fs');
-const path = require('path');
+// 4. Verify Hybrid Endless Loop & Ad Features in app.js
 const appSource = fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'app.js'), 'utf8');
-const economyConfig = require('../public/js/economy-config.js');
 
-const hintCosts = economyConfig.hintsAndUndos.hintCosts;
-assert.deepStrictEqual(hintCosts, [25, 50, 100, 200], 'Hint double-down costs must be [25, 50, 100, 200]');
-assert(appSource.includes("this.spendCoins(hintCost, 'puzzle_hint')"), 'showPuzzleHint must spend coins with puzzle_hint reason');
-assert(appSource.includes("updatePuzzleHintButtonUI"), 'updatePuzzleHintButtonUI method must be wired');
-assert(appSource.includes("Hint limit reached for this challenge"), 'Hint limit guard must be present');
-console.log('✔ Puzzle hint double-down costs [25, 50, 100, 200] and coin deductions verified');
+// Endless modulo loop
+assert(appSource.includes('(targetLevel - 1) % puzzles.length'), 'startDailyPuzzle must use modulo loop for endless challenges');
+assert(appSource.includes('Master Lv.${targetLevel}'), 'Endless master tier display must be formatted for level > 50');
+
+// Feature 1: Free Hint via Rewarded Ad (no coins deducted)
+assert(appSource.includes("AdService.showRewarded('puzzle_hint')"), 'showPuzzleHint must trigger rewarded ad for free hint');
+assert(appSource.includes("highlightPuzzleHintMove"), 'highlightPuzzleHintMove method must be present');
+
+// Feature 2: 2X Rewards Doubler
+assert(appSource.includes("claimPuzzle2XRewards"), 'claimPuzzle2XRewards method must be implemented');
+assert(appSource.includes("AdService.showRewarded('puzzle_2x_doubler')"), 'claimPuzzle2XRewards must call rewarded ad');
+assert(appSource.includes("this.addCoins(bonusCoins, 'puzzle_2x_doubler')"), 'claimPuzzle2XRewards must grant double coins');
+
+// Feature 3: Natural Interstitial Ad every 3 puzzles
+assert(appSource.includes("this.puzzlesSolvedSinceAd = (this.puzzlesSolvedSinceAd || 0) + 1"), 'puzzlesSolvedSinceAd must be incremented on puzzle solved');
+assert(appSource.includes("if ((this.puzzlesSolvedSinceAd || 0) >= 3)"), 'Interstitial threshold check (>= 3) must be present');
+assert(appSource.includes("AdService.showInterstitial('puzzle_next_level')"), 'Next Level must trigger interstitial when threshold met');
+assert(appSource.includes("AdService.showInterstitial('puzzle_exit_lobby')"), 'Exit to Lobby must trigger interstitial when threshold met');
+console.log('✔ Hybrid endless loop and all 3 Ad features verified in app.js');
 
 console.log('--- ALL DAILY PUZZLE TESTS PASSED SUCCESSFULLY! ---');
-

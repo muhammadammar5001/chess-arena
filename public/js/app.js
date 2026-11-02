@@ -101,6 +101,10 @@ class App {
     this.lastPuzzleDate = null;
     this.currentPuzzle = null;
     this.puzzleStepIndex = 0;
+    this.puzzleHintUsed = false;
+    this.puzzlesSolvedSinceAd = 0;
+    this.lastPuzzleDoubled = false;
+    this.lastPuzzleBaseRewards = null;
 
     // Cloud-backed player profile (YouTube Playables / PlayGama / localStorage).
     this.cloudProfile = null;
@@ -6957,16 +6961,18 @@ class App {
     if (!titleEl || !descEl || !badgeEl) return;
 
     const puzzles = (typeof DAILY_PUZZLES !== 'undefined' ? DAILY_PUZZLES : (window.DAILY_PUZZLES || []));
-    const lvl = Math.max(1, Math.min(puzzles.length, Math.floor(Number(this.puzzleLevel) || 1)));
-    const puzzle = puzzles.find(p => p.level === lvl) || puzzles[0];
+    const lvl = Math.max(1, Math.floor(Number(this.puzzleLevel) || 1));
+    const pIdx = (lvl - 1) % (puzzles.length || 1);
+    const puzzle = puzzles[pIdx] || puzzles[0];
 
     const today = this.getEconomyDateKey();
     const completedToday = this.lastPuzzleDate === today;
 
-    titleEl.textContent = `Daily Puzzle · Level ${lvl}`;
+    const levelLabel = lvl > puzzles.length ? `Master Lv.${lvl}` : `Level ${lvl}`;
+    titleEl.textContent = `Daily Puzzle · ${levelLabel}`;
 
     if (completedToday) {
-      descEl.textContent = `Today's challenge complete! Replay Level ${lvl} for practice`;
+      descEl.textContent = `Today's challenge complete! Replay ${levelLabel} for practice`;
       badgeEl.textContent = 'DONE';
       badgeEl.style.background = 'rgba(76, 175, 80, 0.22)';
       badgeEl.style.color = '#81C784';
@@ -6987,14 +6993,25 @@ class App {
       return;
     }
 
-    const currentLvl = Math.max(1, Math.min(puzzles.length, Math.floor(Number(this.puzzleLevel) || 1)));
-    const targetLevel = level ? Math.max(1, Math.min(puzzles.length, Math.floor(Number(level)))) : currentLvl;
-    let puzzle = puzzles.find(p => p.level === targetLevel) || puzzles[0];
+    const currentLvl = Math.max(1, Math.floor(Number(this.puzzleLevel) || 1));
+    const targetLevel = level ? Math.max(1, Math.floor(Number(level))) : currentLvl;
+    const puzzleIdx = (targetLevel - 1) % puzzles.length;
+    const basePuzzle = puzzles[puzzleIdx] || puzzles[0];
+
+    // Scale rewards continuously for master tiers beyond 50
+    const loopCycle = Math.floor((targetLevel - 1) / puzzles.length);
+    const puzzle = {
+      ...basePuzzle,
+      level: targetLevel,
+      xpReward: basePuzzle.xpReward + (loopCycle * 50),
+      coinsReward: basePuzzle.coinsReward + (loopCycle * 50)
+    };
 
     this.opponentAvatarSrc = null;
     this.gameMode = 'puzzle';
     this.currentPuzzle = puzzle;
     this.puzzleStepIndex = 0;
+    this.puzzleHintUsed = false;
     this.playerColor = puzzle.playerColor || 'white';
     this.boardFlipped = this.playerColor === 'black';
     this.engine = new ChessEngine();
@@ -7010,9 +7027,11 @@ class App {
     this.undoCountInMatch = 0;
     this.hasUndoneCurrentMove = false;
 
+    const levelDisplay = targetLevel > puzzles.length ? `Master Lv.${targetLevel}` : `Puzzle Lv.${targetLevel}`;
+
     this.setupGameUI(
       this.getPreferredDisplayName() || 'You',
-      `Puzzle Lv.${puzzle.level}`,
+      levelDisplay,
       false,
       this.getGameHeaderSelfMeta(),
       { username: puzzle.title, rating: 1000 + (puzzle.level * 40), level: puzzle.level }
@@ -7022,6 +7041,7 @@ class App {
     setTimeout(() => this.startBgMusic(), 500);
     this.renderBoard();
     this.updatePlayerBars();
+    this.updatePuzzleHintButtonUI();
 
     // In-game puzzle indicators
     const badge = document.getElementById('turn-status-badge');
@@ -7032,7 +7052,7 @@ class App {
     const bTimer = document.getElementById('bottom-timer');
     if (bTimer) bTimer.textContent = `+${puzzle.xpReward} XP`;
     const tTimer = document.getElementById('top-timer');
-    if (tTimer) tTimer.textContent = `Lv.${puzzle.level}`;
+    if (tTimer) tTimer.textContent = targetLevel > puzzles.length ? `M.Lv.${targetLevel}` : `Lv.${targetLevel}`;
   }
 
   handlePuzzleMove(fromRow, fromCol, toRow, toCol, promotion) {
@@ -7111,33 +7131,38 @@ class App {
   updatePuzzleHintButtonUI() {
     const label = document.getElementById('btn-puzzle-hint-label');
     if (!label) return;
-    const costs = (window.ECONOMY_CONFIG && window.ECONOMY_CONFIG.hintsAndUndos && window.ECONOMY_CONFIG.hintsAndUndos.hintCosts) || [25, 50, 100, 200];
-    const idx = this.hintCountInMatch || 0;
-    if (idx >= costs.length) {
-      label.textContent = 'Hint limit';
+    if (this.puzzleHintUsed) {
+      label.innerHTML = 'Hint <span style="color:#A58463;font-size:10px;font-weight:700;">(Used)</span>';
     } else {
-      label.innerHTML = `Hint <span style="color:#FFD54F;font-size:11px;font-weight:700;"><img class="ui-ic" src="assets/icons/coin.svg" alt="">${costs[idx]}</span>`;
+      label.innerHTML = 'Hint <span style="background:#E5A93C;color:#1E1208;font-size:9px;font-weight:900;padding:1px 4px;border-radius:4px;letter-spacing:0.5px;">AD</span>';
     }
   }
 
-  showPuzzleHint() {
+  async showPuzzleHint() {
     if (!this.currentPuzzle) return;
-    const hintCosts = (window.ECONOMY_CONFIG && window.ECONOMY_CONFIG.hintsAndUndos && window.ECONOMY_CONFIG.hintsAndUndos.hintCosts) || [25, 50, 100, 200];
-    const hintIdx = this.hintCountInMatch || 0;
-    if (hintIdx >= hintCosts.length) {
-      this.showToast('Hint limit reached for this challenge');
+    if (this.puzzleHintUsed) {
+      this.showToast(`💡 Hint: ${this.currentPuzzle.hint}`);
+      this.highlightPuzzleHintMove();
       return;
     }
-    const hintCost = hintCosts[hintIdx];
-    if (!this.spendCoins(hintCost, 'puzzle_hint')) {
-      this.showToast(`Not enough coins for a hint! (${hintCost} Coins needed)`);
-      return;
+
+    if (typeof AdService !== 'undefined' && AdService.showRewarded) {
+      const ok = await AdService.showRewarded('puzzle_hint');
+      if (!ok) {
+        this.showToast('Ad was not completed. Hint not revealed.');
+        return;
+      }
     }
-    this.hintCountInMatch = hintIdx + 1;
+
+    this.puzzleHintUsed = true;
     this.updatePuzzleHintButtonUI();
     this.playSound('click');
+    this.highlightPuzzleHintMove();
+    this.showToast(`💡 Hint: ${this.currentPuzzle.hint}`);
+  }
 
-    // Highlight the piece to move
+  highlightPuzzleHintMove() {
+    if (!this.currentPuzzle) return;
     const nextMove = this.currentPuzzle.solution[this.puzzleStepIndex || 0];
     if (nextMove) {
       const from = ChessEngine.fromAlgebraic(nextMove.slice(0, 2));
@@ -7149,10 +7174,8 @@ class App {
       setTimeout(() => {
         if (fromSquare) fromSquare.classList.remove('hint-move');
         if (toSquare) toSquare.classList.remove('hint-move');
-      }, 3000);
+      }, 3500);
     }
-
-    this.showToast(`💡 Hint: ${this.currentPuzzle.hint}`);
   }
 
   onPuzzleSolved() {
@@ -7161,30 +7184,38 @@ class App {
     const isFirstToday = this.lastPuzzleDate !== today;
     const xpReward = Number(puzzle.xpReward) || 40;
     const coinsReward = Number(puzzle.coinsReward) || 60;
-    const puzzles = (typeof DAILY_PUZZLES !== 'undefined' ? DAILY_PUZZLES : (window.DAILY_PUZZLES || []));
+
+    // Increment puzzles solved counter for interstitial ad trigger
+    this.puzzlesSolvedSinceAd = (this.puzzlesSolvedSinceAd || 0) + 1;
+    this.lastPuzzleDoubled = false;
 
     let rewardText = '';
     if (isFirstToday) {
       this.addXP(xpReward);
       this.addCoins(coinsReward, 'daily_puzzle_win');
       this.lastPuzzleDate = today;
+      this.lastPuzzleBaseRewards = { xp: xpReward, coins: coinsReward };
 
       if (this.puzzleLevel === puzzle.level) {
-        this.puzzleLevel = Math.min(puzzles.length, this.puzzleLevel + 1);
+        this.puzzleLevel = this.puzzleLevel + 1;
       }
       this.saveEconomyState();
       rewardText = `+${xpReward} EXP & +${coinsReward} Coins earned!`;
     } else {
-      this.addXP(15);
-      rewardText = `Puzzle solved! (+15 EXP practice bonus)`;
+      const practiceXP = 20;
+      const practiceCoins = 30;
+      this.addXP(practiceXP);
+      this.addCoins(practiceCoins, 'puzzle_practice_bonus');
+      this.lastPuzzleBaseRewards = { xp: practiceXP, coins: practiceCoins };
+      rewardText = `Puzzle solved! (+${practiceXP} EXP & +${practiceCoins} Coins bonus)`;
       if (this.puzzleLevel === puzzle.level) {
-        this.puzzleLevel = Math.min(puzzles.length, this.puzzleLevel + 1);
+        this.puzzleLevel = this.puzzleLevel + 1;
         this.saveEconomyState();
       }
     }
 
     this.updatePuzzleHomeCard();
-    const nextLevel = puzzle.level < puzzles.length ? puzzle.level + 1 : null;
+    const nextLevel = puzzle.level + 1;
 
     setTimeout(() => {
       this.showPuzzleVictoryModal(puzzle, rewardText, nextLevel);
@@ -7196,26 +7227,89 @@ class App {
     const subEl = document.getElementById('puzzle-victory-sub');
     const rewardsEl = document.getElementById('puzzle-victory-rewards');
     const nextBtn = document.getElementById('btn-puzzle-next');
+    const doublerBtn = document.getElementById('btn-puzzle-doubler');
 
     if (titleEl) titleEl.textContent = `Level ${puzzle.level} Cleared!`;
     if (subEl) subEl.textContent = `Brilliant tactic: "${puzzle.title}"`;
     if (rewardsEl) rewardsEl.textContent = rewardText;
 
+    if (doublerBtn) {
+      doublerBtn.disabled = false;
+      doublerBtn.style.display = 'flex';
+      doublerBtn.style.background = 'linear-gradient(180deg, #F5D36C 0%, #D89812 100%)';
+      doublerBtn.style.border = '1.5px solid #FFE58A';
+      doublerBtn.style.color = '#20120B';
+      doublerBtn.style.cursor = 'pointer';
+      doublerBtn.innerHTML = '<span>🎁</span> <span>Claim 2X Rewards (Watch Ad)</span>';
+    }
+
     if (nextBtn) {
-      if (nextLevel) {
-        nextBtn.style.display = '';
-        nextBtn.textContent = `Level ${nextLevel} →`;
-        nextBtn.onclick = () => {
-          this.hideModal('modal-puzzle-victory');
-          this.startDailyPuzzle(nextLevel);
-        };
-      } else {
-        nextBtn.style.display = 'none';
-      }
+      nextBtn.style.display = '';
+      nextBtn.textContent = `Level ${nextLevel} ➔`;
+      nextBtn.onclick = async () => {
+        this.hideModal('modal-puzzle-victory');
+        if ((this.puzzlesSolvedSinceAd || 0) >= 3) {
+          this.puzzlesSolvedSinceAd = 0;
+          if (typeof AdService !== 'undefined' && AdService.showInterstitial) {
+            await AdService.showInterstitial('puzzle_next_level');
+          }
+        }
+        this.startDailyPuzzle(nextLevel);
+      };
     }
 
     this.showModal('modal-puzzle-victory');
   }
+
+  async claimPuzzle2XRewards() {
+    if (this.lastPuzzleDoubled) return;
+    const doublerBtn = document.getElementById('btn-puzzle-doubler');
+
+    if (typeof AdService !== 'undefined' && AdService.showRewarded) {
+      const success = await AdService.showRewarded('puzzle_2x_doubler');
+      if (!success) {
+        this.showToast('Watch the full ad to claim 2X rewards!');
+        return;
+      }
+    }
+
+    this.lastPuzzleDoubled = true;
+    const bonusXP = (this.lastPuzzleBaseRewards && this.lastPuzzleBaseRewards.xp) || 40;
+    const bonusCoins = (this.lastPuzzleBaseRewards && this.lastPuzzleBaseRewards.coins) || 60;
+
+    this.addXP(bonusXP);
+    this.addCoins(bonusCoins, 'puzzle_2x_doubler');
+    this.saveEconomyState();
+    this.playSound('celebrate');
+
+    if (doublerBtn) {
+      doublerBtn.disabled = true;
+      doublerBtn.style.background = 'linear-gradient(180deg, #4CAF50 0%, #2E7D32 100%)';
+      doublerBtn.style.border = '1.5px solid #81C784';
+      doublerBtn.style.color = '#FFF';
+      doublerBtn.style.cursor = 'default';
+      doublerBtn.innerHTML = `<span>✅</span> <span>2X Rewards Claimed! (+${bonusXP} XP, +${bonusCoins} Coins)</span>`;
+    }
+
+    const rewardsEl = document.getElementById('puzzle-victory-rewards');
+    if (rewardsEl) {
+      rewardsEl.innerHTML = `🌟 <strong>2X Bonus Doubled: +${bonusXP * 2} EXP & +${bonusCoins * 2} Coins</strong>`;
+    }
+
+    this.showToast(`🎉 2X Rewards: +${bonusXP} XP & +${bonusCoins} Coins added!`);
+  }
+
+  async exitPuzzleToHome() {
+    this.hideModal('modal-puzzle-victory');
+    if ((this.puzzlesSolvedSinceAd || 0) >= 3) {
+      this.puzzlesSolvedSinceAd = 0;
+      if (typeof AdService !== 'undefined' && AdService.showInterstitial) {
+        await AdService.showInterstitial('puzzle_exit_lobby');
+      }
+    }
+    this.goHome();
+  }
+
 
 }
 

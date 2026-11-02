@@ -14,11 +14,11 @@
   <title>Chess Arena • Tactical PvP Chess</title>
   <!-- PlayGama Bridge (bundles the YouTube Playables adapter) -->
   <script src="https://bridge.playgama.com/v2/stable/playgama-bridge.js"></script>
-  <link rel="stylesheet" href="css/tokens.css?v=1793602000000">
-  <link rel="stylesheet" href="css/styles.css?v=1793602000000">
-  <link rel="stylesheet" href="css/wooden-theme.css?v=1793602000000">
-  <link rel="stylesheet" href="css/home-lobby.css?v=1793602000000">
-  <link rel="stylesheet" href="css/abilities-screen.css?v=1793602000000">
+  <link rel="stylesheet" href="css/tokens.css?v=1793610000000">
+  <link rel="stylesheet" href="css/styles.css?v=1793610000000">
+  <link rel="stylesheet" href="css/wooden-theme.css?v=1793610000000">
+  <link rel="stylesheet" href="css/home-lobby.css?v=1793610000000">
+  <link rel="stylesheet" href="css/abilities-screen.css?v=1793610000000">
   <style>
     #username-modal.hidden {
       display: none !important;
@@ -764,7 +764,7 @@
                 <path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2.1V18h6v-1.2c0-.9.4-1.6 1-2.1A7 7 0 0 0 12 2z" />
               </svg>
             </span>
-            <span class="btn-label" id="btn-puzzle-hint-label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">Hint <span style="color: #FFD54F; font-size: 11px; font-weight: 700;"><img class="ui-ic" src="assets/icons/coin.svg" alt="">25</span></span>
+            <span class="btn-label" id="btn-puzzle-hint-label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">Hint <span style="background: #E5A93C; color: #1E1208; font-size: 9px; font-weight: 900; padding: 1px 4px; border-radius: 4px; letter-spacing: 0.5px;">AD</span></span>
           </button>
           <button class="btn-game-pill" id="btn-puzzle-reset" onclick="app.resetCurrentPuzzle()" style="display: none;" title="Reset Puzzle">
             <span class="btn-icon" style="display: inline-flex; align-items: center; justify-content: center;">
@@ -776,7 +776,7 @@
             </span>
             <span class="btn-label">Reset</span>
           </button>
-          <button class="btn-game-pill" id="btn-puzzle-exit" onclick="app.goHome()" style="display: none;" title="Exit to Lobby">
+          <button class="btn-game-pill" id="btn-puzzle-exit" onclick="app.exitPuzzleToHome()" style="display: none;" title="Exit to Lobby">
             <span class="btn-icon" style="display: inline-flex; align-items: center; justify-content: center;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
@@ -1489,12 +1489,17 @@
       </div>
       <h3 id="puzzle-victory-title" style="color: #FFD54F; font-family: 'Cinzel', Georgia, serif; font-size: 22px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Puzzle Solved!</h3>
       <p id="puzzle-victory-sub" style="color: #EBD2A5; font-size: 14px; margin-bottom: 16px;">Outstanding move! You solved the challenge.</p>
-      <div id="puzzle-victory-rewards" style="background: rgba(0,0,0,0.35); border: 1px solid rgba(201,151,0,0.3); border-radius: 10px; padding: 12px; margin-bottom: 20px; font-weight: 700; color: #FFE082; font-size: 15px;">
+      <div id="puzzle-victory-rewards" style="background: rgba(0,0,0,0.35); border: 1px solid rgba(201,151,0,0.3); border-radius: 10px; padding: 12px; margin-bottom: 14px; font-weight: 700; color: #FFE082; font-size: 15px;">
         +40 EXP &amp; +60 Coins
+      </div>
+      <div style="margin-bottom: 14px;">
+        <button class="btn" id="btn-puzzle-doubler" onclick="app.claimPuzzle2XRewards()" style="width: 100%; font-weight: 800; background: linear-gradient(180deg, #F5D36C 0%, #D89812 100%); color: #20120B; border: 1.5px solid #FFE58A; border-radius: 10px; cursor: pointer; padding: 10px 14px; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(216, 152, 18, 0.35);">
+          <span>🎁</span> <span>Claim 2X Rewards (Watch Ad)</span>
+        </button>
       </div>
       <div class="puzzle-victory-buttons" style="display: flex; gap: 10px; justify-content: center;">
         <button class="btn btn-primary" id="btn-puzzle-next" style="flex: 1; font-weight: 800; background: linear-gradient(180deg, #F8DA78 0%, #E4B33C 48%, #C99700 100%); color: #20120B; border: 1.5px solid #FFE58A; border-radius: 10px; cursor: pointer; padding: 10px 14px;">Next Level</button>
-        <button class="btn btn-tertiary" onclick="app.hideModal('modal-puzzle-victory'); app.goHome();" style="flex: 1; font-weight: 700; background: rgba(255, 255, 255, 0.08); color: #FDF7EC; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; cursor: pointer; padding: 10px 14px;">Lobby</button>
+        <button class="btn btn-tertiary" onclick="app.exitPuzzleToHome()" style="flex: 1; font-weight: 700; background: rgba(255, 255, 255, 0.08); color: #FDF7EC; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; cursor: pointer; padding: 10px 14px;">Lobby</button>
       </div>
     </div>
   </div>
@@ -1961,13 +1966,13 @@
   <script src="js/multiplayer.js?v=1793602000000"></script>
   <script src="js/ai-engine.js?v=1793602000000"></script>
   <script src="js/pieces.js?v=1793602000000"></script>
-  <script src="js/ad-service.js?v=1793603000000"></script>
+  <script src="js/ad-service.js?v=1793610000000"></script>
   <script src="js/platform.js?v=1793602000000"></script>
   <script src="js/save-store.js?v=1793602000000"></script>
   <script src="js/storage-service.js?v=1793602000000"></script>
   <script src="js/economy-config.js?v=1793602000000"></script>
-  <script src="js/puzzles-config.js?v=1793604000000"></script>
-  <script src="js/app.js?v=1793602000000"></script>
+  <script src="js/puzzles-config.js?v=1793610000000"></script>
+  <script src="js/app.js?v=1793610000000"></script>
 </body>
 
 </html>
