@@ -5048,7 +5048,7 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 }
 
 /* ==========================================================================
-   PLAYGAMA QA SCALING & VIEWPORT FIT: ZERO SCROLL & CRISP PROPORTIONS
+   PLAYGAMA QA SCALING & VIEWPORT FIT: ZERO OVERLAP & SLEEK ACTION BAR
    Ensures board, header, clocks, and action buttons fit 100% in viewport
    across Playgama iframe, 16:9, 1:1, iPhone Portrait & Landscape.
    ========================================================================== */
@@ -5059,6 +5059,13 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   max-height: 100dvh !important;
   width: 100% !important;
   box-sizing: border-box !important;
+  --board-max: min(460px, calc(100vw - 32px), calc(100dvh - 176px));
+}
+
+@media (min-width: 801px) {
+  #screen-game {
+    --board-max: min(460px, calc(100vw - 360px), calc(100dvh - 176px));
+  }
 }
 
 #screen-game .game-layout-wrapper {
@@ -5086,25 +5093,25 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   height: 100% !important;
   max-height: 100dvh !important;
   width: 100% !important;
-  padding: 2px 6px 4px 6px !important;
-  gap: 4px !important;
+  padding: 4px 6px !important;
+  gap: 5px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
 }
 
 #screen-game .ingame-match-header {
   flex: 0 0 auto !important;
-  height: 38px !important;
-  min-height: 38px !important;
+  height: 36px !important;
+  min-height: 36px !important;
   width: 100% !important;
-  max-width: min(480px, calc(100vw - 32px), calc(100dvh - 150px)) !important;
+  max-width: var(--board-max) !important;
   margin: 0 auto !important;
   padding: 0 4px !important;
 }
 
 #screen-game .ingame-player-avatar {
-  width: 32px !important;
-  height: 32px !important;
+  width: 30px !important;
+  height: 30px !important;
 }
 
 #screen-game .ingame-timers-row {
@@ -5112,65 +5119,150 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   height: 28px !important;
   min-height: 28px !important;
   width: 100% !important;
-  max-width: min(480px, calc(100vw - 32px), calc(100dvh - 150px)) !important;
+  max-width: var(--board-max) !important;
   margin: 0 auto !important;
 }
 
 #screen-game .timer-pill,
 #screen-game .turn-status-badge {
-  font-size: 12px !important;
-  padding: 2px 10px !important;
-  min-height: 24px !important;
+  font-size: 11px !important;
+  padding: 2px 8px !important;
+  min-height: 22px !important;
 }
 
 #screen-game .move-ticker-container {
   flex: 0 0 auto !important;
-  height: 26px !important;
-  min-height: 26px !important;
+  height: 24px !important;
+  min-height: 24px !important;
   width: 100% !important;
-  max-width: min(480px, calc(100vw - 32px), calc(100dvh - 150px)) !important;
+  max-width: var(--board-max) !important;
   margin: 0 auto !important;
 }
 
+/* CHESSBOARD ARENA: STRICT CONTAINER LOCK (NEVER SHRINKS BELOW BOARD) */
 #screen-game .board-arena-container {
-  flex: 0 1 auto !important;
+  flex: 0 0 auto !important;
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
   justify-content: center !important;
   position: relative !important;
-  width: 100% !important;
-  max-width: min(580px, calc(100vw - 20px), calc(100dvh - 146px)) !important;
+  width: var(--board-max) !important;
+  height: var(--board-max) !important;
+  max-width: var(--board-max) !important;
+  max-height: var(--board-max) !important;
   margin: 0 auto !important;
   gap: 6px !important;
+  box-sizing: border-box !important;
 }
 
 #screen-game .board-arena-container .board-wrap {
-  flex: 1 1 auto !important;
-  width: 100% !important;
-  max-width: min(480px, calc(100vw - 44px), calc(100dvh - 146px)) !important;
+  flex: 0 0 auto !important;
+  width: var(--board-max) !important;
+  height: var(--board-max) !important;
+  max-width: var(--board-max) !important;
+  max-height: var(--board-max) !important;
   aspect-ratio: 1 / 1 !important;
   margin: 0 auto !important;
+  box-sizing: border-box !important;
 }
 
 #screen-game .board-frame {
-  padding: clamp(6px, 1.2vw, 12px) !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding: clamp(6px, 1.2vw, 10px) !important;
   box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 #screen-game .chess-board {
   width: 100% !important;
   height: 100% !important;
+  flex: 1 1 0 !important;
   aspect-ratio: 1 / 1 !important;
 }
 
+/* SLEEK, COMPACT ACTION BAR: REDUCED HEIGHT (34px) & ZERO OVERLAP */
 #screen-game .ingame-action-bar {
   flex: 0 0 auto !important;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  align-items: center !important;
   width: 100% !important;
-  max-width: min(480px, calc(100vw - 44px), calc(100dvh - 146px)) !important;
-  margin: 2px auto 0 auto !important;
-  height: clamp(38px, 5.5vh, 46px) !important;
-  min-height: 38px !important;
+  max-width: var(--board-max) !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  margin: 6px auto 0 auto !important;
+  gap: 8px !important;
+  box-sizing: border-box !important;
+}
+
+#screen-game .btn-game-pill {
+  flex: 1 1 0 !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  padding: 0 8px !important;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  border-radius: 9px !important;
+  border: 1.5px solid #8C6538 !important;
+  background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
+  box-shadow: 0 3px 6px rgba(46, 26, 15, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.15) !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+  transition: all 0.16s ease !important;
+}
+
+#screen-game .btn-game-pill:hover {
+  background: linear-gradient(180deg, #4A2E1B 0%, #2A170C 100%) !important;
+  border-color: #C99700 !important;
+  transform: translateY(-1px) !important;
+}
+
+#screen-game .btn-game-pill .btn-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+}
+
+#screen-game .btn-game-pill .btn-icon svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+#screen-game .btn-game-pill .btn-label {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.3px !important;
+  color: #FDF7EC !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+#screen-game .undo-cost-badge {
+  font-size: 10px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+}
+
+#screen-game .undo-cost-badge img,
+#screen-game .btn-label img.ui-ic {
+  width: 11px !important;
+  height: 11px !important;
 }
 
 #screen-game .chat-container {
@@ -5180,12 +5272,11 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 }
 
 /* ==========================================================================
-   SHORT LANDSCAPE PHONES (iPhone 16 Landscape & wide short viewports <= 500px):
-   Side-by-side split layout: Board gets massive 96% screen height on the left,
+   SHORT LANDSCAPE PHONES (max-height <= 440px):
+   Side-by-side split layout: Board gets massive screen height on the left,
    Player headers, clocks, ticker & buttons sit comfortably on the right.
-   Zero vertical scroll, zero cramping!
    ========================================================================== */
-@media (orientation: landscape) and (max-height: 500px) {
+@media (orientation: landscape) and (max-height: 440px) {
   #screen-game {
     overflow: hidden !important;
     height: 100dvh !important;
@@ -5232,8 +5323,8 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   #screen-game #btn-toggle-chat {
     display: flex !important;
     position: static !important;
-    width: 36px !important;
-    height: 36px !important;
+    width: 34px !important;
+    height: 34px !important;
   }
 
   #screen-game #connection-status {
@@ -5246,7 +5337,7 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 
   #screen-game .game-container {
     display: grid !important;
-    grid-template-columns: auto minmax(230px, 350px) !important;
+    grid-template-columns: auto minmax(220px, 340px) !important;
     grid-template-rows: auto auto auto auto !important;
     grid-template-areas:
       "board header"
@@ -5262,7 +5353,7 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
     max-width: 100vw !important;
     height: 100dvh !important;
     max-height: 100dvh !important;
-    padding: 3px 8px !important;
+    padding: 2px 8px !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
   }
@@ -5275,7 +5366,7 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
     justify-content: center !important;
     height: calc(100dvh - 8px) !important;
     max-height: calc(100dvh - 8px) !important;
-    width: auto !important;
+    width: calc(100dvh - 8px) !important;
     max-width: calc(100dvh - 8px) !important;
     margin: 0 !important;
     gap: 4px !important;
@@ -5309,7 +5400,7 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   #screen-game .ingame-match-header {
     grid-area: header !important;
     width: 100% !important;
-    max-width: 350px !important;
+    max-width: 340px !important;
     height: 32px !important;
     min-height: 32px !important;
     margin: 0 auto !important;
@@ -5337,7 +5428,7 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   #screen-game .ingame-timers-row {
     grid-area: timers !important;
     width: 100% !important;
-    max-width: 350px !important;
+    max-width: 340px !important;
     height: 26px !important;
     min-height: 26px !important;
     margin: 0 auto !important;
@@ -5353,27 +5444,27 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   #screen-game .move-ticker-container {
     grid-area: ticker !important;
     width: 100% !important;
-    max-width: 350px !important;
-    height: 24px !important;
-    min-height: 24px !important;
+    max-width: 340px !important;
+    height: 22px !important;
+    min-height: 22px !important;
     margin: 0 auto !important;
   }
 
   #screen-game .ingame-action-bar {
     grid-area: actions !important;
     width: 100% !important;
-    max-width: 350px !important;
-    height: 38px !important;
-    min-height: 38px !important;
-    margin: 3px auto 0 auto !important;
+    max-width: 340px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    margin: 2px auto 0 auto !important;
     gap: 4px !important;
   }
 
   #screen-game .btn-game-pill {
-    height: 36px !important;
-    min-height: 36px !important;
-    max-height: 36px !important;
-    padding: 0 8px !important;
-    font-size: 11px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    padding: 0 6px !important;
+    font-size: 10px !important;
   }
 }
