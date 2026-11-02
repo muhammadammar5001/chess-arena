@@ -89,4 +89,15 @@ assert(appSource.includes("AdService.showInterstitial('puzzle_next_level')"), 'N
 assert(appSource.includes("AdService.showInterstitial('puzzle_exit_lobby')"), 'Exit to Lobby must trigger interstitial when threshold met');
 console.log('✔ Hybrid endless loop and all 3 Ad features verified in app.js');
 
+// 5. Verify Option 1: Daily 4-Challenge Cap, Reset Countdown Timer & Bonus Ad Unlock
+assert(appSource.includes("this.DAILY_PUZZLES_CAP = 4;"), 'DAILY_PUZZLES_CAP must be set to 4');
+assert(appSource.includes("isDailyPuzzleCapReached()"), 'isDailyPuzzleCapReached method must be present');
+assert(appSource.includes("getPuzzleResetTimeRemaining()"), 'getPuzzleResetTimeRemaining method must be present');
+assert(appSource.includes("startPuzzleTimerTicker()"), 'startPuzzleTimerTicker method must be present');
+assert(appSource.includes("stopPuzzleTimerTicker()"), 'stopPuzzleTimerTicker method must be present');
+assert(appSource.includes("AdService.showRewarded('puzzle_unlock_bonus')"), 'Must allow unlocking bonus challenges via rewarded ad');
+assert(appSource.includes("owl_puzzles_solved_today"), 'Must persist daily solved count');
+assert(appSource.includes("owl_bonus_puzzles_today"), 'Must persist bonus puzzles count');
+console.log('✔ Daily 4-challenge cap, countdown timer, and bonus ad unlock verified in app.js');
+
 console.log('--- ALL DAILY PUZZLE TESTS PASSED SUCCESSFULLY! ---');

@@ -105,6 +105,10 @@ class App {
     this.puzzlesSolvedSinceAd = 0;
     this.lastPuzzleDoubled = false;
     this.lastPuzzleBaseRewards = null;
+    this.DAILY_PUZZLES_CAP = 4;
+    this.puzzlesSolvedToday = 0;
+    this.bonusPuzzlesUnlockedToday = 0;
+    this.puzzleTimerInterval = null;
 
     // Cloud-backed player profile (YouTube Playables / PlayGama / localStorage).
     this.cloudProfile = null;
@@ -1172,6 +1176,9 @@ class App {
     }
     if (screenId === 'screen-home') {
       this.updatePuzzleHomeCard();
+      this.startPuzzleTimerTicker();
+    } else {
+      this.stopPuzzleTimerTicker();
     }
     document.querySelectorAll('.screen').forEach(s => {
       s.classList.remove('active');
@@ -5761,6 +5768,8 @@ class App {
       SaveStore.setItem('owl_player_xp', String(this.playerXP));
       SaveStore.setItem('owl_puzzle_level', String(this.puzzleLevel || 1));
       if (this.lastPuzzleDate) SaveStore.setItem('owl_last_puzzle_date', this.lastPuzzleDate);
+      SaveStore.setItem('owl_puzzles_solved_today', String(this.puzzlesSolvedToday || 0));
+      SaveStore.setItem('owl_bonus_puzzles_today', String(this.bonusPuzzlesUnlockedToday || 0));
       SaveStore.setItem('owl_slot2_unlocked', this.slot2Unlocked ? 'true' : 'false');
       SaveStore.setItem('owl_slot2_ads', String(this.slot2AdsWatched));
       SaveStore.setItem('owl_unlocked_skills', JSON.stringify(this.unlockedSkills));
@@ -5787,6 +5796,8 @@ class App {
       xp: Math.max(0, Math.floor(Number(this.playerXP) || 0)),
       puzzleLevel: Math.max(1, Math.floor(Number(this.puzzleLevel) || 1)),
       lastPuzzleDate: this.lastPuzzleDate || null,
+      puzzlesSolvedToday: Math.max(0, parseInt(this.puzzlesSolvedToday, 10) || 0),
+      bonusPuzzlesUnlockedToday: Math.max(0, parseInt(this.bonusPuzzlesUnlockedToday, 10) || 0),
       slot2Unlocked: this.slot2Unlocked === true,
       slot2AdsWatched: Math.max(0, Math.min(3, Math.floor(Number(this.slot2AdsWatched) || 0))),
       unlockedSkills: Array.isArray(this.unlockedSkills) ? this.unlockedSkills.slice(0, 12) : [],
@@ -5856,6 +5867,14 @@ class App {
     const pLvl = parseInt(data.puzzleLevel, 10);
     if (Number.isFinite(pLvl) && pLvl > 0) this.puzzleLevel = Math.max(this.puzzleLevel || 1, pLvl);
     if (data.lastPuzzleDate) this.lastPuzzleDate = data.lastPuzzleDate;
+    const todayKey = this.getEconomyDateKey();
+    if (this.lastPuzzleDate === todayKey) {
+      this.puzzlesSolvedToday = Math.max(0, parseInt(data.puzzlesSolvedToday, 10) || 0);
+      this.bonusPuzzlesUnlockedToday = Math.max(0, parseInt(data.bonusPuzzlesUnlockedToday, 10) || 0);
+    } else {
+      this.puzzlesSolvedToday = 0;
+      this.bonusPuzzlesUnlockedToday = 0;
+    }
     this.slot2AdsWatched = Math.max(0, Math.min(3, parseInt(data.slot2AdsWatched, 10) || 0));
     this.slot2Unlocked = data.slot2Unlocked === true || this.slot2AdsWatched >= 3;
 
@@ -5977,6 +5996,14 @@ class App {
       const parsedPuzzleLevel = parseInt(SaveStore.getItem('owl_puzzle_level'), 10);
       this.puzzleLevel = Number.isFinite(parsedPuzzleLevel) && parsedPuzzleLevel > 0 ? parsedPuzzleLevel : 1;
       this.lastPuzzleDate = SaveStore.getItem('owl_last_puzzle_date') || null;
+      const todayInit = this.getEconomyDateKey();
+      if (this.lastPuzzleDate === todayInit) {
+        this.puzzlesSolvedToday = Math.max(0, parseInt(SaveStore.getItem('owl_puzzles_solved_today'), 10) || 0);
+        this.bonusPuzzlesUnlockedToday = Math.max(0, parseInt(SaveStore.getItem('owl_bonus_puzzles_today'), 10) || 0);
+      } else {
+        this.puzzlesSolvedToday = 0;
+        this.bonusPuzzlesUnlockedToday = 0;
+      }
       this.slot2Unlocked = SaveStore.getItem('owl_slot2_unlocked') === 'true';
       this.slot2AdsWatched = Math.max(0, Math.min(3, parseInt(SaveStore.getItem('owl_slot2_ads'), 10) || 0));
       if (this.slot2AdsWatched >= 3) this.slot2Unlocked = true;
@@ -6954,6 +6981,50 @@ class App {
 
   // --- Daily Legal Puzzle Challenges ------------------
 
+  isDailyPuzzleCapReached() {
+    const today = this.getEconomyDateKey();
+    if (this.lastPuzzleDate !== today) {
+      this.puzzlesSolvedToday = 0;
+      this.bonusPuzzlesUnlockedToday = 0;
+    }
+    const solved = this.puzzlesSolvedToday || 0;
+    const allowed = (this.DAILY_PUZZLES_CAP || 4) + (this.bonusPuzzlesUnlockedToday || 0);
+    return solved >= allowed;
+  }
+
+  getPuzzleResetTimeRemaining() {
+    const now = new Date();
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+    const diffMs = Math.max(0, tomorrow.getTime() - now.getTime());
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
+    return {
+      formatted: `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`,
+      hours,
+      mins,
+      secs
+    };
+  }
+
+  startPuzzleTimerTicker() {
+    this.stopPuzzleTimerTicker();
+    if (!this.isDailyPuzzleCapReached()) return;
+    this.puzzleTimerInterval = setInterval(() => {
+      this.updatePuzzleHomeCard();
+      if (!this.isDailyPuzzleCapReached()) {
+        this.stopPuzzleTimerTicker();
+      }
+    }, 1000);
+  }
+
+  stopPuzzleTimerTicker() {
+    if (this.puzzleTimerInterval) {
+      clearInterval(this.puzzleTimerInterval);
+      this.puzzleTimerInterval = null;
+    }
+  }
+
   updatePuzzleHomeCard() {
     const titleEl = document.getElementById('home-puzzle-title');
     const descEl = document.getElementById('home-puzzle-desc');
@@ -6966,30 +7037,60 @@ class App {
     const puzzle = puzzles[pIdx] || puzzles[0];
 
     const today = this.getEconomyDateKey();
-    const completedToday = this.lastPuzzleDate === today;
+    if (this.lastPuzzleDate !== today) {
+      this.puzzlesSolvedToday = 0;
+      this.bonusPuzzlesUnlockedToday = 0;
+    }
 
+    const solvedToday = this.puzzlesSolvedToday || 0;
+    const capReached = this.isDailyPuzzleCapReached();
     const levelLabel = lvl > puzzles.length ? `Master Lv.${lvl}` : `Level ${lvl}`;
     titleEl.textContent = `Daily Puzzle · ${levelLabel}`;
 
-    if (completedToday) {
-      descEl.textContent = `Today's challenge complete! Replay ${levelLabel} for practice`;
-      badgeEl.textContent = 'DONE';
-      badgeEl.style.background = 'rgba(76, 175, 80, 0.22)';
-      badgeEl.style.color = '#81C784';
-      badgeEl.style.borderColor = 'rgba(129, 199, 132, 0.45)';
+    if (capReached) {
+      const timer = this.getPuzzleResetTimeRemaining();
+      descEl.textContent = `4/4 solved today! Tap to unlock bonus with Ad 🎬`;
+      badgeEl.textContent = `⏳ ${timer.formatted}`;
+      badgeEl.style.background = 'rgba(255, 152, 0, 0.22)';
+      badgeEl.style.color = '#FFA726';
+      badgeEl.style.borderColor = 'rgba(255, 167, 38, 0.45)';
     } else {
-      descEl.textContent = puzzle ? `Solve to earn +${puzzle.xpReward} XP & +${puzzle.coinsReward} Coins` : 'Solve daily tactical puzzles for XP & Coins';
-      badgeEl.textContent = 'READY';
+      descEl.textContent = `Challenge ${Math.min(solvedToday + 1, 4)}/4: +${puzzle.xpReward} XP & +${puzzle.coinsReward} Coins`;
+      badgeEl.textContent = `${solvedToday}/4 DONE`;
       badgeEl.style.background = 'rgba(255, 213, 79, 0.18)';
       badgeEl.style.color = '#FFD54F';
       badgeEl.style.borderColor = 'rgba(255, 213, 79, 0.35)';
     }
   }
 
-  startDailyPuzzle(level = null) {
+  startDailyPuzzle(level = null, bypassCapCheck = false) {
     const puzzles = (typeof DAILY_PUZZLES !== 'undefined' ? DAILY_PUZZLES : (window.DAILY_PUZZLES || []));
     if (!puzzles || puzzles.length === 0) {
       this.showToast('Daily puzzles currently unavailable');
+      return;
+    }
+
+    // Check if daily 4-puzzle cap reached
+    if (!bypassCapCheck && this.isDailyPuzzleCapReached()) {
+      const timer = this.getPuzzleResetTimeRemaining();
+      this.showConfirm(
+        'Unlock Bonus Challenge?',
+        `You completed all 4 daily challenges! Next daily reset in ${timer.formatted}.\n\nWatch an ad to unlock a bonus challenge immediately?`,
+        async () => {
+          if (typeof AdService !== 'undefined' && AdService.showRewarded) {
+            this.showToast('Opening ad to unlock bonus challenge...');
+            const ok = await AdService.showRewarded('puzzle_unlock_bonus');
+            if (!ok) {
+              this.showToast('Ad was not completed. Challenge locked.');
+              return;
+            }
+          }
+          this.bonusPuzzlesUnlockedToday = (this.bonusPuzzlesUnlockedToday || 0) + 1;
+          this.saveEconomyState();
+          this.showToast('🎉 Bonus Challenge Unlocked!');
+          this.startDailyPuzzle(level, true);
+        }
+      );
       return;
     }
 
@@ -7181,38 +7282,32 @@ class App {
   onPuzzleSolved() {
     const puzzle = this.currentPuzzle;
     const today = this.getEconomyDateKey();
-    const isFirstToday = this.lastPuzzleDate !== today;
-    const xpReward = Number(puzzle.xpReward) || 40;
-    const coinsReward = Number(puzzle.coinsReward) || 60;
 
-    // Increment puzzles solved counter for interstitial ad trigger
+    // Check if new day
+    if (this.lastPuzzleDate !== today) {
+      this.lastPuzzleDate = today;
+      this.puzzlesSolvedToday = 0;
+      this.bonusPuzzlesUnlockedToday = 0;
+    }
+
+    this.puzzlesSolvedToday = (this.puzzlesSolvedToday || 0) + 1;
     this.puzzlesSolvedSinceAd = (this.puzzlesSolvedSinceAd || 0) + 1;
     this.lastPuzzleDoubled = false;
 
-    let rewardText = '';
-    if (isFirstToday) {
-      this.addXP(xpReward);
-      this.addCoins(coinsReward, 'daily_puzzle_win');
-      this.lastPuzzleDate = today;
-      this.lastPuzzleBaseRewards = { xp: xpReward, coins: coinsReward };
+    const xpReward = Number(puzzle.xpReward) || 40;
+    const coinsReward = Number(puzzle.coinsReward) || 60;
 
-      if (this.puzzleLevel === puzzle.level) {
-        this.puzzleLevel = this.puzzleLevel + 1;
-      }
-      this.saveEconomyState();
-      rewardText = `+${xpReward} EXP & +${coinsReward} Coins earned!`;
-    } else {
-      const practiceXP = 20;
-      const practiceCoins = 30;
-      this.addXP(practiceXP);
-      this.addCoins(practiceCoins, 'puzzle_practice_bonus');
-      this.lastPuzzleBaseRewards = { xp: practiceXP, coins: practiceCoins };
-      rewardText = `Puzzle solved! (+${practiceXP} EXP & +${practiceCoins} Coins bonus)`;
-      if (this.puzzleLevel === puzzle.level) {
-        this.puzzleLevel = this.puzzleLevel + 1;
-        this.saveEconomyState();
-      }
+    this.addXP(xpReward);
+    this.addCoins(coinsReward, 'daily_puzzle_win');
+    this.lastPuzzleBaseRewards = { xp: xpReward, coins: coinsReward };
+
+    if (this.puzzleLevel === puzzle.level) {
+      this.puzzleLevel = this.puzzleLevel + 1;
     }
+    this.saveEconomyState();
+
+    const solvedToday = this.puzzlesSolvedToday;
+    const rewardText = `+${xpReward} EXP & +${coinsReward} Coins earned! (${Math.min(solvedToday, 4)}/4 Today)`;
 
     this.updatePuzzleHomeCard();
     const nextLevel = puzzle.level + 1;
@@ -7245,17 +7340,39 @@ class App {
 
     if (nextBtn) {
       nextBtn.style.display = '';
-      nextBtn.textContent = `Level ${nextLevel} ➔`;
-      nextBtn.onclick = async () => {
-        this.hideModal('modal-puzzle-victory');
-        if ((this.puzzlesSolvedSinceAd || 0) >= 3) {
-          this.puzzlesSolvedSinceAd = 0;
-          if (typeof AdService !== 'undefined' && AdService.showInterstitial) {
-            await AdService.showInterstitial('puzzle_next_level');
+      const capReached = this.isDailyPuzzleCapReached();
+      if (capReached) {
+        nextBtn.innerHTML = `<span>🎬 Unlock Lv.${nextLevel} (Ad)</span>`;
+        nextBtn.style.background = 'linear-gradient(180deg, #FFB74D 0%, #F57C00 100%)';
+        nextBtn.onclick = async () => {
+          this.hideModal('modal-puzzle-victory');
+          if (typeof AdService !== 'undefined' && AdService.showRewarded) {
+            this.showToast('Loading ad for bonus challenge...');
+            const ok = await AdService.showRewarded('puzzle_unlock_bonus');
+            if (!ok) {
+              this.showToast('Ad was not completed. Challenge locked.');
+              return;
+            }
           }
-        }
-        this.startDailyPuzzle(nextLevel);
-      };
+          this.bonusPuzzlesUnlockedToday = (this.bonusPuzzlesUnlockedToday || 0) + 1;
+          this.saveEconomyState();
+          this.showToast('🎉 Bonus Challenge Unlocked!');
+          this.startDailyPuzzle(nextLevel, true);
+        };
+      } else {
+        nextBtn.innerHTML = `<span>Level ${nextLevel} ➔</span>`;
+        nextBtn.style.background = 'linear-gradient(180deg, #F8DA78 0%, #E4B33C 48%, #C99700 100%)';
+        nextBtn.onclick = async () => {
+          this.hideModal('modal-puzzle-victory');
+          if ((this.puzzlesSolvedSinceAd || 0) >= 3) {
+            this.puzzlesSolvedSinceAd = 0;
+            if (typeof AdService !== 'undefined' && AdService.showInterstitial) {
+              await AdService.showInterstitial('puzzle_next_level');
+            }
+          }
+          this.startDailyPuzzle(nextLevel);
+        };
+      }
     }
 
     this.showModal('modal-puzzle-victory');
