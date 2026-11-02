@@ -5183,7 +5183,7 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   aspect-ratio: 1 / 1 !important;
 }
 
-/* SLEEK, COMPACT ACTION BAR: STRICT MODE-SPECIFIC BUTTON VISIBILITY (NEVER OVERRIDE DISPLAY: NONE) */
+/* SLEEK, COMPACT ACTION BAR: STRICT MODE-SPECIFIC BUTTON VISIBILITY & HORIZONTAL FIT */
 #screen-game .ingame-action-bar {
   flex: 0 0 auto !important;
   display: flex !important;
@@ -5192,12 +5192,13 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   align-items: center !important;
   width: 100% !important;
   max-width: var(--board-max) !important;
-  height: 34px !important;
-  min-height: 34px !important;
-  max-height: 34px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
   margin: 6px auto 0 auto !important;
-  gap: 8px !important;
+  gap: 6px !important;
   box-sizing: border-box !important;
+  overflow: visible !important;
 }
 
 /* NEVER display buttons that are marked hidden by app.js mode logic */
@@ -5208,15 +5209,15 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 
 #screen-game .btn-game-pill {
   flex: 1 1 0 !important;
-  height: 34px !important;
-  min-height: 34px !important;
-  max-height: 34px !important;
-  padding: 0 8px !important;
-  display: inline-flex; /* NO !important so style="display: none" from app.js always wins */
-  flex-direction: row !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  padding: 2px 4px !important;
+  display: flex; /* NO !important so style="display: none" from app.js always wins */
+  flex-direction: column !important; /* Column keeps buttons compact horizontally so they never truncate */
   align-items: center !important;
   justify-content: center !important;
-  gap: 5px !important;
+  gap: 2px !important;
   border-radius: 9px !important;
   border: 1.5px solid #8C6538 !important;
   background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
@@ -5224,6 +5225,7 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   box-sizing: border-box !important;
   cursor: pointer !important;
   transition: all 0.16s ease !important;
+  min-width: 0 !important;
 }
 
 #screen-game .btn-game-pill:hover {
@@ -5233,10 +5235,9 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 }
 
 #screen-game .btn-game-pill .btn-icon {
-  display: inline-flex !important;
+  display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 13px !important;
   line-height: 1 !important;
 }
 
@@ -5246,13 +5247,13 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 }
 
 #screen-game .btn-game-pill .btn-label {
-  display: inline-flex !important;
+  display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 4px !important;
-  font-size: 11px !important;
+  gap: 3px !important;
+  font-size: 10px !important;
   font-weight: 700 !important;
-  letter-spacing: 0.3px !important;
+  letter-spacing: 0.2px !important;
   color: #FDF7EC !important;
   line-height: 1 !important;
   white-space: nowrap !important;
@@ -5267,8 +5268,8 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 
 #screen-game .undo-cost-badge img,
 #screen-game .btn-label img.ui-ic {
-  width: 11px !important;
-  height: 11px !important;
+  width: 10px !important;
+  height: 10px !important;
 }
 
 #screen-game .chat-container {
