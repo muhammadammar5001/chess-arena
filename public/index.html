@@ -14,6 +14,25 @@
   <title>Chess Arena • Tactical PvP Chess</title>
   <!-- PlayGama Bridge (bundles the YouTube Playables adapter) -->
   <script src="https://bridge.playgama.com/v2/stable/playgama-bridge.js"></script>
+  <script>
+    (function() {
+      window._playgamaBridgeInitPromise = null;
+      function initBridge() {
+        if (window.bridge && typeof window.bridge.initialize === 'function') {
+          if (!window._playgamaBridgeInitPromise) {
+            window._playgamaBridgeInitPromise = window.bridge.initialize().catch(function(err) {
+              console.warn('[Playgama] Bridge init warning:', err);
+              return null;
+            });
+          }
+        }
+      }
+      initBridge();
+      if (!window._playgamaBridgeInitPromise) {
+        window.addEventListener('load', initBridge, { once: true });
+      }
+    })();
+  </script>
   <link rel="stylesheet" href="css/tokens.css?v=1793640000000">
   <link rel="stylesheet" href="css/styles.css?v=1793652990310">
   <link rel="stylesheet" href="css/wooden-theme.css?v=1793656312198">

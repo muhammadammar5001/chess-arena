@@ -71,21 +71,29 @@
 
   function initializeBridge(bridge) {
     return new Promise((resolve) => {
-      if (!bridge || typeof bridge.initialize !== 'function') return resolve(bridge || null);
+      if (!bridge) return resolve(null);
       let settled = false;
       const done = () => {
         if (settled) return;
         settled = true;
         resolve(bridge);
       };
-      try {
-        const result = bridge.initialize(done);
-        if (result && typeof result.then === 'function') {
-          result.then(done).catch(done);
+
+      if (window._playgamaBridgeInitPromise) {
+        window._playgamaBridgeInitPromise.then(done).catch(done);
+      } else if (typeof bridge.initialize === 'function') {
+        try {
+          const result = bridge.initialize(done);
+          if (result && typeof result.then === 'function') {
+            result.then(done).catch(done);
+          }
+        } catch (e) {
+          done();
         }
-      } catch (e) {
-        done();
+      } else {
+        return resolve(bridge);
       }
+
       // Never block the game on a slow platform handshake.
       setTimeout(done, 4000);
     });
@@ -256,10 +264,12 @@
         resolveReady(profile);
       }
 
-      // game_ready is sent by App.init() once the first playable frame is on
-      // screen (PlayGama required step 6). If the app never boots we still
-      // release the host's loading screen after a generous safety delay.
-      setTimeout(() => { sendGameReady(); }, 15000);
+      // Send game_ready after the first playable document is interactive. The
+      // app also calls gameReady() after its own init as a safety net; the
+      // bridge message is intentionally sent only once.
+      const fireReady = () => setTimeout(() => { sendGameReady(); }, 50);
+      if (document.readyState === 'complete') fireReady();
+      else window.addEventListener('load', fireReady, { once: true });
     } catch (e) {
       if (!readyResolved) {
         readyResolved = true;
