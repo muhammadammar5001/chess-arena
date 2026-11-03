@@ -583,6 +583,25 @@ class App {
     ]);
   }
 
+  getServerApiUrl(endpoint) {
+    const cleanEndpoint = String(endpoint || '').replace(/^\//, '');
+    if (typeof window !== 'undefined' && window.location) {
+      const hostname = window.location.hostname || '';
+      const isLocal = (
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname.startsWith('192.168.') ||
+        hostname.startsWith('10.') ||
+        hostname.endsWith('.local') ||
+        hostname.endsWith('.onrender.com')
+      );
+      if (isLocal && window.location.origin) {
+        return `${window.location.origin}/${cleanEndpoint}`;
+      }
+    }
+    return `https://chess-arena-262t.onrender.com/${cleanEndpoint}`;
+  }
+
   async syncLeaderboardProfile(profile = this.cloudProfile, options = {}) {
     if (!profile || !profile.username) return false;
     if (!this.externalCallsAllowed()) return false;
@@ -611,7 +630,8 @@ class App {
       try {
         controller = new AbortController();
         timeout = setTimeout(() => controller.abort(), 8000);
-        const response = await fetch('api/leaderboard/sync', {
+        const syncUrl = this.getServerApiUrl('api/leaderboard/sync');
+        const response = await fetch(syncUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify(snapshot),
@@ -5635,7 +5655,8 @@ class App {
       return;
     }
     try {
-      const response = await fetch('api/leaderboard', { headers: { Accept: 'application/json' } });
+      const listUrl = this.getServerApiUrl('api/leaderboard');
+      const response = await fetch(listUrl, { headers: { Accept: 'application/json' } });
       if (!response.ok) throw new Error('Request failed');
       const data = await response.json();
       const players = Array.isArray(data.players) ? data.players : [];
