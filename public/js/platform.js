@@ -231,9 +231,13 @@
   }
 
   async function sendGameReady() {
+    // The inline head script may have already sent game_ready immediately after
+    // bridge.initialize() — respect that flag to avoid duplicate messages.
+    if (window._playgamaBridgeGameReadySent) { gameReadySent = true; return true; }
     if (gameReadySent || !bridgeRef || !bridgeRef.platform) return false;
     if (typeof bridgeRef.platform.sendMessage !== 'function') return false;
     gameReadySent = true;
+    window._playgamaBridgeGameReadySent = true;
     try {
       const result = bridgeRef.platform.sendMessage('game_ready');
       if (result && typeof result.catch === 'function') result.catch(() => {});

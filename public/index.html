@@ -17,19 +17,45 @@
   <script>
     (function() {
       window._playgamaBridgeInitPromise = null;
-      function initBridge() {
-        if (window.bridge && typeof window.bridge.initialize === 'function') {
-          if (!window._playgamaBridgeInitPromise) {
-            window._playgamaBridgeInitPromise = window.bridge.initialize().catch(function(err) {
-              console.warn('[Playgama] Bridge init warning:', err);
-              return null;
-            });
-          }
+      window._playgamaBridgeGameReadySent = false;
+
+      function sendGameReadyNow() {
+        if (window._playgamaBridgeGameReadySent) return;
+        var b = window.bridge;
+        if (b && b.platform && typeof b.platform.sendMessage === 'function') {
+          window._playgamaBridgeGameReadySent = true;
+          try { b.platform.sendMessage('game_ready'); } catch(e) {}
         }
       }
+
+      function initBridge() {
+        var b = window.bridge;
+        if (!b || typeof b.initialize !== 'function') return;
+        if (window._playgamaBridgeInitPromise) return;
+        window._playgamaBridgeInitPromise = b.initialize()
+          .then(function() { sendGameReadyNow(); })
+          .catch(function(err) {
+            console.warn('[Playgama] Bridge init warning:', err);
+            sendGameReadyNow();
+            return null;
+          });
+      }
+
       initBridge();
+
       if (!window._playgamaBridgeInitPromise) {
-        window.addEventListener('load', initBridge, { once: true });
+        window.addEventListener('load', function() {
+          initBridge();
+          // Fallback: if bridge still not ready after load, retry briefly
+          if (!window._playgamaBridgeInitPromise) {
+            var retries = 0;
+            var interval = setInterval(function() {
+              initBridge();
+              retries++;
+              if (window._playgamaBridgeInitPromise || retries >= 40) clearInterval(interval);
+            }, 50);
+          }
+        }, { once: true });
       }
     })();
   </script>
