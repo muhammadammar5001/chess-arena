@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "playgama-developer-console": {
+      "type": "http",
+      "url": "https://developer.playgama.com/api/mcp"
+    }
+  }
+}
+

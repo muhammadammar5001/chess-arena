@@ -1,3 +1,12 @@
 {
-  "platforms": {}
+  "platforms": {},
+  "saas": {
+    "publicToken": "cmvzvefha0fuglf0hilcmck8n",
+    "leaderboards": {
+      "platforms": ["playgama", "playgama_sandbox", "youtube"]
+    }
+  },
+  "leaderboards": [
+    { "id": "1", "isMain": true }
+  ]
 }

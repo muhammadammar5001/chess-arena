@@ -704,6 +704,14 @@ class App {
         target.rank = Number(data.currentRank) > 0 ? Math.floor(Number(data.currentRank)) : null;
         target.lastUpdated = Date.now();
         this.cloudProfile = target;
+
+        // Sync with Playgama SaaS Leaderboard
+        if (window.bridge && window.bridge.leaderboards && typeof window.bridge.leaderboards.setScore === 'function') {
+          try {
+            const scoreToSubmit = Number(target.rating) || 1200;
+            window.bridge.leaderboards.setScore('1', scoreToSubmit).catch(() => {});
+          } catch(e) {}
+        }
         this.lastLeaderboardSyncAt = Date.now();
         this.leaderboardSyncAttempts = 0;
         if (this.leaderboardRetryTimer) {
@@ -1701,9 +1709,9 @@ class App {
     this.opponentAvatarSrc = null;
 
     if (!this.multiplayer) {
-      this.multiplayer = new MultiplayerClient();
+      const useBridge = window.BridgeMultiplayerClient && window.bridge && window.bridge.multiplayer;
+      this.multiplayer = useBridge ? new BridgeMultiplayerClient() : new MultiplayerClient();
       this.setupMultiplayerCallbacks();
-    
     }
 
     const timerValue = 10;
@@ -1744,7 +1752,8 @@ class App {
     this.opponentAvatarSrc = null;
 
     if (!this.multiplayer) {
-      this.multiplayer = new MultiplayerClient();
+      const useBridge = window.BridgeMultiplayerClient && window.bridge && window.bridge.multiplayer;
+      this.multiplayer = useBridge ? new BridgeMultiplayerClient() : new MultiplayerClient();
       this.setupMultiplayerCallbacks();
     }
 
@@ -1782,7 +1791,8 @@ class App {
     await this.ensureServerProfileSynced();
 
     if (!this.multiplayer) {
-      this.multiplayer = new MultiplayerClient();
+      const useBridge = window.BridgeMultiplayerClient && window.bridge && window.bridge.multiplayer;
+      this.multiplayer = useBridge ? new BridgeMultiplayerClient() : new MultiplayerClient();
       this.setupMultiplayerCallbacks();
     }
 
