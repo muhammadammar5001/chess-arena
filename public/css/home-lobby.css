@@ -1299,3 +1299,15 @@
   }
 }
 
+/*
+ * PlayGama / YouTube: hide anything that needs our external backend on hosts
+ * that block external calls. The class is set by applyPlatformCapabilities().
+ * Some lobby cards use `display: flex !important`, so match that specificity.
+ */
+body.online-unavailable #screen-home .home-rank-card,
+body.online-unavailable #screen-home [onclick="app.findMatch()"],
+body.online-unavailable #screen-home [onclick="app.showLeaderboardScreen()"],
+body.online-unavailable [onclick="app.showLeaderboardScreen()"] {
+  display: none !important;
+}
+

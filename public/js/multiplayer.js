@@ -3,6 +3,51 @@
  * WebSocket-based real-time multiplayer with room codes.
  */
 
+/**
+ * Resolve the shared Chess Arena backend origin.
+ *
+ * The game runs from three kinds of hosts:
+ *   1. Its own Node server (localhost / *.onrender.com) — same origin has the
+ *      HTTP API and the WebSocket server.
+ *   2. A static host such as the PlayGama sandbox (*.games.playgama.net) — the
+ *      static host has no backend, so both the API and the WebSocket must use
+ *      the deployed production backend.
+ *   3. Any other custom static host — same as (2).
+ *
+ * `app.getServerApiUrl()` and the WebSocket URL both use this helper so the
+ * HTTP API and realtime server can never drift apart.
+ */
+const CHESS_SERVER_BASE_DEFAULT = 'https://chess-arena-262t.onrender.com';
+
+function resolveChessServerBase() {
+  if (typeof window === 'undefined') return CHESS_SERVER_BASE_DEFAULT;
+
+  const override = window.CHESS_SERVER_BASE;
+  if (override) return String(override).replace(/\/+$/, '');
+
+  const loc = window.location;
+  if (!loc) return CHESS_SERVER_BASE_DEFAULT;
+
+  const hostname = String(loc.hostname || '').toLowerCase();
+  const origin = loc.origin;
+  const isPrivate = (
+    !hostname ||
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '[::1]' ||
+    hostname === '::1' ||
+    hostname.startsWith('127.') ||
+    hostname.startsWith('192.168.') ||
+    hostname.startsWith('10.') ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
+    hostname.endsWith('.local') ||
+    hostname.endsWith('.onrender.com')
+  );
+
+  if (isPrivate && origin && origin !== 'null') return origin;
+  return CHESS_SERVER_BASE_DEFAULT;
+}
+
 class MultiplayerClient {
   constructor() {
     this.ws = null;
@@ -45,15 +90,17 @@ class MultiplayerClient {
       return window.CHESS_WS_URL;
     }
 
-    if (typeof window === 'undefined' || !window.location) return null;
-    const host = window.location.host;
-    if (!host) return null;
-
-    // Same-origin only: the Node server that serves the game also hosts the
-    // WebSocket endpoint. On hosts that block external calls the platform
-    // capability gate hides multiplayer entirely (PlayGama 1.2.5 / 3.3).
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${host}`;
+    const base = resolveChessServerBase();
+    try {
+      const url = new URL(base);
+      const scheme = url.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${scheme}//${url.host}`;
+    } catch (e) {
+      const secure = /^https:/i.test(base);
+      return (secure ? 'wss://' : 'ws://') + String(base)
+        .replace(/^https?:\/\//i, '')
+        .replace(/\/.*$/, '');
+    }
   }
 
   isSupported() {
@@ -98,13 +145,14 @@ class MultiplayerClient {
       }
 
       // A dead endpoint can leave the socket in CONNECTING forever. Fail fast
-      // so the lobby shows a usable error instead of hanging.
+      // so the lobby shows a usable error instead of hanging. Cross-origin
+      // hosts (PlayGama sandbox) may need a few seconds to reach the backend.
       connectTimer = setTimeout(() => {
         if (!settled) {
           try { this.ws.close(); } catch (e) { /* ignore */ }
           finish(new Error('Connection timed out'));
         }
-      }, 8000);
+      }, 15000);
 
       this.ws.onopen = () => {
         if (connectTimer) { clearTimeout(connectTimer); connectTimer = null; }
