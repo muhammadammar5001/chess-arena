@@ -215,12 +215,18 @@
       : 'en';
     lifecycle.audioEnabled = platform.isAudioEnabled !== false;
     lifecycle.paused = platform.isPaused === true;
-    // External networking (the optional online chess backend) is only allowed
-    // when the host explicitly supports it. On YouTube Playables it is blocked,
-    // so the game must stay fully playable offline. The local mock adapter is
-    // development-only and keeps the self-hosted server usable.
-    const isMock = !lifecycle.platformId || lifecycle.platformId.toLowerCase() === 'mock';
-    lifecycle.externalCallsSupported = isMock ? true : platform.isExternalCallsSupported === true;
+    // External networking (the optional online chess backend) is allowed
+    // on web and Playgama hosts. Only YouTube Playables strictly forbids external calls.
+    const platId = (lifecycle.platformId || '').toLowerCase();
+    const isYouTube = platId === 'youtube';
+    if (isYouTube) {
+      lifecycle.externalCallsSupported = false;
+    } else if (typeof platform.isExternalCallsSupported === 'boolean') {
+      lifecycle.externalCallsSupported = platform.isExternalCallsSupported;
+    } else {
+      // Default true for PlayGama, standalone, and mock
+      lifecycle.externalCallsSupported = true;
+    }
 
     try {
       document.documentElement.lang = lifecycle.language;
