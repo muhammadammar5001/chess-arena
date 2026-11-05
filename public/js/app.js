@@ -2432,6 +2432,8 @@ class App {
     this.applyAvatarToUI();
     this.syncOpponentAvatarFromMeta(normalizedOpponent);
 
+    const screenGame = document.getElementById('screen-game');
+    if (screenGame && this.gameMode !== 'puzzle') screenGame.classList.remove('is-puzzle-mode');
     // Show/hide online-only controls
     document.getElementById('btn-ingame-draw').style.display = isOnline ? '' : 'none';
     document.getElementById('btn-ingame-resign').style.display = isOnline ? '' : 'none';
@@ -7168,6 +7170,8 @@ class App {
 
     this.opponentAvatarSrc = null;
     this.gameMode = 'puzzle';
+    const screenGame = document.getElementById('screen-game');
+    if (screenGame) screenGame.classList.add('is-puzzle-mode');
     this.currentPuzzle = puzzle;
     this.puzzleStepIndex = 0;
     this.puzzleHintUsed = false;

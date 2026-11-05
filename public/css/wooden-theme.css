@@ -5257,6 +5257,7 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
   color: #FDF7EC !important;
   line-height: 1 !important;
   white-space: nowrap !important;
+  margin-bottom: 3px !important;
 }
 
 #screen-game .undo-cost-badge {
@@ -5474,4 +5475,23 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
     padding: 0 6px !important;
     font-size: 10px !important;
   }
+}
+
+/* PUZZLE & INGAME OVERLAP FIX & ACTION BUTTON LIFT */
+#screen-game .turn-status-badge {
+  max-width: 60% !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: inline-block !important;
+  text-align: center !important;
+  line-height: 1.4 !important;
+}
+
+#screen-game.is-puzzle-mode #move-history-ticker {
+  display: none !important;
+}
+
+#screen-game .game-container {
+  justify-content: space-evenly !important;
 }
