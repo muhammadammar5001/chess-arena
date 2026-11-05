@@ -585,40 +585,21 @@ class App {
 
   getServerApiUrl(endpoint) {
     const cleanEndpoint = String(endpoint || '').replace(/^\//, '');
-    const base = (typeof resolveChessServerBase === 'function')
-      ? resolveChessServerBase()
-      : 'https://chess-arena-262t.onrender.com';
-    return `${base}/${cleanEndpoint}`;
-  }
-
-  /**
-   * Wake the shared backend before an online action. Free hosting sleeps when
-   * idle; waking it up front means a tap on "Find Match" does not time out.
-   * Resolves false instead of throwing so callers can continue regardless.
-   */
-  warmServer(timeoutMs = 20000) {
-    if (!this.externalCallsAllowed()) return Promise.resolve(false);
-    if (this._serverWarmPromise) return this._serverWarmPromise;
-
-    const url = this.getServerApiUrl('health');
-    let controller = null;
-    let timer = null;
-    try {
-      controller = new AbortController();
-      timer = setTimeout(() => controller.abort(), Math.max(1000, timeoutMs));
-      this._serverWarmPromise = fetch(url, {
-        method: 'GET',
-        cache: 'no-store',
-        signal: controller.signal
-      }).then((response) => !!response && response.ok).catch(() => false).finally(() => {
-        if (timer) clearTimeout(timer);
-        this._serverWarmPromise = null;
-      });
-    } catch (e) {
-      if (timer) clearTimeout(timer);
-      return Promise.resolve(false);
+    if (typeof window !== 'undefined' && window.location) {
+      const hostname = window.location.hostname || '';
+      const isLocal = (
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname.startsWith('192.168.') ||
+        hostname.startsWith('10.') ||
+        hostname.endsWith('.local') ||
+        hostname.endsWith('.onrender.com')
+      );
+      if (isLocal && window.location.origin) {
+        return `${window.location.origin}/${cleanEndpoint}`;
+      }
     }
-    return this._serverWarmPromise;
+    return `https://chess-arena-262t.onrender.com/${cleanEndpoint}`;
   }
 
   async syncLeaderboardProfile(profile = this.cloudProfile, options = {}) {
@@ -781,29 +762,8 @@ class App {
     }
   }
 
-  /**
-   * PlayGama's sandbox is a development host. Keep online features available
-   * there even when the emulated target platform (for example YouTube) blocks
-   * external calls in production, because testers need to exercise them.
-   */
-  isSandboxHost() {
-    try {
-      if (typeof isPlaygamaSandboxHost === 'function') return isPlaygamaSandboxHost();
-      const hostname = String(window.location.hostname || '').toLowerCase();
-      if (hostname.endsWith('.games.playgama.net')) return true;
-      const platform = window.ChessArenaPlatform;
-      const id = platform && typeof platform.getPlatformId === 'function'
-        ? String(platform.getPlatformId() || '').toLowerCase()
-        : '';
-      return id === 'playgama_sandbox';
-    } catch (e) {
-      return false;
-    }
-  }
-
   externalCallsAllowed() {
     try {
-      if (this.isSandboxHost()) return true;
       const platform = window.ChessArenaPlatform;
       if (platform && typeof platform.isExternalCallsSupported === 'function') {
         return platform.isExternalCallsSupported() !== false;
@@ -1685,22 +1645,6 @@ class App {
 
   // --- Online Game -----------------------------------
 
-  /**
-   * Connect the realtime client, retrying once after a cold start. Free
-   * hosting can drop the first upgrade while the instance wakes up.
-   */
-  async connectOnline() {
-    try {
-      await this.multiplayer.connect();
-    } catch (firstError) {
-      // Drop a half-open socket before retrying.
-      try { if (this.multiplayer.ws) this.multiplayer.ws.close(); } catch (e) { /* ignore */ }
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      await this.warmServer(12000);
-      await this.multiplayer.connect();
-    }
-  }
-
   async findMatch() {
     if (!this.onlinePlayAvailable()) return;
     if (!(await this.ensureProfileReady())) return;
@@ -1721,11 +1665,8 @@ class App {
     this.showScreen('screen-waiting');
     this.startSlotMachine();
 
-    // Wake a sleeping backend while the search animation is visible.
-    await this.warmServer();
-
     try {
-      await this.connectOnline();
+      await this.multiplayer.connect();
       const myProfile = {
         username: this.getPreferredDisplayName() || 'Player',
         rating: (this.cloudProfile && Number.isFinite(Number(this.cloudProfile.rating)))
@@ -1758,8 +1699,7 @@ class App {
     }
 
     try {
-      await this.warmServer();
-      await this.connectOnline();
+      await this.multiplayer.connect();
       const timerValue = 10;
       this.timerMinutes = timerValue;
       const myProfile = {
@@ -1797,8 +1737,7 @@ class App {
     }
 
     try {
-      await this.warmServer();
-      await this.connectOnline();
+      await this.multiplayer.connect();
       this.showToast('Checking room...');
       this.multiplayer.checkRoom(code);
     } catch {
@@ -5717,49 +5656,47 @@ class App {
     if (this.cloudProfile && this.cloudProfile.username) {
       this.syncLeaderboardProfile(this.cloudProfile, { silent: true, reason: 'view' });
     }
-    // The fetch below is also the wake-up request, so it starts immediately.
     await this.loadLeaderboardData();
   }
 
   async loadLeaderboardData() {
     const list = document.getElementById('leaderboard-list');
     if (!list) return;
-    if (!this.externalCallsAllowed()) {
-      list.innerHTML = '<p style="color: #D6BD9B; text-align: center; margin: 24px 0;">Rankings are unavailable on this platform.</p>';
-      return;
+
+    // 1. Try Playgama Bridge SaaS Leaderboards first
+    if (window.bridge && window.bridge.leaderboards && typeof window.bridge.leaderboards.getEntries === 'function') {
+      try {
+        const entries = await window.bridge.leaderboards.getEntries('1');
+        if (Array.isArray(entries) && entries.length > 0) {
+          const players = entries.map(e => ({
+            rank: e.rank,
+            username: e.name || 'Player',
+            rating: Number(e.score) || 1200,
+            elo: Number(e.score) || 1200,
+            wins: 0,
+            avatarSrc: e.photo || null
+          }));
+          this.renderLeaderboardData(players, players.length);
+          return;
+        }
+      } catch (err) {
+        console.warn('[Leaderboard] Bridge getEntries fallback:', err);
+      }
     }
 
-    const listUrl = this.getServerApiUrl('api/leaderboard');
-    const fetchOnce = async (timeoutMs) => {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
-      try {
-        const response = await fetch(listUrl, {
-          headers: { Accept: 'application/json' },
-          cache: 'no-store',
-          signal: controller.signal
-        });
-        if (!response.ok) throw new Error('Request failed with ' + response.status);
-        return await response.json();
-      } finally {
-        if (timer) clearTimeout(timer);
-      }
-    };
-
+    // 2. Fallback to API endpoint
     try {
-      let data;
-      try {
-        data = await fetchOnce(12000);
-      } catch (firstError) {
-        // A cold backend can miss the first request; wake it and retry once.
-        await this.warmServer(15000);
-        data = await fetchOnce(12000);
-      }
+      const listUrl = this.getServerApiUrl('api/leaderboard');
+      const response = await fetch(listUrl, { headers: { Accept: 'application/json' } });
+      if (!response.ok) throw new Error('Request failed');
+      const data = await response.json();
       const players = Array.isArray(data.players) ? data.players : [];
       this.renderLeaderboardData(players, Number(data.totalPlayers) || players.length);
     } catch (e) {
-      list.innerHTML = '<p style="color: #D6BD9B; text-align: center; margin: 24px 0;">Rankings are unavailable right now.</p>';
-      this.renderLeaderboardMyRank();
+      // Local fallback: show self entry so the screen is never blank
+      const self = this.getLeaderboardSelfEntry();
+      const fallbackList = self ? [self] : [];
+      this.renderLeaderboardData(fallbackList, fallbackList.length);
     }
   }
 

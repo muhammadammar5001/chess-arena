@@ -399,3 +399,4 @@ class BridgeMultiplayerClient {
 }
 
 window.BridgeMultiplayerClient = BridgeMultiplayerClient;
+
