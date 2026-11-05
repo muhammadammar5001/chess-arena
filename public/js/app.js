@@ -773,8 +773,29 @@ class App {
     }
   }
 
+  /**
+   * PlayGama's sandbox is a development host. Keep online features available
+   * there even when the emulated target platform (for example YouTube) blocks
+   * external calls in production, because testers need to exercise them.
+   */
+  isSandboxHost() {
+    try {
+      if (typeof isPlaygamaSandboxHost === 'function') return isPlaygamaSandboxHost();
+      const hostname = String(window.location.hostname || '').toLowerCase();
+      if (hostname.endsWith('.games.playgama.net')) return true;
+      const platform = window.ChessArenaPlatform;
+      const id = platform && typeof platform.getPlatformId === 'function'
+        ? String(platform.getPlatformId() || '').toLowerCase()
+        : '';
+      return id === 'playgama_sandbox';
+    } catch (e) {
+      return false;
+    }
+  }
+
   externalCallsAllowed() {
     try {
+      if (this.isSandboxHost()) return true;
       const platform = window.ChessArenaPlatform;
       if (platform && typeof platform.isExternalCallsSupported === 'function') {
         return platform.isExternalCallsSupported() !== false;
@@ -947,9 +968,6 @@ class App {
     this.setPlatformAudioEnabled(state.audioEnabled !== false, { initial });
     this.setPlatformPaused(state.paused === true, { initial });
     this.platformStateReady = true;
-    // The Bridge resolves after App.init sometimes, so the external-calls
-    // capability can change after the first check. Re-apply the gate.
-    this.applyPlatformCapabilities();
   }
 
   setPlatformAudioEnabled(enabled, options = {}) {

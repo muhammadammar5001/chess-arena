@@ -48,6 +48,27 @@ function resolveChessServerBase() {
   return CHESS_SERVER_BASE_DEFAULT;
 }
 
+/**
+ * PlayGama's sandbox is a development host: testers must be able to exercise
+ * online play there even when the emulated target platform (for example
+ * YouTube) blocks external calls in production. Both the UI capability gate
+ * and the realtime client use this helper so they cannot disagree.
+ */
+function isPlaygamaSandboxHost() {
+  if (typeof window === 'undefined') return false;
+  try {
+    const hostname = String(window.location.hostname || '').toLowerCase();
+    if (hostname.endsWith('.games.playgama.net')) return true;
+    const platform = window.ChessArenaPlatform;
+    const id = platform && typeof platform.getPlatformId === 'function'
+      ? String(platform.getPlatformId() || '').toLowerCase()
+      : '';
+    return id === 'playgama_sandbox';
+  } catch (e) {
+    return false;
+  }
+}
+
 class MultiplayerClient {
   constructor() {
     this.ws = null;
@@ -105,6 +126,9 @@ class MultiplayerClient {
 
   isSupported() {
     try {
+      // The sandbox is a development host and keeps online play available even
+      // when the emulated target platform reports external calls as blocked.
+      if (isPlaygamaSandboxHost()) return !!this.getWebSocketUrl();
       const platform = window.ChessArenaPlatform;
       if (platform && typeof platform.isExternalCallsSupported === 'function' &&
           platform.isExternalCallsSupported() === false) {
