@@ -4295,9 +4295,11 @@ div.game-layout-wrapper {
   background: rgba(20, 21, 58, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
-  margin: 4px 0;
-  padding: 8px 12px;
-  min-height: 38px;
+  margin: 2px 0;
+  padding: 2px 6px;
+  min-height: 28px;
+  height: 28px;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -4305,40 +4307,41 @@ div.game-layout-wrapper {
 
 .ticker-content {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 5px;
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;
   width: 100%;
-  padding-bottom: 3px;
+  height: 100%;
+  padding: 0 2px;
+  box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-x;
-  scrollbar-width: thin;
-  scrollbar-color: #C99700 rgba(0, 0, 0, 0.28);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .ticker-content::-webkit-scrollbar {
-  height: 6px;
-}
-
-.ticker-content::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.28);
-  border-radius: 9999px;
-}
-
-.ticker-content::-webkit-scrollbar-thumb {
-  background: #C99700;
-  border-radius: 9999px;
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .ticker-item {
   color: #ffffff;
   font-family: monospace;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   background: rgba(255, 255, 255, 0.15);
-  padding: 3px 8px;
-  border-radius: 8px;
+  padding: 0 6px;
+  height: 20px;
+  line-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  box-sizing: border-box;
   flex-shrink: 0;
 }
 

@@ -173,11 +173,24 @@ class ChessEngine {
     }
     
     if (abilityId === 'second') {
+      let movesToPop = 1;
       const lastMove = this.moveHistory[this.moveHistory.length - 1];
       const lastMoveColor = lastMove ? (lastMove.color || (lastMove.piece && lastMove.piece.color)) : null;
-      if (lastMoveColor !== color) return false; // Can only undo your own move
+      if (lastMoveColor === color) {
+        movesToPop = 1;
+      } else if (this.currentTurn === color && this.moveHistory.length >= 2) {
+        movesToPop = 2;
+      } else {
+        return false; // Can only undo own move or previous turn on own turn
+      }
       
-      const success = this.undoLastMove();
+      let success = true;
+      for (let i = 0; i < movesToPop; i++) {
+        if (!this.undoLastMove()) {
+          success = false;
+          break;
+        }
+      }
       if (success) {
          this.moveHistory.push({ notation: 'USE_SECOND_CHANCE', color: color, ability: 'second', args: null });
          if (this.abilitiesUsed && this.abilitiesUsed[color]) this.abilitiesUsed[color].push('second');
@@ -270,11 +283,13 @@ class ChessEngine {
     if (lastMove && lastMove.ability) return false; // Cannot undo abilities directly this way
     
     const previousStateJson = this.stateHistory.pop();
+    const currentRemainingHistory = this.stateHistory;
     const previousState = JSON.parse(previousStateJson);
     
     // Since previousState was parsed from JSON, all nested objects are new instances.
     // Shallow assign will safely replace our engine's properties with the restored ones.
     Object.assign(this, previousState);
+    this.stateHistory = currentRemainingHistory;
     
     return true;
   }

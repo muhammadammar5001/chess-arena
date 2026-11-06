@@ -5319,11 +5319,71 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 
 #screen-game .move-ticker-container {
   flex: 0 0 auto !important;
-  height: 24px !important;
-  min-height: 24px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  max-height: 28px !important;
   width: 100% !important;
   max-width: var(--board-max) !important;
   margin: 0 auto !important;
+  padding: 2px 6px !important;
+  box-sizing: border-box !important;
+  border-radius: 8px !important;
+  background: #2A170C !important;
+  border: 1.5px solid #8C6538 !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  display: flex !important;
+  align-items: center !important;
+  overflow: hidden !important;
+}
+
+#screen-game .ticker-content {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  white-space: nowrap !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-x !important;
+}
+
+#screen-game .ticker-content::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+#screen-game .ticker-item {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 20px !important;
+  line-height: 20px !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #FDF7EC !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(201, 151, 0, 0.25) !important;
+  border-radius: 5px !important;
+  padding: 0 6px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+#screen-game .ticker-item:last-child {
+  background: rgba(245, 211, 108, 0.22) !important;
+  border-color: rgba(245, 211, 108, 0.6) !important;
+  color: #FFD54F !important;
 }
 
 /* CHESSBOARD ARENA: STRICT CONTAINER LOCK (NEVER SHRINKS BELOW BOARD) */
@@ -5640,8 +5700,10 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
     grid-area: ticker !important;
     width: 100% !important;
     max-width: 340px !important;
-    height: 22px !important;
-    min-height: 22px !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    max-height: 26px !important;
+    padding: 2px 4px !important;
     margin: 0 auto !important;
   }
 

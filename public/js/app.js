@@ -1985,8 +1985,8 @@ class App {
 
     
       mp.onAbilityUsed = (ability, args, color) => {
-        if (color === this.playerColor) this.pendingAbilityCharge = null;
         if (this.engine.validateAbility(ability, args, color)) {
+            if (color === this.playerColor) this.pendingAbilityCharge = null;
             let abilityName = ability;
             if (ability === 'second') abilityName = 'Second Chance';
             if (ability === 'freeze') abilityName = 'Piece Freeze';
@@ -2003,13 +2003,27 @@ class App {
                 if (ability === 'second') this.lastMove = null;
                 // Move history is rolled back inside engine
                 this.updateMoveHistoryUI();
-            this.updatePlayerBars();
+                this.updatePlayerBars();
             }
             this.hintCountInMatch = 0;
-    this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI(); // Re-render ability buttons (to gray them out if used)
+            this.undoCountInMatch = 0;
+            this.hasUndoneCurrentMove = false;
+            this.setupAbilitiesUI();
+            this.updateUndoButtonUI();
             this.renderBoard();
             this.updateCapturedPieces();
             this.updatePlayerBars();
+        } else {
+          // If ability failed validation, refund the skill charge safely
+          if (color === this.playerColor && this.pendingAbilityCharge) {
+            this.restoreSkillCharge(this.pendingAbilityCharge);
+            this.pendingAbilityCharge = null;
+            if (this.abilitiesActivatedThisMatch) {
+              this.abilitiesActivatedThisMatch.delete(ability);
+            }
+            this.setupAbilitiesUI();
+            this.showToast('Could not use ability.');
+          }
         }
       };
       
@@ -2734,8 +2748,9 @@ class App {
       if (this.gameMode === 'online') {
         const lastMove = this.engine.moveHistory[this.engine.moveHistory.length - 1];
         const lastMoveColor = lastMove ? (lastMove.color || (lastMove.piece && lastMove.piece.color)) : null;
-        if (lastMoveColor !== this.playerColor) {
-          this.showToast('Can only undo immediately after your own move!');
+        const canUndo = (lastMoveColor === this.playerColor) || (this.engine.currentTurn === this.playerColor && this.engine.moveHistory.length >= 2);
+        if (!canUndo) {
+          this.showToast('No moves available to undo with Second Chance!');
           return;
         }
         this.pendingAbilityCharge = 'second';

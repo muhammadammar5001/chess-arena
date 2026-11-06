@@ -443,9 +443,19 @@ class BridgeMultiplayerClient {
       case 'chat_message':
         if (this.onChatMessage) this.onChatMessage(data.sender, data.senderName, data.text);
         break;
-      case 'ability_used':
-        if (this.onAbilityUsed) this.onAbilityUsed(data.ability, data.args, data.color);
+      case 'use_ability':
+      case 'ability_used': {
+        const color = data.color || (this.playerColor === 'white' ? 'black' : 'white');
+        if (data.ability === 'second' && this._botMoveTimer) {
+          clearTimeout(this._botMoveTimer);
+          this._botMoveTimer = null;
+        }
+        if (this.onAbilityUsed) {
+          this.onAbilityUsed(data.ability, data.args, color);
+        }
+        this._triggerBotMoveIfNeeded();
         break;
+      }
       case 'resign':
         if (this.onGameOver) this.onGameOver('resignation', this.playerColor);
         break;
@@ -498,6 +508,39 @@ class BridgeMultiplayerClient {
   }
 
   send(data) {
+    if (!data || typeof data !== 'object') return;
+
+    if (data.type === 'use_ability') {
+      const color = this.playerColor;
+      const ability = data.ability;
+      const args = data.args || null;
+
+      const outgoing = {
+        type: 'ability_used',
+        ability: ability,
+        args: args,
+        color: color
+      };
+
+      this._transmit(outgoing);
+
+      if (ability === 'second' && this._botMoveTimer) {
+        clearTimeout(this._botMoveTimer);
+        this._botMoveTimer = null;
+      }
+
+      if (this.onAbilityUsed) {
+        this.onAbilityUsed(ability, args, color);
+      }
+
+      this._triggerBotMoveIfNeeded();
+      return;
+    }
+
+    this._transmit(data);
+  }
+
+  _transmit(data) {
     if (window.bridge && window.bridge.multiplayer && typeof window.bridge.multiplayer.send === 'function') {
       try {
         window.bridge.multiplayer.send('game_event', data);
@@ -509,6 +552,7 @@ class BridgeMultiplayerClient {
     if (window.bridge && window.bridge.multiplayer && typeof window.bridge.multiplayer.sendMessage === 'function') {
       try {
         window.bridge.multiplayer.sendMessage(data);
+        return;
       } catch (e) {
         console.warn('[BridgeMultiplayer] sendMessage fallback error:', e);
       }
@@ -556,8 +600,31 @@ class BridgeMultiplayerClient {
   }
 
   sendChatMessage(text) {
-    const senderName = (this._selfProfile && this._selfProfile.username) || 'Player';
+    const senderName = (this._selfProfile && this._selfProfile.username) || (window.app && window.app.username) || 'Player';
     this.send({ type: 'chat_message', sender: this.playerColor, senderName, text });
+    if (this.onChatMessage) {
+      this.onChatMessage(this.playerColor, senderName, text);
+    }
+    if (this._isBot && text) {
+      setTimeout(() => {
+        if (!this.onChatMessage) return;
+        const botName = (this._opponentProfile && this._opponentProfile.username) || 'Opponent';
+        const botColor = this.playerColor === 'white' ? 'black' : 'white';
+        const clean = text.toLowerCase().trim();
+        let reply = null;
+        if (clean.includes('good luck')) reply = 'Good luck to you too!';
+        else if (clean.includes('nice move')) reply = 'Thanks! You too!';
+        else if (clean.includes('oops')) reply = 'No worries!';
+        else if (clean.includes('good game')) reply = 'Good game!';
+        else {
+          const quickReplies = ['Well played!', 'Interesting move!', 'Good luck!'];
+          reply = quickReplies[Math.floor(Math.random() * quickReplies.length)];
+        }
+        if (reply) {
+          this.onChatMessage(botColor, botName, reply);
+        }
+      }, 1200);
+    }
   }
 
   resign() {
