@@ -1653,8 +1653,7 @@ class App {
     this.opponentAvatarSrc = null;
 
     if (!this.multiplayer) {
-      const useBridge = window.BridgeMultiplayerClient && window.bridge && window.bridge.multiplayer;
-      this.multiplayer = useBridge ? new BridgeMultiplayerClient() : new MultiplayerClient();
+      this.multiplayer = window.BridgeMultiplayerClient ? new BridgeMultiplayerClient() : new MultiplayerClient();
       this.setupMultiplayerCallbacks();
     }
 
@@ -1693,8 +1692,7 @@ class App {
     this.opponentAvatarSrc = null;
 
     if (!this.multiplayer) {
-      const useBridge = window.BridgeMultiplayerClient && window.bridge && window.bridge.multiplayer;
-      this.multiplayer = useBridge ? new BridgeMultiplayerClient() : new MultiplayerClient();
+      this.multiplayer = window.BridgeMultiplayerClient ? new BridgeMultiplayerClient() : new MultiplayerClient();
       this.setupMultiplayerCallbacks();
     }
 
@@ -1731,8 +1729,7 @@ class App {
     await this.ensureServerProfileSynced();
 
     if (!this.multiplayer) {
-      const useBridge = window.BridgeMultiplayerClient && window.bridge && window.bridge.multiplayer;
-      this.multiplayer = useBridge ? new BridgeMultiplayerClient() : new MultiplayerClient();
+      this.multiplayer = window.BridgeMultiplayerClient ? new BridgeMultiplayerClient() : new MultiplayerClient();
       this.setupMultiplayerCallbacks();
     }
 
