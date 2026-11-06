@@ -4,6 +4,9 @@
     "publicToken": "cmvzvefha0fuglf0hilcmck8n",
     "leaderboards": {
       "platforms": ["playgama", "playgama_sandbox", "youtube"]
+    },
+    "multiplayer": {
+      "platforms": ["playgama", "playgama_sandbox", "standalone", "youtube", "mock"]
     }
   },
   "leaderboards": [

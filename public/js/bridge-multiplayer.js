@@ -1,7 +1,8 @@
 /**
  * BridgeMultiplayerClient
  * Playgama Bridge SaaS Multiplayer Adapter for Chess Arena.
- * Handles online rooms on Playgama cloud and smooth auto-pairing so matchmaking never fails.
+ * Uses Playgama Bridge SaaS real-time rooms & state sync (relay servers)
+ * for seamless real-player PvP and room-code friend duels.
  */
 
 class BridgeMultiplayerClient {
@@ -44,7 +45,9 @@ class BridgeMultiplayerClient {
     };
 
     this._matchTimeout = null;
+    this._statusTimer = null;
     this._isBot = false;
+    this._boundBridgeEvents = false;
   }
 
   isSupported() {
@@ -58,39 +61,49 @@ class BridgeMultiplayerClient {
   }
 
   _bindRoomEvents() {
-    if (!window.bridge || !window.bridge.multiplayer) return;
+    if (this._boundBridgeEvents) return;
+    if (!window.bridge) return;
+
     const mp = window.bridge.multiplayer;
     const events = window.bridge.EVENT_NAME || {};
 
-    try {
-      if (events.MULTIPLAYER_PLAYER_JOINED) {
-        mp.on(events.MULTIPLAYER_PLAYER_JOINED, (player) => {
-          this._handlePlayerJoined(player);
-        });
+    const registerEvent = (evName, handler) => {
+      if (!evName) return;
+      try {
+        if (mp && typeof mp.on === 'function') {
+          mp.on(evName, handler);
+        } else if (typeof window.bridge.on === 'function') {
+          window.bridge.on(evName, handler);
+        }
+      } catch (e) {
+        console.warn('[BridgeMultiplayer] Event subscribe notice:', evName, e);
       }
+    };
 
-      if (events.MULTIPLAYER_PLAYER_LEFT) {
-        mp.on(events.MULTIPLAYER_PLAYER_LEFT, (player) => {
-          this._handlePlayerLeft(player);
-        });
-      }
+    registerEvent(events.MULTIPLAYER_PLAYER_JOINED || 'multiplayer_player_joined', (player) => {
+      console.log('[BridgeMultiplayer] MULTIPLAYER_PLAYER_JOINED:', player);
+      this._handlePlayerJoined(player);
+    });
 
-      if (events.MULTIPLAYER_MESSAGE_RECEIVED) {
-        mp.on(events.MULTIPLAYER_MESSAGE_RECEIVED, (message) => {
-          this._handleMessage(message);
-        });
-      }
+    registerEvent(events.MULTIPLAYER_PLAYER_LEFT || 'multiplayer_player_left', (player) => {
+      console.log('[BridgeMultiplayer] MULTIPLAYER_PLAYER_LEFT:', player);
+      this._handlePlayerLeft(player);
+    });
 
-      if (events.MULTIPLAYER_SYNC_STATE_RECEIVED) {
-        mp.on(events.MULTIPLAYER_SYNC_STATE_RECEIVED, (state) => {
-          this._handleSyncState(state);
-        });
-      }
-    } catch(e) {
-      console.warn('[BridgeMultiplayer] Event binding notice:', e);
-    }
+    registerEvent(events.MULTIPLAYER_MESSAGE_RECEIVED || 'multiplayer_message_received', (message) => {
+      this._handleMessage(message);
+    });
+
+    registerEvent(events.MULTIPLAYER_SYNC_STATE_RECEIVED || 'multiplayer_sync_state_received', (state) => {
+      this._handleSyncState(state);
+    });
+
+    this._boundBridgeEvents = true;
   }
 
+  /**
+   * Random matchmaking
+   */
   async findMatch(timerMinutes = 10, mode = 'standard', abilities = [], avatarId = null, profile = null) {
     this._selfProfile = profile || {
       username: (window.app && window.app.getPreferredDisplayName()) || 'Player',
@@ -103,6 +116,7 @@ class BridgeMultiplayerClient {
     this._timerMinutes = timerMinutes;
     this._mode = mode;
     this._state.started = false;
+    this._isBot = false;
 
     if (this.onWaitingForMatch) this.onWaitingForMatch();
 
@@ -111,104 +125,197 @@ class BridgeMultiplayerClient {
     if (hasNativeBridgeMP) {
       try {
         this._bindRoomEvents();
-        const room = await window.bridge.multiplayer.joinOrCreateRoom({
+
+        const code = await window.bridge.multiplayer.joinOrCreateRoom({
+          playerName: this._selfProfile.username,
+          playerProperties: {
+            rating: this._selfProfile.rating,
+            avatarSrc: this._selfProfile.avatarSrc || '',
+            abilities: this._abilities || []
+          },
           maxPlayers: 2,
+          filter: { gameMode: mode || 'standard' },
           syncState: true
         });
-        this.room = room;
-        this.roomCode = (room && room.code) || 'PLAYGAMA';
-        this.isHost = !!(room && room.isHost);
 
-        const players = (room && room.players) ? room.players : [];
-        if (players.length >= 2) {
-          this._startDuel(players);
+        this.roomCode = code || (window.bridge.multiplayer.room && window.bridge.multiplayer.room.id) || 'ONLINE';
+        this.isHost = !!(window.bridge.multiplayer.isHost);
+        this.playerColor = this.isHost ? 'white' : 'black';
+
+        // Check if another player is already connected in the room
+        const currentPlayers = window.bridge.multiplayer.players || [];
+        const otherPlayer = currentPlayers.find(p => p.id !== window.bridge.multiplayer.playerId);
+
+        if (otherPlayer) {
+          console.log('[BridgeMultiplayer] Found opponent immediately in room:', otherPlayer);
+          this._startDuel([otherPlayer]);
           return;
         }
 
-        // Arm 4-second matching window: if another real player joins, play them; else smoothly start challenge
+        // Give up to 18 seconds for another human player in quick match before fallback
         if (this._matchTimeout) clearTimeout(this._matchTimeout);
         this._matchTimeout = setTimeout(() => {
-          this._startBotDuel();
-        }, 4000);
+          if (!this._state.started) {
+            console.log('[BridgeMultiplayer] Matchmaking timeout reached, starting challenge duel');
+            this._startBotDuel();
+          }
+        }, 18000);
+
         return;
       } catch (err) {
-        console.warn('[BridgeMultiplayer] joinOrCreateRoom notice, continuing:', err);
+        console.warn('[BridgeMultiplayer] Native joinOrCreateRoom failed:', err);
       }
     }
 
-    // Smooth instant pairing fallback so player never gets stuck on error
+    // Fallback if SDK or server is temporarily unreachable
     if (this._matchTimeout) clearTimeout(this._matchTimeout);
     this._matchTimeout = setTimeout(() => {
       this._startBotDuel();
-    }, 2200);
+    }, 12000);
   }
 
+  /**
+   * Create Private Room with Room Code (Friends Duel)
+   */
   async createRoom(timerMinutes = 10, mode = 'standard', abilities = [], avatarId = null, profile = null) {
-    this._selfProfile = profile;
+    this._selfProfile = profile || {
+      username: (window.app && window.app.getPreferredDisplayName()) || 'Host',
+      rating: 1200,
+      avatarId: avatarId || 'pfp-01',
+      avatarSrc: (window.app && window.app.getSelectedAvatarSrc()) || null,
+      level: 1
+    };
     this._abilities = abilities;
     this._timerMinutes = timerMinutes;
     this._mode = mode;
+    this._state.started = false;
+    this._isBot = false;
+    this.isHost = true;
+    this.playerColor = 'white';
 
     const hasNativeBridgeMP = window.bridge && window.bridge.multiplayer && typeof window.bridge.multiplayer.createRoom === 'function';
+
     if (hasNativeBridgeMP) {
       try {
         this._bindRoomEvents();
-        const room = await window.bridge.multiplayer.createRoom({
+
+        const code = await window.bridge.multiplayer.createRoom({
+          playerName: this._selfProfile.username,
+          playerProperties: {
+            rating: this._selfProfile.rating,
+            avatarSrc: this._selfProfile.avatarSrc || '',
+            abilities: this._abilities || []
+          },
           maxPlayers: 2,
+          isOpen: true,
+          isVisible: false, // Private room for friends only
           syncState: true
         });
-        this.room = room;
-        this.roomCode = (room && room.code) || ('RM' + Math.floor(1000 + Math.random() * 9000));
-        this.isHost = true;
-        this.playerColor = 'white';
-        if (this.onRoomCreated) this.onRoomCreated(this.roomCode, 'white');
+
+        this.roomCode = code || (window.bridge.multiplayer.room && window.bridge.multiplayer.room.id);
+        console.log('[BridgeMultiplayer] Private room created with code:', this.roomCode);
+
+        if (this.onRoomCreated) {
+          this.onRoomCreated(this.roomCode, 'white');
+        }
+        // IMPORTANT: NEVER start a bot duel for friend rooms! Wait for friend.
         return;
       } catch (e) {
-        console.warn('[BridgeMultiplayer] createRoom notice:', e);
+        console.warn('[BridgeMultiplayer] createRoom error:', e);
       }
     }
 
+    // Local fallback code
     this.roomCode = 'RM' + Math.floor(1000 + Math.random() * 9000);
-    this.isHost = true;
-    this.playerColor = 'white';
     if (this.onRoomCreated) this.onRoomCreated(this.roomCode, 'white');
   }
 
+  /**
+   * Check Room before joining
+   */
+  async checkRoom(roomCode) {
+    const cleanCode = String(roomCode || '').trim().toUpperCase();
+    if (!cleanCode) {
+      if (this.onCheckRoomResult) this.onCheckRoomResult({ success: false, message: 'Invalid room code' });
+      return;
+    }
+
+    // With Playgama Bridge, room codes can be checked directly by joinRoom
+    if (this.onCheckRoomResult) {
+      this.onCheckRoomResult({
+        success: true,
+        roomCode: cleanCode,
+        timerMinutes: 10
+      });
+    }
+  }
+
+  /**
+   * Join Private Room via Code
+   */
   async joinRoom(roomCode, abilities = [], avatarId = null, profile = null) {
-    this._selfProfile = profile;
+    const cleanCode = String(roomCode || '').trim().toUpperCase();
+    this._selfProfile = profile || {
+      username: (window.app && window.app.getPreferredDisplayName()) || 'Guest',
+      rating: 1200,
+      avatarId: avatarId || 'pfp-02',
+      avatarSrc: (window.app && window.app.getSelectedAvatarSrc()) || null,
+      level: 1
+    };
     this._abilities = abilities;
+    this._state.started = false;
+    this._isBot = false;
+    this.isHost = false;
+    this.playerColor = 'black';
+    this.roomCode = cleanCode;
+
     const hasNativeBridgeMP = window.bridge && window.bridge.multiplayer && typeof window.bridge.multiplayer.joinRoom === 'function';
 
     if (hasNativeBridgeMP) {
       try {
         this._bindRoomEvents();
-        const room = await window.bridge.multiplayer.joinRoom(roomCode, { syncState: true });
-        this.room = room;
-        this.roomCode = roomCode;
-        this.isHost = false;
-        this.playerColor = 'black';
+
+        await window.bridge.multiplayer.joinRoom(cleanCode, {
+          playerName: this._selfProfile.username,
+          playerProperties: {
+            rating: this._selfProfile.rating,
+            avatarSrc: this._selfProfile.avatarSrc || '',
+            abilities: this._abilities || []
+          },
+          syncState: true
+        });
+
+        console.log('[BridgeMultiplayer] Successfully joined room:', cleanCode);
+
+        // Find the host in the room
+        const players = window.bridge.multiplayer.players || [];
+        const hostPlayer = players.find(p => p.id !== window.bridge.multiplayer.playerId) || players[0];
+
+        // Send hello greeting message so host gets opponent profile
         this.send({
           type: 'player_joined_duel',
           profile: this._selfProfile,
           abilities: this._abilities
         });
+
+        if (hostPlayer) {
+          this._startDuel([hostPlayer]);
+        }
         return;
       } catch (e) {
-        console.warn('[BridgeMultiplayer] joinRoom notice:', e);
+        console.warn('[BridgeMultiplayer] joinRoom error:', e);
+        if (window.app && typeof window.app.showToast === 'function') {
+          window.app.showToast('Room not found or expired');
+        }
+        if (window.app && typeof window.app.showScreen === 'function') {
+          window.app.showScreen('screen-home');
+        }
+        return;
       }
     }
 
-    this.roomCode = roomCode;
-    this.isHost = false;
-    this.playerColor = 'black';
-    setTimeout(() => {
-      this._startBotDuel();
-    }, 1500);
-  }
-
-  checkRoom(roomCode) {
-    if (this.onCheckRoomResult) {
-      this.onCheckRoomResult({ success: true, roomCode: roomCode, timer: 10 });
+    if (window.app && typeof window.app.showToast === 'function') {
+      window.app.showToast('Unable to connect to room');
     }
   }
 
@@ -218,9 +325,11 @@ class BridgeMultiplayerClient {
     this._isBot = false;
 
     this.playerColor = this.isHost ? 'white' : 'black';
-    const opponent = players.find(p => !p.isSelf) || {};
-    const oppName = opponent.name || 'Opponent';
-    const oppRating = opponent.score || 1200;
+    const opponent = players.find(p => !p.isSelf && p.id !== (window.bridge && window.bridge.multiplayer && window.bridge.multiplayer.playerId)) || players[0] || {};
+    const oppProps = opponent.properties || {};
+    const oppName = opponent.name || oppProps.username || 'Opponent';
+    const oppRating = oppProps.rating || opponent.score || 1200;
+    const oppAvatar = oppProps.avatarSrc || opponent.photo || null;
 
     const gameData = {
       color: this.playerColor,
@@ -230,9 +339,9 @@ class BridgeMultiplayerClient {
       opponentProfile: {
         username: oppName,
         rating: oppRating,
-        avatarSrc: opponent.photo || null
+        avatarSrc: oppAvatar
       },
-      abilities: { self: this._abilities || [], opponent: [] }
+      abilities: { self: this._abilities || [], opponent: oppProps.abilities || [] }
     };
 
     if (this.onGameStart) {
@@ -292,6 +401,14 @@ class BridgeMultiplayerClient {
     const data = msg.data || msg;
 
     switch (data.type) {
+      case 'player_joined_duel':
+        if (!this._state.started && this.isHost) {
+          this._startDuel([{
+            name: (data.profile && data.profile.username) || 'Player',
+            properties: data.profile || {}
+          }]);
+        }
+        break;
       case 'move':
         if (this.onOpponentMove) this.onOpponentMove(data.from, data.to, data.promotion);
         break;
@@ -328,11 +445,19 @@ class BridgeMultiplayerClient {
   }
 
   send(data) {
+    if (window.bridge && window.bridge.multiplayer && typeof window.bridge.multiplayer.send === 'function') {
+      try {
+        window.bridge.multiplayer.send('game_event', data);
+        return;
+      } catch (e) {
+        console.warn('[BridgeMultiplayer] bridge.multiplayer.send error:', e);
+      }
+    }
     if (window.bridge && window.bridge.multiplayer && typeof window.bridge.multiplayer.sendMessage === 'function') {
       try {
         window.bridge.multiplayer.sendMessage(data);
       } catch (e) {
-        console.warn('[BridgeMultiplayer] sendMessage error:', e);
+        console.warn('[BridgeMultiplayer] sendMessage fallback error:', e);
       }
     }
   }
@@ -340,11 +465,21 @@ class BridgeMultiplayerClient {
   sendMove(from, to, promotion = null) {
     this.send({ type: 'move', from, to, promotion });
 
-    // If duel partner is simulated, play smart responsive moves using chess engine
+    // Sync state for seamless recovery
+    if (window.bridge && window.bridge.multiplayer && typeof window.bridge.multiplayer.setSyncState === 'function') {
+      try {
+        window.bridge.multiplayer.setSyncState({
+          lastMove: { from, to, promotion, time: Date.now() }
+        });
+      } catch (e) {}
+    }
+
+    // If duel partner is simulated bot, play responsive moves using chess engine
     if (this._isBot && window.app && window.app.engine && !window.app.engine.gameOver) {
       setTimeout(() => {
         if (!window.app || !window.app.engine || window.app.engine.gameOver) return;
-        if (window.app.engine.currentTurn !== 'black') return;
+        const botColor = this.playerColor === 'white' ? 'black' : 'white';
+        if (window.app.engine.currentTurn !== botColor) return;
         try {
           const ai = new AIEngine('medium');
           const best = ai.getBestMove(window.app.engine);
@@ -354,7 +489,7 @@ class BridgeMultiplayerClient {
             this.onOpponentMove(fromAlg, toAlg, best.promotion || null);
           }
         } catch(e) {
-          console.warn('[BridgeMultiplayer] bot move error:', e);
+          console.warn('[BridgeMultiplayer] bot move execution notice:', e);
         }
       }, 700 + Math.random() * 800);
     }
@@ -404,11 +539,13 @@ class BridgeMultiplayerClient {
 
   cancelMatch() {
     if (this._matchTimeout) clearTimeout(this._matchTimeout);
+    if (this._statusTimer) clearInterval(this._statusTimer);
     if (window.bridge && window.bridge.multiplayer && typeof window.bridge.multiplayer.leaveRoom === 'function') {
       try { window.bridge.multiplayer.leaveRoom(); } catch(e) {}
     }
     this.room = null;
     this.roomCode = null;
+    this._state.started = false;
   }
 
   disconnect() {

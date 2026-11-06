@@ -1720,8 +1720,8 @@ class App {
     const input = document.getElementById('room-code-input');
     const code = input ? input.value.trim().toUpperCase() : '';
 
-    if (code.length !== 6) {
-      this.showToast('Enter a 6-character room code');
+    if (code.length < 4 || code.length > 10) {
+      this.showToast('Enter a valid room code');
       return;
     }
 
