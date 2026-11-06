@@ -6,14 +6,20 @@
       "platforms": [
         "playgama",
         "playgama_sandbox",
-        "youtube"
+        "portal",
+        "standalone",
+        "qa_tool",
+        "youtube",
+        "mock"
       ]
     },
     "multiplayer": {
       "platforms": [
         "playgama",
         "playgama_sandbox",
+        "portal",
         "standalone",
+        "qa_tool",
         "youtube",
         "mock"
       ]

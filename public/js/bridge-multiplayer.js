@@ -173,13 +173,9 @@ class BridgeMultiplayerClient {
         }
 
         // Give up to 18 seconds for another human player in quick match before fallback
+        // Online random matchmaking: ONLY human opponents, no bots!
         if (this._matchTimeout) clearTimeout(this._matchTimeout);
-        this._matchTimeout = setTimeout(() => {
-          if (this._isSearching && this._searchSessionId === currentSearchId && !this._state.started) {
-            console.log('[BridgeMultiplayer] Matchmaking timeout reached, starting challenge duel');
-            this._startBotDuel();
-          }
-        }, 18000);
+        this._matchTimeout = null;
 
         return;
       } catch (err) {
@@ -190,11 +186,8 @@ class BridgeMultiplayerClient {
     // Fallback if SDK or server is temporarily unreachable
     if (!this._isSearching || this._searchSessionId !== currentSearchId) return;
     if (this._matchTimeout) clearTimeout(this._matchTimeout);
-    this._matchTimeout = setTimeout(() => {
-      if (this._isSearching && this._searchSessionId === currentSearchId && !this._state.started) {
-        this._startBotDuel();
-      }
-    }, 12000);
+    this._matchTimeout = null;
+    console.log('[BridgeMultiplayer] Waiting for human opponent to join...');
   }
 
   /**
@@ -376,6 +369,9 @@ class BridgeMultiplayerClient {
   }
 
   _startBotDuel() {
+    // Bots strictly disabled for online random matchmaking. Only Practice mode uses bots.
+    console.log('[BridgeMultiplayer] Bot duels disabled for random matchmaking');
+    return;
     if (!this._isSearching || this._state.started) return;
     this._isSearching = false;
     this._state.started = true;

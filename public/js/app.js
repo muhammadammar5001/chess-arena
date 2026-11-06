@@ -647,7 +647,7 @@ class App {
       let timeout = null;
       try {
         controller = new AbortController();
-        timeout = setTimeout(() => controller.abort(), 8000);
+        timeout = setTimeout(() => controller.abort(), 25000);
         const syncUrl = this.getServerApiUrl('api/leaderboard/sync');
         const response = await fetch(syncUrl, {
           method: 'POST',
@@ -5788,41 +5788,83 @@ class App {
     const list = document.getElementById('leaderboard-list');
     if (!list) return;
 
-    // 1. Try Playgama Bridge SaaS Leaderboards first ('LB 1' or '1')
+    // Load any cached leaderboard immediately so rankings are NEVER blank
+    let cached = null;
+    try {
+      const raw = (window.SaveStore && typeof window.SaveStore.getItem === 'function')
+        ? window.SaveStore.getItem('chessarena_cached_leaderboard')
+        : (typeof localStorage !== 'undefined' ? localStorage.getItem('chessarena_cached_leaderboard') : null);
+      cached = raw ? JSON.parse(raw) : null;
+      if (cached && Array.isArray(cached.players) && cached.players.length > 0) {
+        this.renderLeaderboardData(cached.players, cached.totalPlayers || cached.players.length);
+      }
+    } catch (e) {}
+
+    let loadedPlayers = null;
+    let totalCount = 0;
+
+    // 1. Fetch authoritative full player list from central Render server
+    try {
+      const controller = new AbortController();
+      const fetchTimer = setTimeout(() => controller.abort(), 25000);
+      const listUrl = this.getServerApiUrl('api/leaderboard');
+      const response = await fetch(listUrl, {
+        headers: { Accept: 'application/json' },
+        signal: controller.signal
+      });
+      clearTimeout(fetchTimer);
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data.players) && data.players.length > 0) {
+          loadedPlayers = data.players;
+          totalCount = Number(data.totalPlayers) || loadedPlayers.length;
+          try {
+            const cachePayload = JSON.stringify({ players: loadedPlayers, totalPlayers: totalCount });
+            if (window.SaveStore && typeof window.SaveStore.setItem === 'function') {
+              window.SaveStore.setItem('chessarena_cached_leaderboard', cachePayload);
+            } else if (typeof localStorage !== 'undefined') {
+              localStorage.setItem('chessarena_cached_leaderboard', cachePayload);
+            }
+          } catch (e) {}
+        }
+      }
+    } catch (err) {
+      console.warn('[Leaderboard] Central server fetch error:', err);
+    }
+
+    // 2. Also check Playgama Bridge SaaS Leaderboards if available
     if (window.bridge && window.bridge.leaderboards && typeof window.bridge.leaderboards.getEntries === 'function') {
       try {
-        let entries = null;
-        try {
-          entries = await window.bridge.leaderboards.getEntries('LB 1');
-        } catch(e) {
-          entries = await window.bridge.leaderboards.getEntries('1');
-        }
+        const bridgeEntriesPromise = (async () => {
+          try {
+            return await window.bridge.leaderboards.getEntries('LB 1');
+          } catch (e) {
+            return await window.bridge.leaderboards.getEntries('1');
+          }
+        })();
+        const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 3000));
+        const entries = await Promise.race([bridgeEntriesPromise, timeoutPromise]);
         if (Array.isArray(entries) && entries.length > 0) {
-          const players = entries.map(e => ({
-            rank: e.rank,
-            username: e.name || 'Player',
-            rating: Number(e.score) || 1200,
-            elo: Number(e.score) || 1200,
-            wins: 0,
-            avatarSrc: e.photo || null
-          }));
-          this.renderLeaderboardData(players, players.length);
-          return;
+          if (!loadedPlayers || loadedPlayers.length === 0) {
+            loadedPlayers = entries.map(e => ({
+              rank: e.rank,
+              username: e.name || 'Player',
+              rating: Number(e.score) || 1200,
+              elo: Number(e.score) || 1200,
+              wins: 0,
+              avatarSrc: e.photo || null
+            }));
+            totalCount = entries.length;
+          }
         }
       } catch (err) {
         console.warn('[Leaderboard] Bridge getEntries fallback:', err);
       }
     }
 
-    // 2. Fallback to API endpoint
-    try {
-      const listUrl = this.getServerApiUrl('api/leaderboard');
-      const response = await fetch(listUrl, { headers: { Accept: 'application/json' } });
-      if (!response.ok) throw new Error('Request failed');
-      const data = await response.json();
-      const players = Array.isArray(data.players) ? data.players : [];
-      this.renderLeaderboardData(players, Number(data.totalPlayers) || players.length);
-    } catch (e) {
+    if (loadedPlayers && loadedPlayers.length > 0) {
+      this.renderLeaderboardData(loadedPlayers, totalCount);
+    } else if (!cached || !cached.players || cached.players.length === 0) {
       // Local fallback: show self entry so the screen is never blank
       const self = this.getLeaderboardSelfEntry();
       const fallbackList = self ? [self] : [];
@@ -5843,7 +5885,7 @@ class App {
         this.leaderboardTotalPlayers = 1;
       } else {
         list.innerHTML = '<div style="text-align: center; padding: 36px 18px; color: #D6BD9B;">' +
-          '<div style="margin-bottom: 10px;"><img src="assets/icons/crown.svg" alt="" style="width: 34px; height: 34px;"></div>' +
+          '<div style="margin-bottom: 10px;"><img src="assets/crown-rank-1.webp" alt="Rank 1" style="width: 44px; height: 44px; object-fit: contain;"></div>' +
           '<p style="margin: 0 0 6px; color: #FDF7EC; font-weight: 700;">No ranked players yet</p>' +
           '<p style="margin: 0; font-size: 13px;">Play a match to claim the first spot.</p></div>';
         this.renderLeaderboardMyRank();
