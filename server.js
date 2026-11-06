@@ -485,6 +485,9 @@ function handleMessage(ws, data) {
     case 'accept_rematch':
       handleRematchAccept(ws);
       break;
+    case 'decline_rematch':
+      handleRematchDecline(ws);
+      break;
     case 'reconnect':
       handleReconnect(ws, data);
       break;
@@ -853,6 +856,12 @@ function handleRematchRequest(ws) {
   const room = rooms.get(ws.roomCode);
   if (!room) return;
 
+  // If opponent already requested rematch, auto-accept immediately!
+  if (room.rematchRequested && room.rematchRequested !== ws.playerColor) {
+    handleRematchAccept(ws);
+    return;
+  }
+
   room.rematchRequested = ws.playerColor;
   const opponent = ws.playerColor === 'white' ? room.players.black : room.players.white;
   if (opponent) {
@@ -872,6 +881,12 @@ function handleRematchAccept(ws) {
   if (room.players.white) room.players.white.playerColor = 'white';
   if (room.players.black) room.players.black.playerColor = 'black';
 
+  if (room.abilities) {
+    const tempAbilities = room.abilities.white;
+    room.abilities.white = room.abilities.black;
+    room.abilities.black = tempAbilities;
+  }
+
   // Reset game
   room.engine = new ChessEngine();
   room.gameId = uuidv4();
@@ -888,13 +903,25 @@ function handleRematchAccept(ws) {
   sendJSON(room.players.white, {
     type: 'rematch_accepted',
     color: 'white',
-    gameId: room.gameId
+    gameId: room.gameId,
+    abilities: room.abilities ? { self: room.abilities.white, opponent: room.abilities.black } : undefined
   });
   sendJSON(room.players.black, {
     type: 'rematch_accepted',
     color: 'black',
-    gameId: room.gameId
+    gameId: room.gameId,
+    abilities: room.abilities ? { self: room.abilities.black, opponent: room.abilities.white } : undefined
   });
+}
+
+function handleRematchDecline(ws) {
+  const room = rooms.get(ws.roomCode);
+  if (!room) return;
+  room.rematchRequested = null;
+  const opponent = ws.playerColor === 'white' ? room.players.black : room.players.white;
+  if (opponent) {
+    sendJSON(opponent, { type: 'rematch_declined' });
+  }
 }
 
 function handleReconnect(ws, data) {

@@ -28,6 +28,7 @@ class BridgeMultiplayerClient {
     this.onOpponentResigned = null;
     this.onRematchRequested = null;
     this.onRematchAccepted = null;
+    this.onRematchDeclined = null;
     this.onTimerSync = null;
     this.onChatMessage = null;
     this.onCheckRoomResult = null;
@@ -48,6 +49,10 @@ class BridgeMultiplayerClient {
     this._statusTimer = null;
     this._isBot = false;
     this._boundBridgeEvents = false;
+    this._isSearching = false;
+    this._searchSessionId = 0;
+    this._rematchRequestedBySelf = false;
+    this._rematchBotTimeout = null;
   }
 
   isSupported() {
@@ -105,6 +110,9 @@ class BridgeMultiplayerClient {
    * Random matchmaking
    */
   async findMatch(timerMinutes = 10, mode = 'standard', abilities = [], avatarId = null, profile = null) {
+    this._isSearching = true;
+    const currentSearchId = ++this._searchSessionId;
+
     this._selfProfile = profile || {
       username: (window.app && window.app.getPreferredDisplayName()) || 'Player',
       rating: 1200,
@@ -138,6 +146,17 @@ class BridgeMultiplayerClient {
           syncState: true
         });
 
+        // If search was cancelled while awaiting joinOrCreateRoom, leave and abort
+        if (!this._isSearching || this._searchSessionId !== currentSearchId) {
+          console.log('[BridgeMultiplayer] Matchmaking was cancelled while joining room, leaving room');
+          if (window.bridge && window.bridge.multiplayer && typeof window.bridge.multiplayer.leaveRoom === 'function') {
+            try { window.bridge.multiplayer.leaveRoom(); } catch(e) {}
+          }
+          this.room = null;
+          this.roomCode = null;
+          return;
+        }
+
         this.roomCode = code || (window.bridge.multiplayer.room && window.bridge.multiplayer.room.id) || 'ONLINE';
         this.isHost = !!(window.bridge.multiplayer.isHost);
         this.playerColor = this.isHost ? 'white' : 'black';
@@ -147,6 +166,7 @@ class BridgeMultiplayerClient {
         const otherPlayer = currentPlayers.find(p => p.id !== window.bridge.multiplayer.playerId);
 
         if (otherPlayer) {
+          if (!this._isSearching || this._searchSessionId !== currentSearchId) return;
           console.log('[BridgeMultiplayer] Found opponent immediately in room:', otherPlayer);
           this._startDuel([otherPlayer]);
           return;
@@ -155,7 +175,7 @@ class BridgeMultiplayerClient {
         // Give up to 18 seconds for another human player in quick match before fallback
         if (this._matchTimeout) clearTimeout(this._matchTimeout);
         this._matchTimeout = setTimeout(() => {
-          if (!this._state.started) {
+          if (this._isSearching && this._searchSessionId === currentSearchId && !this._state.started) {
             console.log('[BridgeMultiplayer] Matchmaking timeout reached, starting challenge duel');
             this._startBotDuel();
           }
@@ -168,9 +188,12 @@ class BridgeMultiplayerClient {
     }
 
     // Fallback if SDK or server is temporarily unreachable
+    if (!this._isSearching || this._searchSessionId !== currentSearchId) return;
     if (this._matchTimeout) clearTimeout(this._matchTimeout);
     this._matchTimeout = setTimeout(() => {
-      this._startBotDuel();
+      if (this._isSearching && this._searchSessionId === currentSearchId && !this._state.started) {
+        this._startBotDuel();
+      }
     }, 12000);
   }
 
@@ -321,6 +344,9 @@ class BridgeMultiplayerClient {
 
   _startDuel(players = []) {
     if (this._matchTimeout) clearTimeout(this._matchTimeout);
+    if (!this._isSearching && !this.roomCode) return;
+    if (this._state.started) return;
+    this._isSearching = false;
     this._state.started = true;
     this._isBot = false;
 
@@ -350,7 +376,8 @@ class BridgeMultiplayerClient {
   }
 
   _startBotDuel() {
-    if (this._state.started) return;
+    if (!this._isSearching || this._state.started) return;
+    this._isSearching = false;
     this._state.started = true;
     this._isBot = true;
     this.playerColor = 'white';
@@ -384,6 +411,7 @@ class BridgeMultiplayerClient {
   }
 
   _handlePlayerJoined(player) {
+    if (!this._isSearching && !this.roomCode) return;
     if (this._matchTimeout) clearTimeout(this._matchTimeout);
     if (!this._state.started) {
       this._startDuel([player]);
@@ -428,11 +456,36 @@ class BridgeMultiplayerClient {
         if (this.onGameOver) this.onGameOver('draw', null);
         break;
       case 'request_rematch':
-        if (this.onRematchRequested) this.onRematchRequested();
+        if (this._rematchRequestedBySelf) {
+          // Both players requested rematch independently -> auto-accept immediately!
+          this.acceptRematch();
+        } else if (this.onRematchRequested) {
+          this.onRematchRequested();
+        }
         break;
-      case 'accept_rematch':
-        this.playerColor = this.playerColor === 'white' ? 'black' : 'white';
-        if (this.onRematchAccepted) this.onRematchAccepted(this.playerColor);
+      case 'accept_rematch': {
+        this._rematchRequestedBySelf = false;
+        if (this._rematchBotTimeout) clearTimeout(this._rematchBotTimeout);
+        if (this._botMoveTimer) clearTimeout(this._botMoveTimer);
+
+        const myNewColor = data.color || (this.playerColor === 'white' ? 'black' : 'white');
+        this.playerColor = myNewColor;
+        this._state.started = true;
+        this._state.lastMove = null;
+
+        if (this.onRematchAccepted) {
+          this.onRematchAccepted(this.playerColor);
+        }
+
+        if (this._isBot && this.playerColor === 'black') {
+          this._triggerBotMoveIfNeeded();
+        }
+        break;
+      }
+      case 'decline_rematch':
+        this._rematchRequestedBySelf = false;
+        if (this._rematchBotTimeout) clearTimeout(this._rematchBotTimeout);
+        if (this.onRematchDeclined) this.onRematchDeclined();
         break;
     }
   }
@@ -462,6 +515,30 @@ class BridgeMultiplayerClient {
     }
   }
 
+  _triggerBotMoveIfNeeded() {
+    if (!this._isBot || !window.app || !window.app.engine || window.app.engine.gameOver) return;
+    const botColor = this.playerColor === 'white' ? 'black' : 'white';
+    if (window.app.engine.currentTurn !== botColor) return;
+
+    if (this._botMoveTimer) clearTimeout(this._botMoveTimer);
+    this._botMoveTimer = setTimeout(() => {
+      if (!window.app || !window.app.engine || window.app.engine.gameOver) return;
+      if (window.app.engine.currentTurn !== botColor) return;
+      try {
+        if (typeof AIEngine === 'undefined') return;
+        const ai = new AIEngine('medium');
+        const best = ai.getBestMove(window.app.engine);
+        if (best && this.onOpponentMove) {
+          const fromAlg = ChessEngine.toAlgebraic(best.from.row, best.from.col);
+          const toAlg = ChessEngine.toAlgebraic(best.to.row, best.to.col);
+          this.onOpponentMove(fromAlg, toAlg, best.promotion || null);
+        }
+      } catch (e) {
+        console.warn('[BridgeMultiplayer] bot move execution notice:', e);
+      }
+    }, 700 + Math.random() * 800);
+  }
+
   sendMove(from, to, promotion = null) {
     this.send({ type: 'move', from, to, promotion });
 
@@ -475,24 +552,7 @@ class BridgeMultiplayerClient {
     }
 
     // If duel partner is simulated bot, play responsive moves using chess engine
-    if (this._isBot && window.app && window.app.engine && !window.app.engine.gameOver) {
-      setTimeout(() => {
-        if (!window.app || !window.app.engine || window.app.engine.gameOver) return;
-        const botColor = this.playerColor === 'white' ? 'black' : 'white';
-        if (window.app.engine.currentTurn !== botColor) return;
-        try {
-          const ai = new AIEngine('medium');
-          const best = ai.getBestMove(window.app.engine);
-          if (best && this.onOpponentMove) {
-            const fromAlg = ChessEngine.toAlgebraic(best.from.row, best.from.col);
-            const toAlg = ChessEngine.toAlgebraic(best.to.row, best.to.col);
-            this.onOpponentMove(fromAlg, toAlg, best.promotion || null);
-          }
-        } catch(e) {
-          console.warn('[BridgeMultiplayer] bot move execution notice:', e);
-        }
-      }, 700 + Math.random() * 800);
-    }
+    this._triggerBotMoveIfNeeded();
   }
 
   sendChatMessage(text) {
@@ -524,22 +584,83 @@ class BridgeMultiplayerClient {
   }
 
   requestRematch() {
+    this._rematchRequestedBySelf = true;
     this.send({ type: 'request_rematch' });
     if (this._isBot) {
-      setTimeout(() => {
-        this.playerColor = this.playerColor === 'white' ? 'black' : 'white';
-        if (this.onRematchAccepted) this.onRematchAccepted(this.playerColor);
+      if (this._rematchBotTimeout) clearTimeout(this._rematchBotTimeout);
+      this._rematchBotTimeout = setTimeout(() => {
+        this.acceptRematch();
       }, 800);
     }
   }
 
   acceptRematch() {
-    this.send({ type: 'accept_rematch' });
+    const myNewColor = this.playerColor === 'white' ? 'black' : 'white';
+    const oppNewColor = this.playerColor; // opponent takes my previous color
+
+    this._rematchRequestedBySelf = false;
+    if (this._rematchBotTimeout) {
+      clearTimeout(this._rematchBotTimeout);
+      this._rematchBotTimeout = null;
+    }
+    if (this._botMoveTimer) {
+      clearTimeout(this._botMoveTimer);
+      this._botMoveTimer = null;
+    }
+    this.playerColor = myNewColor;
+    this._state.started = true;
+    this._state.lastMove = null;
+
+    this.send({
+      type: 'accept_rematch',
+      color: oppNewColor,
+      gameId: 'rematch_' + Date.now()
+    });
+
+    if (window.bridge && window.bridge.multiplayer && typeof window.bridge.multiplayer.setSyncState === 'function') {
+      try {
+        window.bridge.multiplayer.setSyncState({ lastMove: null, rematchAt: Date.now() });
+      } catch (e) {}
+    }
+
+    if (this.onRematchAccepted) {
+      this.onRematchAccepted(this.playerColor);
+    }
+
+    if (this._isBot && this.playerColor === 'black') {
+      this._triggerBotMoveIfNeeded();
+    }
+  }
+
+  declineRematch() {
+    this._rematchRequestedBySelf = false;
+    if (this._rematchBotTimeout) {
+      clearTimeout(this._rematchBotTimeout);
+      this._rematchBotTimeout = null;
+    }
+    this.send({ type: 'decline_rematch' });
   }
 
   cancelMatch() {
-    if (this._matchTimeout) clearTimeout(this._matchTimeout);
-    if (this._statusTimer) clearInterval(this._statusTimer);
+    this._isSearching = false;
+    this._searchSessionId = (this._searchSessionId || 0) + 1;
+    this._rematchRequestedBySelf = false;
+    if (this._rematchBotTimeout) {
+      clearTimeout(this._rematchBotTimeout);
+      this._rematchBotTimeout = null;
+    }
+    if (this._matchTimeout) {
+      clearTimeout(this._matchTimeout);
+      this._matchTimeout = null;
+    }
+    if (this._statusTimer) {
+      clearInterval(this._statusTimer);
+      this._statusTimer = null;
+    }
+    if (this._botMoveTimer) {
+      clearTimeout(this._botMoveTimer);
+      this._botMoveTimer = null;
+    }
     if (window.bridge && window.bridge.multiplayer && typeof window.bridge.multiplayer.leaveRoom === 'function') {
       try { window.bridge.multiplayer.leaveRoom(); } catch(e) {}
     }

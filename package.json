@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "node test/chess-rules.test.js && node test/economy.test.js"
+    "test": "node test/chess-rules.test.js && node test/economy.test.js && node test/rematch.test.js"
   },
   "keywords": [
     "chess",

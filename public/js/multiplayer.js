@@ -100,6 +100,7 @@ class MultiplayerClient {
     this.onOpponentResigned = null;
     this.onRematchRequested = null;
     this.onRematchAccepted = null;
+    this.onRematchDeclined = null;
     this.onTimerSync = null;
     this.onChatMessage = null;
     this.onCheckRoomResult = null;
@@ -358,7 +359,12 @@ class MultiplayerClient {
       case 'rematch_accepted':
         this.playerColor = data.color;
         this.gameId = data.gameId;
+        if (data.abilities) this.abilities = data.abilities;
         if (this.onRematchAccepted) this.onRematchAccepted(data.color);
+        break;
+
+      case 'rematch_declined':
+        if (this.onRematchDeclined) this.onRematchDeclined();
         break;
 
               case 'afk_warning':
@@ -455,6 +461,10 @@ class MultiplayerClient {
 
   acceptRematch() {
     this.send({ type: 'accept_rematch' });
+  }
+
+  declineRematch() {
+    this.send({ type: 'decline_rematch' });
   }
 
   disconnect() {

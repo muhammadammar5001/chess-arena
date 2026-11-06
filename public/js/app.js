@@ -1074,7 +1074,7 @@ class App {
     if (this.soundMuted || this.platformAudioMuted || this.platformPaused) return;
     switch (type) {
       case 'click': {
-        this.playShortSound('assets/sounds/ui-click.wav', 0.55);
+        this.playShortSound('assets/sounds/ui-click.wav', 0.33);
         if (typeof navigator !== 'undefined' && navigator.vibrate) {
           try { navigator.vibrate(12); } catch (e) {}
         }
@@ -1680,6 +1680,8 @@ class App {
     await this.ensureServerProfileSynced();
     this.privateRoom = false;
     this.opponentAvatarSrc = null;
+    this.isMatchmakingActive = true;
+    const currentSession = ++this._matchSearchSession;
 
     if (!this.multiplayer) {
       this.multiplayer = window.BridgeMultiplayerClient ? new BridgeMultiplayerClient() : new MultiplayerClient();
@@ -1695,6 +1697,10 @@ class App {
 
     try {
       await this.multiplayer.connect();
+      if (!this.isMatchmakingActive || this._matchSearchSession !== currentSession) {
+        console.log('[Matchmaking] Cancelled during connect, aborting findMatch');
+        return;
+      }
       const myProfile = {
         username: this.getPreferredDisplayName() || 'Player',
         rating: (this.cloudProfile && Number.isFinite(Number(this.cloudProfile.rating)))
@@ -1704,12 +1710,19 @@ class App {
         avatarSrc: this.getSelectedAvatarSrc(),
         level: Math.max(1, Number(this.playerLevel) || 1)
       };
+      if (!this.isMatchmakingActive || this._matchSearchSession !== currentSession) {
+        console.log('[Matchmaking] Cancelled before findMatch call, aborting');
+        return;
+      }
       this.multiplayer.findMatch(timerValue, this.matchType, this.matchType === 'tactical' ? (this.selectedAbilities || ['swap', 'freeze']) : [], this.avatarId, myProfile);
     } catch {
-      if (this.slotInterval) clearInterval(this.slotInterval);
-      if (this.statusInterval) clearInterval(this.statusInterval);
-      this.showToast('Failed to connect to server');
-      this.showScreen('screen-home');
+      if (this._matchSearchSession === currentSession) {
+        this.isMatchmakingActive = false;
+        if (this.slotInterval) clearInterval(this.slotInterval);
+        if (this.statusInterval) clearInterval(this.statusInterval);
+        this.showToast('Failed to connect to server');
+        this.showScreen('screen-home');
+      }
     }
   }
 
@@ -1836,6 +1849,7 @@ class App {
     };
 
     mp.onWaitingForMatch = () => {
+      if (!this.isMatchmakingActive) return;
       this.showScreen('screen-waiting');
       if (!this.slotInterval) {
         this.startSlotMachine();
@@ -1855,6 +1869,15 @@ class App {
 
     mp.onGameStart = (color, opponent, timerMinutes, gameData = {}) => {
       try {
+        if (!this.isMatchmakingActive && !this.privateRoom) {
+          console.log('[Matchmaking] onGameStart ignored: matchmaking search was cancelled');
+          if (this.multiplayer) {
+            if (typeof this.multiplayer.cancelMatch === 'function') this.multiplayer.cancelMatch();
+            if (typeof this.multiplayer.resign === 'function') this.multiplayer.resign();
+          }
+          return;
+        }
+        this.isMatchmakingActive = false;
         console.log("onGameStart triggered with", color, opponent, timerMinutes);
         this.gameMode = 'online';
         this.playerColor = color;
@@ -2035,6 +2058,11 @@ class App {
     mp.onOpponentDisconnected = (data) => {
       this.showConnectionStatus('disconnected', data && data.forfeitInMs);
       this.showToast('Opponent disconnected');
+      const rematchBtn = document.getElementById('victory-btn-rematch');
+      if (rematchBtn) {
+        rematchBtn.disabled = true;
+        rematchBtn.textContent = 'Opponent Left';
+      }
     };
 
     mp.onOpponentReconnected = () => {
@@ -2232,26 +2260,65 @@ class App {
     mp.onRematchRequested = () => {
       this.showConfirm('Rematch?', 'Your opponent wants a rematch.', () => {
         this.multiplayer.acceptRematch();
+      }, () => {
+        if (this.multiplayer && typeof this.multiplayer.declineRematch === 'function') {
+          this.multiplayer.declineRematch();
+        }
       });
+    };
+
+    mp.onRematchDeclined = () => {
+      this.showToast('Opponent declined rematch');
+      const rematchBtn = document.getElementById('victory-btn-rematch');
+      if (rematchBtn) {
+        rematchBtn.disabled = false;
+        rematchBtn.innerHTML = '<span>Rematch</span>';
+      }
     };
 
     mp.onRematchAccepted = (color) => {
       this.hideModal('modal-confirm');
+      this.hideModal('modal-draw-offer');
+      this.hideModal('modal-afk-warning');
+      this.hideConnectionStatus();
+      this.gameMode = 'online';
       this.showScreen('screen-game');
       setTimeout(() => this.startBgMusic(), 500);
+
       this.playerColor = color;
       this.boardFlipped = color === 'black';
-      if (this.multiplayer && this.multiplayer.abilities) {
-        const previousAbilities = this.multiplayer.abilities;
-        this.multiplayer.abilities = {
-          self: Array.isArray(previousAbilities.opponent) ? previousAbilities.opponent : [],
-          opponent: Array.isArray(previousAbilities.self) ? previousAbilities.self : []
-        };
+
+      // Reset match metrics & ability charges for fresh clean rematch
+      this.abilitiesActivatedThisMatch = new Set();
+      this.pendingAbilityCharge = null;
+      this.lastMatchCoinsEarned = 0;
+      this.lastMatchDoubled = false;
+      this.hintCountInMatch = 0;
+      this.undoCountInMatch = 0;
+      this.hasUndoneCurrentMove = false;
+      this.statsRecordedForGame = null;
+      this.gameStartTime = Date.now();
+      this.moveTimeLeft = 45000;
+
+      // In-game buttons & control states
+      const resignBtn = document.getElementById('btn-ingame-resign');
+      if (resignBtn) resignBtn.classList.remove('hidden');
+      const drawBtn = document.getElementById('btn-ingame-draw');
+      if (drawBtn) drawBtn.classList.remove('hidden');
+      const undoBtn = document.getElementById('btn-ingame-undo');
+      if (undoBtn) { undoBtn.classList.add('hidden'); undoBtn.style.display = 'none'; }
+      const hintBtn = document.getElementById('btn-ingame-hint');
+      if (hintBtn) { hintBtn.classList.add('hidden'); hintBtn.style.display = 'none'; }
+      const rematchBtn = document.getElementById('victory-btn-rematch');
+      if (rematchBtn) {
+        rematchBtn.disabled = false;
+        rematchBtn.innerHTML = '<span>Rematch</span>';
       }
+      const chatMessages = document.getElementById('chat-messages');
+      if (chatMessages) chatMessages.innerHTML = '';
+
       this.engine = new ChessEngine();
-        this.lastMove = null;
-        if (!this.gameStartTime) this.gameStartTime = Date.now();
-        this.statsRecordedForGame = null;
+      this.lastMove = null;
 
       if (this.timerMinutes) {
         this.timers.white = this.timerMinutes * 60 * 1000;
@@ -2285,15 +2352,23 @@ class App {
     };
   }
 
-  cancelWaiting() {
+  cancelWaiting(navigateHome = true) {
+    this.isMatchmakingActive = false;
+    this._matchSearchSession = (this._matchSearchSession || 0) + 1;
+
     if (this.multiplayer) {
-      if (this.multiplayer.roomCode) {
-        this.multiplayer.send({ type: 'leave_private_room' });
-        this.multiplayer.roomCode = null;
-      } else {
+      if (typeof this.multiplayer.cancelMatch === 'function') {
         this.multiplayer.cancelMatch();
       }
+      if (this.multiplayer.roomCode) {
+        if (typeof this.multiplayer.send === 'function') {
+          this.multiplayer.send({ type: 'leave_private_room' });
+        }
+        this.multiplayer.roomCode = null;
+      }
     }
+    this.privateRoom = false;
+
     if (this.slotInterval) {
       clearInterval(this.slotInterval);
       this.slotInterval = null;
@@ -2307,7 +2382,9 @@ class App {
       this.slotStopTimeout = null;
     }
 
-    this.showScreen('screen-home');
+    if (navigateHome) {
+      this.showScreen('screen-home');
+    }
   }
 
 
@@ -5431,7 +5508,7 @@ class App {
     if (modal) modal.classList.add('hidden');
   }
 
-  showConfirm(title, message, onConfirm) {
+  showConfirm(title, message, onConfirm, onCancel = null) {
     document.getElementById('confirm-title').textContent = title;
     document.getElementById('confirm-message').textContent = message;
     const yesBtn = document.getElementById('confirm-yes');
@@ -5439,6 +5516,13 @@ class App {
       this.hideModal('modal-confirm');
       onConfirm();
     };
+    const noBtn = document.getElementById('confirm-no');
+    if (noBtn) {
+      noBtn.onclick = () => {
+        this.hideModal('modal-confirm');
+        if (typeof onCancel === 'function') onCancel();
+      };
+    }
     this.showModal('modal-confirm');
   }
 
