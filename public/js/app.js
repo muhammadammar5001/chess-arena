@@ -169,6 +169,8 @@ class App {
     this.lastMatchDoubled = false;
     this.abilitiesActivatedThisMatch = new Set();
     this.isSpinningWheel = false;
+    this.isMatchmakingActive = false;
+    this._matchSearchSession = 0;
     this.pieceSymbols = {
       white: { king: '♔', queen: '♕', rook: '♖', bishop: '♗', knight: '♘', pawn: '♙' },
       black: { king: '♚', queen: '♛', rook: '♜', bishop: '♝', knight: '♞', pawn: '♟' }
@@ -392,7 +394,14 @@ class App {
   renderProfileRank(profile) {
     const badge = document.getElementById('profile-rank-badge');
     if (!badge) return;
-    const rank = profile && Number(profile.rank) > 0 ? Math.floor(Number(profile.rank)) : null;
+    let rank = profile && Number(profile.rank) > 0 ? Math.floor(Number(profile.rank)) : null;
+    if (!rank && profile) {
+      const stats = profile.stats || {};
+      const matches = Number(stats.totalMatches) || (Number(stats.wins) || 0) + (Number(stats.losses) || 0);
+      if (matches > 0) {
+        rank = Math.max(1, (this.leaderboardTotalPlayers || 1));
+      }
+    }
     badge.textContent = rank ? `#${rank}` : 'Unranked';
     badge.title = rank ? 'Global leaderboard rank' : 'Play a rated match to enter the standings';
   }
@@ -452,8 +461,17 @@ class App {
     const row = (this.leaderboardTopPlayers || []).find((player) => this.isOwnLeaderboardPlayer(player));
     if (row) return row;
 
-    const rank = Math.floor(Number(profile.rank) || 0);
-    if (rank <= 0) return null;
+    let rank = Math.floor(Number(profile.rank) || 0);
+    if (rank <= 0) {
+      // If player has played matches, calculate or assign active standing
+      const matchesPlayed = (profile.stats && profile.stats.totalMatches) ||
+        ((profile.stats ? (Number(profile.stats.wins) || 0) + (Number(profile.stats.losses) || 0) : 0));
+      if (matchesPlayed > 0 || (profile.rating && profile.rating !== 1200)) {
+        rank = Math.max(1, (this.leaderboardTotalPlayers || this.leaderboardTopPlayers.length) + 1);
+      } else {
+        return null;
+      }
+    }
 
     const stats = profile.stats || {};
     return {
@@ -690,7 +708,8 @@ class App {
         if (window.bridge && window.bridge.leaderboards && typeof window.bridge.leaderboards.setScore === 'function') {
           try {
             const scoreToSubmit = Number(target.rating) || 1200;
-            window.bridge.leaderboards.setScore('1', scoreToSubmit).catch(() => {});
+            window.bridge.leaderboards.setScore('LB 1', scoreToSubmit)
+              .catch(() => window.bridge.leaderboards.setScore('1', scoreToSubmit).catch(() => {}));
           } catch(e) {}
         }
         this.lastLeaderboardSyncAt = Date.now();
@@ -714,6 +733,13 @@ class App {
         return true;
       } catch (e) {
         console.warn('[Leaderboard] sync failed', e && (e.message || e));
+        if (window.bridge && window.bridge.leaderboards && typeof window.bridge.leaderboards.setScore === 'function') {
+          try {
+            const scoreToSubmit = Number((this.cloudProfile && this.cloudProfile.rating) || 1200);
+            window.bridge.leaderboards.setScore('LB 1', scoreToSubmit)
+              .catch(() => window.bridge.leaderboards.setScore('1', scoreToSubmit).catch(() => {}));
+          } catch(err) {}
+        }
         if (!e || !e.permanent) this.scheduleLeaderboardRetry();
         if (!options.silent) this.showToast('Could not update rankings. Retrying in the background.');
         return false;
@@ -1199,6 +1225,9 @@ class App {
   // --- Screen Management -----------------------------
 
   showScreen(screenId) {
+    if (this.isMatchmakingActive && screenId !== 'screen-waiting') {
+      this.cancelWaiting(false);
+    }
     if (screenId !== 'screen-game' && this._checkAlertOn) {
       this.stopCheckAlert();
     }
@@ -5660,10 +5689,15 @@ class App {
     const list = document.getElementById('leaderboard-list');
     if (!list) return;
 
-    // 1. Try Playgama Bridge SaaS Leaderboards first
+    // 1. Try Playgama Bridge SaaS Leaderboards first ('LB 1' or '1')
     if (window.bridge && window.bridge.leaderboards && typeof window.bridge.leaderboards.getEntries === 'function') {
       try {
-        const entries = await window.bridge.leaderboards.getEntries('1');
+        let entries = null;
+        try {
+          entries = await window.bridge.leaderboards.getEntries('LB 1');
+        } catch(e) {
+          entries = await window.bridge.leaderboards.getEntries('1');
+        }
         if (Array.isArray(entries) && entries.length > 0) {
           const players = entries.map(e => ({
             rank: e.rank,
@@ -5704,29 +5738,25 @@ class App {
     this.leaderboardTotalPlayers = Math.max(0, Number(totalPlayers) || this.leaderboardTopPlayers.length);
 
     if (this.leaderboardTopPlayers.length === 0) {
-      list.innerHTML = '<div style="text-align: center; padding: 36px 18px; color: #D6BD9B;">' +
-        '<div style="margin-bottom: 10px;"><img src="assets/icons/crown.svg" alt="" style="width: 34px; height: 34px;"></div>' +
-        '<p style="margin: 0 0 6px; color: #FDF7EC; font-weight: 700;">No ranked players yet</p>' +
-        '<p style="margin: 0; font-size: 13px;">Play a match to claim the first spot.</p></div>';
-      this.renderLeaderboardMyRank();
-      return;
+      const self = this.getLeaderboardSelfEntry();
+      if (self) {
+        this.leaderboardTopPlayers = [self];
+        this.leaderboardTotalPlayers = 1;
+      } else {
+        list.innerHTML = '<div style="text-align: center; padding: 36px 18px; color: #D6BD9B;">' +
+          '<div style="margin-bottom: 10px;"><img src="assets/icons/crown.svg" alt="" style="width: 34px; height: 34px;"></div>' +
+          '<p style="margin: 0 0 6px; color: #FDF7EC; font-weight: 700;">No ranked players yet</p>' +
+          '<p style="margin: 0; font-size: 13px;">Play a match to claim the first spot.</p></div>';
+        this.renderLeaderboardMyRank();
+        return;
+      }
     }
 
     const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (ch) => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     }[ch]));
 
-    const visiblePlayers = this.leaderboardTopPlayers.filter(
-      (player) => !this.isOwnLeaderboardPlayer(player)
-    );
-    if (visiblePlayers.length === 0) {
-      list.innerHTML = '<div style="text-align: center; padding: 36px 18px; color: #D6BD9B;">' +
-        '<div style="font-size: 34px; margin-bottom: 10px;">&#9822;</div>' +
-        '<p style="margin: 0 0 6px; color: #FDF7EC; font-weight: 700;">You are the only ranked player</p>' +
-        '<p style="margin: 0; font-size: 13px;">Your rank is pinned above the navigation.</p></div>';
-      this.renderLeaderboardMyRank();
-      return;
-    }
+    const visiblePlayers = this.leaderboardTopPlayers;
 
     const myId = this.cloudProfile && this.cloudProfile.playerId;
     list.innerHTML = visiblePlayers.map((player, i) => {

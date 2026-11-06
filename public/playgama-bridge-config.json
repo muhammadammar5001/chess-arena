@@ -3,13 +3,26 @@
   "saas": {
     "publicToken": "cmvzvefha0fuglf0hilcmck8n",
     "leaderboards": {
-      "platforms": ["playgama", "playgama_sandbox", "youtube"]
+      "platforms": [
+        "playgama",
+        "playgama_sandbox",
+        "youtube"
+      ]
     },
     "multiplayer": {
-      "platforms": ["playgama", "playgama_sandbox", "standalone", "youtube", "mock"]
+      "platforms": [
+        "playgama",
+        "playgama_sandbox",
+        "standalone",
+        "youtube",
+        "mock"
+      ]
     }
   },
   "leaderboards": [
-    { "id": "1", "isMain": true }
+    {
+      "id": "LB 1",
+      "isMain": true
+    }
   ]
 }

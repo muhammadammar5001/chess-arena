@@ -1500,6 +1500,26 @@ body {
   text-align: center;
 }
 
+.howto-head-piece,
+.howto-section h3 img.ui-ic {
+  width: 22px;
+  height: 22px;
+  max-width: 22px;
+  max-height: 22px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.piece-symbol img.howto-piece,
+.piece-symbol img.ui-piece-ic {
+  width: 28px;
+  height: 28px;
+  max-width: 28px;
+  max-height: 28px;
+  object-fit: contain;
+  display: block;
+}
+
 /* ─── Modals ───────────────────────────────────────── */
 
 .modal {
@@ -2274,7 +2294,8 @@ body {
 
 .fantasy-coin-chip
 
-.btn-settings {
+.btn-settings,
+.btn-howto {
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -2289,7 +2310,8 @@ body {
   transition: all 0.2s ease;
 }
 
-.btn-settings:hover {
+.btn-settings:hover,
+.btn-howto:hover {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.25);
   transform: rotate(30deg);

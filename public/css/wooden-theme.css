@@ -2145,7 +2145,8 @@ body, html, .screen, .fantasy-home-screen, #screen-home, #screen-profile, .shop-
   transform: translateX(-2px) !important;
 }
 
-.btn-settings {
+.btn-settings,
+.btn-howto {
   width: 38px !important;
   height: 38px !important;
   border-radius: 50% !important;
@@ -2159,7 +2160,8 @@ body, html, .screen, .fantasy-home-screen, #screen-home, #screen-profile, .shop-
   cursor: pointer !important;
 }
 
-.btn-settings:hover {
+.btn-settings:hover,
+.btn-howto:hover {
   background: #4A2E1B !important;
   border-color: #C99700 !important;
   color: #F5D36C !important;
@@ -3363,18 +3365,203 @@ body[data-piece-theme="ebony-ivory"] .chess-piece[data-color="b"] .piece-eye,
 /* ==========================================================================
    HOW TO PLAY: READABLE INK ON THE WARM TABLETOP
    ========================================================================== */
-#screen-howto .howto-section p,
-#screen-howto .piece-info {
-  color: #3A2315 !important;
+#screen-howto {
+  background: #FBF2E9 !important;
+  color: #20120B !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
 }
 
-#screen-howto .howto-section strong,
-#screen-howto .piece-info strong {
+#screen-howto .howto-content {
+  width: 100% !important;
+  max-width: 620px !important;
+  margin: 0 auto !important;
+  padding: 24px 16px 80px 16px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+}
+
+#screen-howto .screen-header-back {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  min-height: 48px !important;
+  margin-bottom: 20px !important;
+}
+
+#screen-howto .screen-header-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  width: 100% !important;
+}
+
+#screen-howto .back-circle-btn {
+  width: 40px !important;
+  height: 40px !important;
+  flex-shrink: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  background: linear-gradient(180deg, #3A2315 0%, #1F1008 100%) !important;
+  border: 2px solid #C99700 !important;
+  color: #FFD54F !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  cursor: pointer !important;
+  transition: transform 0.16s ease, filter 0.16s ease, background 0.16s ease !important;
+}
+
+#screen-howto .back-circle-btn:hover {
+  background: linear-gradient(180deg, #4A2E1B 0%, #29150B 100%) !important;
+  border-color: #FFD54F !important;
+  color: #FFF0A8 !important;
+  transform: scale(1.05) !important;
+}
+
+#screen-howto .back-circle-btn:active {
+  transform: scale(0.95) !important;
+}
+
+#screen-howto .header-page-title {
+  margin: 0 !important;
+  font-family: var(--font-serif, 'Georgia', serif) !important;
+  font-size: 22px !important;
+  font-weight: 700 !important;
   color: #20120B !important;
+  letter-spacing: 0.3px !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+
+#screen-howto .howto-sections {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  width: 100% !important;
+}
+
+#screen-howto .howto-section {
+  background: linear-gradient(180deg, #3B2316 0%, #22120A 100%) !important;
+  border: 1.5px solid #C99700 !important;
+  border-radius: 16px !important;
+  padding: 16px 18px !important;
+  box-shadow: 0 6px 18px rgba(32, 18, 11, 0.35), inset 0 1px 0 rgba(255, 235, 196, 0.14) !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+#screen-howto .howto-section h3 {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin: 0 0 12px 0 !important;
+  padding-bottom: 8px !important;
+  border-bottom: 1px solid rgba(201, 151, 0, 0.25) !important;
+  font-family: var(--font-serif, 'Georgia', serif) !important;
+  font-size: 16.5px !important;
+  font-weight: 700 !important;
+  color: #FFD54F !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7) !important;
+  line-height: 1.2 !important;
+}
+
+/* Fix for blown-up SVGs: strictly constrain header icon dimensions */
+#screen-howto .howto-section h3 img.ui-ic,
+#screen-howto .howto-section h3 img.howto-head-piece {
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+  min-height: 22px !important;
+  max-width: 22px !important;
+  max-height: 22px !important;
+  object-fit: contain !important;
+  display: inline-block !important;
+  flex-shrink: 0 !important;
+  vertical-align: middle !important;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5)) !important;
+}
+
+#screen-howto .howto-section p {
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  color: #E6D2B5 !important;
+  margin: 0 0 8px 0 !important;
+}
+
+#screen-howto .howto-section p:last-child {
+  margin-bottom: 0 !important;
+}
+
+#screen-howto .howto-section strong {
+  color: #FFD54F !important;
+  font-weight: 700 !important;
+}
+
+#screen-howto .howto-section em {
+  color: #F5D36C !important;
+  font-style: italic !important;
+}
+
+/* Pieces Grid */
+#screen-howto .pieces-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)) !important;
+  gap: 8px !important;
+  margin-top: 10px !important;
+  width: 100% !important;
+}
+
+#screen-howto .piece-info {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 8px 12px !important;
+  background: rgba(0, 0, 0, 0.25) !important;
+  border: 1px solid rgba(201, 151, 0, 0.22) !important;
+  border-radius: 10px !important;
+  font-size: 13.5px !important;
+  color: #E6D2B5 !important;
+  line-height: 1.4 !important;
+  box-sizing: border-box !important;
+}
+
+#screen-howto .piece-info strong {
+  color: #FFD54F !important;
+  font-weight: 700 !important;
 }
 
 #screen-howto .piece-symbol {
-  color: #8C6538 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  min-height: 34px !important;
+  flex-shrink: 0 !important;
+  background: rgba(245, 211, 108, 0.12) !important;
+  border: 1px solid rgba(201, 151, 0, 0.35) !important;
+  border-radius: 8px !important;
+  padding: 3px !important;
+  box-sizing: border-box !important;
+}
+
+/* Fix for blown-up SVGs: strictly constrain piece icons in the grid */
+#screen-howto .piece-symbol img.howto-piece,
+#screen-howto .piece-symbol img.ui-piece-ic {
+  width: 28px !important;
+  height: 28px !important;
+  max-width: 28px !important;
+  max-height: 28px !important;
+  object-fit: contain !important;
+  display: block !important;
+  margin: 0 auto !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5)) !important;
 }
 
 /* ==========================================================================

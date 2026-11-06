@@ -93,6 +93,7 @@
 #screen-home .fantasy-profile:focus-visible,
 #screen-home .fantasy-coin-chip:focus-visible,
 #screen-home .btn-settings:focus-visible,
+#screen-home .btn-howto:focus-visible,
 #screen-home .home-play-btn:focus-visible,
 #screen-home .home-abilities-card:focus-visible,
 #screen-home .home-quick-card:focus-visible,
@@ -274,13 +275,15 @@
   transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease !important;
 }
 
-#screen-home .btn-settings:hover {
+#screen-home .btn-settings:hover,
+#screen-home .btn-howto:hover {
   border-color: #f5d36c !important;
   background: linear-gradient(180deg, #3a2111 0%, #1e0e06 100%) !important;
   transform: translateY(-1px) !important;
 }
 
-#screen-home .btn-settings:active {
+#screen-home .btn-settings:active,
+#screen-home .btn-howto:active {
   transform: translateY(1px) !important;
 }
 

@@ -103,6 +103,8 @@ class MultiplayerClient {
     this.onTimerSync = null;
     this.onChatMessage = null;
     this.onCheckRoomResult = null;
+    this._isSearching = false;
+    this._pendingCancelMatch = false;
   }
 
   getWebSocketUrl() {
@@ -204,6 +206,11 @@ class MultiplayerClient {
         // Start client-side keepalive — sends ping every 25s to survive proxies/tunnels
         this.startKeepAlive();
 
+        if (this._pendingCancelMatch) {
+          this._pendingCancelMatch = false;
+          this.send({ type: 'cancel_match' });
+        }
+
         // Don't let a missing auth reply block room creation forever.
         authTimer = setTimeout(() => finish(), 2500);
       };
@@ -290,6 +297,13 @@ class MultiplayerClient {
         break;
 
       case 'game_start':
+        if (!this._isSearching && !this.roomCode) {
+          console.log('[MultiplayerClient] Matchmaking was cancelled, ignoring game_start');
+          this.send({ type: 'leave_room', roomCode: data.roomCode });
+          this.send({ type: 'resign' });
+          return;
+        }
+        this._isSearching = false;
         if (data.roomCode) this.roomCode = data.roomCode;
         this.playerColor = data.color;
         this.gameId = data.gameId;
@@ -395,12 +409,19 @@ class MultiplayerClient {
   }
 
   findMatch(timerMinutes = null, mode = 'standard', abilities = [], avatarId = null, profile = null) {
+    this._isSearching = true;
+    this._pendingCancelMatch = false;
     const avatarSrc = profile && profile.avatarSrc ? profile.avatarSrc : null;
     this.send({ type: 'find_match', timer: timerMinutes, mode: mode, abilities: abilities, avatarId: avatarId, avatarSrc: avatarSrc, profile: profile });
   }
 
   cancelMatch() {
-    this.send({ type: 'cancel_match' });
+    this._isSearching = false;
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.send({ type: 'cancel_match' });
+    } else {
+      this._pendingCancelMatch = true;
+    }
   }
 
   sendMove(from, to, promotion = null) {
