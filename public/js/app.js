@@ -43,6 +43,8 @@ class App {
     this.ai = null;
     this.multiplayer = null;
     this.gameMode = null; // 'ai' or 'online'
+    this.isBotMatch = false;
+    this._opponentForfeitTriggered = false;
     this.playerColor = 'white';
     this.selectedSquare = null;
     this.legalMoves = [];
@@ -446,8 +448,23 @@ class App {
     badge.title = `${title.name} · ${title.min}+ Elo (your rating: ${Math.floor(Number(rating) || 0)})`;
   }
 
+  getBridgePlayerId() {
+    const bridge = window.bridge;
+    if (!bridge || bridge.isInitialized !== true) return null;
+    try {
+      const player = bridge.player;
+      return player && player.id ? String(player.id) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   isOwnLeaderboardPlayer(player) {
     if (!player || !this.cloudProfile || !this.cloudProfile.username) return false;
+    const bridgeId = this.getBridgePlayerId();
+    if (bridgeId && player.playerId && String(bridgeId) === String(player.playerId)) {
+      return true;
+    }
     if (this.cloudProfile.playerId && player.playerId) {
       return String(this.cloudProfile.playerId) === String(player.playerId);
     }
@@ -620,9 +637,53 @@ class App {
     return `https://chess-arena-262t.onrender.com/${cleanEndpoint}`;
   }
 
+  getBridgeLeaderboardId() {
+    return 'LB 1';
+  }
+
+  async submitBridgeLeaderboardScore(score) {
+    const bridge = window.bridge;
+    if (!bridge || bridge.isInitialized !== true) return false;
+    if (!bridge.leaderboards || typeof bridge.leaderboards.setScore !== 'function') {
+      return false;
+    }
+    const rating = Math.max(0, Math.floor(Number(score) || 1200));
+    const primary = this.getBridgeLeaderboardId();
+    const ids = primary === '1' ? [primary] : [primary, '1'];
+    for (const id of ids) {
+      try {
+        await bridge.leaderboards.setScore(id, rating);
+        return true;
+      } catch (e) {
+        // The fallback ID covers older PlayGama dashboards.
+      }
+    }
+    return false;
+  }
+
   async syncLeaderboardProfile(profile = this.cloudProfile, options = {}) {
     if (!profile || !profile.username) return false;
-    if (!this.externalCallsAllowed()) return false;
+    const externalAllowed = this.externalCallsAllowed();
+    const bridgeAvailable = this.hasBridgeLeaderboards();
+    if (!externalAllowed && !bridgeAvailable) return false;
+
+    if (!externalAllowed) {
+      // YouTube Playables: the host Bridge is the only ranking transport. It
+      // is a first-party SDK call, not an arbitrary external request.
+      const submitted = await this.submitBridgeLeaderboardScore(profile.rating);
+      this.lastLeaderboardSyncAt = Date.now();
+      if (!submitted) {
+        this.scheduleLeaderboardRetry();
+        return false;
+      }
+      this.leaderboardSyncAttempts = 0;
+      if (this.leaderboardRetryTimer) {
+        clearTimeout(this.leaderboardRetryTimer);
+        this.leaderboardRetryTimer = null;
+      }
+      return true;
+    }
+
     if (this._leaderboardSyncInFlight) {
       this._leaderboardSyncQueued = true;
       return this._leaderboardSyncInFlight;
@@ -704,13 +765,13 @@ class App {
         target.lastUpdated = Date.now();
         this.cloudProfile = target;
 
-        // Sync with Playgama SaaS Leaderboard
-        if (window.bridge && window.bridge.leaderboards && typeof window.bridge.leaderboards.setScore === 'function') {
-          try {
-            const scoreToSubmit = Number(target.rating) || 1200;
-            window.bridge.leaderboards.setScore('LB 1', scoreToSubmit)
-              .catch(() => window.bridge.leaderboards.setScore('1', scoreToSubmit).catch(() => {}));
-          } catch(e) {}
+        // PlayGama Bridge SaaS leaderboard is independent of our REST server.
+        // Submit the same rating through the SDK whenever it is available.
+        if (bridgeAvailable) {
+          const scoreToSubmit = Number(target.rating) || 1200;
+          this.submitBridgeLeaderboardScore(scoreToSubmit).then((ok) => {
+            if (!ok) this.scheduleLeaderboardRetry();
+          });
         }
         this.lastLeaderboardSyncAt = Date.now();
         this.leaderboardSyncAttempts = 0;
@@ -733,12 +794,9 @@ class App {
         return true;
       } catch (e) {
         console.warn('[Leaderboard] sync failed', e && (e.message || e));
-        if (window.bridge && window.bridge.leaderboards && typeof window.bridge.leaderboards.setScore === 'function') {
-          try {
-            const scoreToSubmit = Number((this.cloudProfile && this.cloudProfile.rating) || 1200);
-            window.bridge.leaderboards.setScore('LB 1', scoreToSubmit)
-              .catch(() => window.bridge.leaderboards.setScore('1', scoreToSubmit).catch(() => {}));
-          } catch(err) {}
+        if (bridgeAvailable) {
+          // A Render failure must not strand the Bridge leaderboard.
+          this.submitBridgeLeaderboardScore((this.cloudProfile && this.cloudProfile.rating) || 1200);
         }
         if (!e || !e.permanent) this.scheduleLeaderboardRetry();
         if (!options.silent) this.showToast('Could not update rankings. Retrying in the background.');
@@ -799,31 +857,104 @@ class App {
   }
 
   /**
+   * Online PvP can be provided by the PlayGama Bridge relay even when the
+   * host blocks arbitrary external calls. On YouTube the live SDK explicitly
+   * disables multiplayer, so we fall back to the legacy Render WebSocket only
+   * when external calls are allowed. Never expose a dead online button.
+   */
+  hasBridgeMultiplayerSupport() {
+    try {
+      const Bridge = window.BridgeMultiplayerClient;
+      return !!(Bridge && typeof Bridge.isSupported === 'function' && Bridge.isSupported());
+    } catch (e) {
+      return false;
+    }
+  }
+
+  hasBridgeLeaderboards() {
+    const bridge = window.bridge;
+    if (!bridge || bridge.isInitialized !== true) return false;
+    try {
+      const leaderboards = bridge.leaderboards;
+      if (!leaderboards) return false;
+      return typeof leaderboards.setScore === 'function' ||
+        typeof leaderboards.getEntries === 'function';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  canUseOnlinePlay() {
+    return true;
+  }
+
+  canUseLeaderboards() {
+    return this.hasBridgeLeaderboards() || this.externalCallsAllowed();
+  }
+
+  createMultiplayerClient() {
+    if (this.hasBridgeMultiplayerSupport()) {
+      return new window.BridgeMultiplayerClient();
+    }
+    if (this.externalCallsAllowed() && typeof window.MultiplayerClient !== 'undefined') {
+      return new window.MultiplayerClient();
+    }
+    if (typeof window.BridgeMultiplayerClient !== 'undefined') {
+      const client = new window.BridgeMultiplayerClient();
+      client._forceSimulatedDuel = true;
+      return client;
+    }
+    return null;
+  }
+
+  ensureMultiplayerClient() {
+    // The Bridge initializes asynchronously. If an older Render client was
+    // created before the host SDK became ready, upgrade to Bridge rooms.
+    if (this.multiplayer) {
+      const isBridge = window.BridgeMultiplayerClient && this.multiplayer instanceof window.BridgeMultiplayerClient;
+      const isRender = window.MultiplayerClient && this.multiplayer instanceof window.MultiplayerClient;
+      if (isBridge && this.hasBridgeMultiplayerSupport()) return this.multiplayer;
+      if (isRender && !this.hasBridgeMultiplayerSupport() && this.externalCallsAllowed()) return this.multiplayer;
+      this.multiplayer = null;
+    }
+
+    const client = this.createMultiplayerClient();
+    this.multiplayer = client;
+    if (client) this.setupMultiplayerCallbacks();
+    return client;
+  }
+
+  /**
    * PlayGama requirement 1.2.5 / 3.3: everything that needs our own server is
-   * hidden on hosts that block external calls (YouTube Playables). The game
-   * stays fully playable against the AI and in local two-player mode.
+   * hidden on hosts that block external calls (YouTube Playables). Bridge
+   * leaderboards and Bridge multiplayer are host features, not arbitrary
+   * external calls, so they stay available wherever the SDK supports them.
    */
   applyPlatformCapabilities() {
-    const online = this.externalCallsAllowed();
+    const online = this.canUseOnlinePlay();
+    const rankings = this.canUseLeaderboards();
     try { document.body.classList.toggle('online-unavailable', !online); } catch (e) { /* ignore */ }
-    if (online) return;
-    const offlineHidden = [
-      '[onclick="app.findMatch()"]',
-      '[onclick="app.showRoomScreen()"]',
-      '[onclick="app.showLeaderboardScreen()"]'
-    ];
-    document.querySelectorAll(offlineHidden.join(',')).forEach((el) => {
-      el.style.display = 'none';
-      el.setAttribute('aria-hidden', 'true');
-    });
+
+    const setHidden = (selector, hidden) => {
+      document.querySelectorAll(selector).forEach((el) => {
+        if (hidden) {
+          el.style.display = 'none';
+          el.setAttribute('aria-hidden', 'true');
+        } else {
+          el.style.display = '';
+          el.removeAttribute('aria-hidden');
+        }
+      });
+    };
+
+    setHidden('[onclick="app.findMatch()"], [onclick="app.showRoomScreen()"]', !online);
+    setHidden('[onclick="app.showLeaderboardScreen()"]', !rankings);
   }
 
   onlinePlayAvailable() {
-    if (!this.externalCallsAllowed()) {
-      this.showToast('Online play is unavailable on this platform. AI matches still work.');
-      return false;
-    }
-    return true;
+    if (this.canUseOnlinePlay()) return true;
+    this.showToast('Online play is unavailable on this platform. AI matches still work.');
+    return false;
   }
 
   createGuestId() {
@@ -962,6 +1093,15 @@ class App {
     this.setPlatformAudioEnabled(state.audioEnabled !== false, { initial });
     this.setPlatformPaused(state.paused === true, { initial });
     this.platformStateReady = true;
+
+    // The Bridge initializes after the first app paint. Re-evaluate host
+    // capabilities whenever platform state changes so online/rankings appear
+    // as soon as the SDK reports what it supports (and disappear if needed).
+    const fingerprint = `${state.platformId || ''}|${state.externalCallsSupported}|${this.hasBridgeMultiplayerSupport()}|${this.hasBridgeLeaderboards()}`;
+    if (fingerprint !== this._platformCapabilityFingerprint) {
+      this._platformCapabilityFingerprint = fingerprint;
+      this.applyPlatformCapabilities();
+    }
   }
 
   setPlatformAudioEnabled(enabled, options = {}) {
@@ -1263,6 +1403,7 @@ class App {
   startAIGame(difficulty) {
     this.opponentAvatarSrc = null;
     this.gameMode = 'ai';
+    this.isBotMatch = false;
     this.playerColor = this.selectedAIColor;
     this.boardFlipped = this.playerColor === 'black';
     this.engine = new ChessEngine();
@@ -1683,9 +1824,11 @@ class App {
     this.isMatchmakingActive = true;
     const currentSession = ++this._matchSearchSession;
 
-    if (!this.multiplayer) {
-      this.multiplayer = window.BridgeMultiplayerClient ? new BridgeMultiplayerClient() : new MultiplayerClient();
-      this.setupMultiplayerCallbacks();
+    if (!this.ensureMultiplayerClient()) {
+      this.isMatchmakingActive = false;
+      this.showToast('Online play is unavailable on this platform.');
+      this.showScreen('screen-home');
+      return;
     }
 
     const timerValue = 10;
@@ -1696,7 +1839,15 @@ class App {
     this.startSlotMachine();
 
     try {
-      await this.multiplayer.connect();
+      const connected = await this.multiplayer.connect();
+      if (connected === false) {
+        this.isMatchmakingActive = false;
+        if (this.slotInterval) clearInterval(this.slotInterval);
+        if (this.statusInterval) clearInterval(this.statusInterval);
+        this.showToast('Online play is unavailable right now. AI matches still work.');
+        this.showScreen('screen-home');
+        return;
+      }
       if (!this.isMatchmakingActive || this._matchSearchSession !== currentSession) {
         console.log('[Matchmaking] Cancelled during connect, aborting findMatch');
         return;
@@ -1733,9 +1884,11 @@ class App {
     this.privateRoom = true;
     this.opponentAvatarSrc = null;
 
-    if (!this.multiplayer) {
-      this.multiplayer = window.BridgeMultiplayerClient ? new BridgeMultiplayerClient() : new MultiplayerClient();
-      this.setupMultiplayerCallbacks();
+    if (!this.ensureMultiplayerClient()) {
+      this.privateRoom = false;
+      this.showToast('Private rooms are unavailable on this platform.');
+      this.showScreen('screen-home');
+      return;
     }
 
     try {
@@ -1770,9 +1923,9 @@ class App {
     if (!(await this.ensureProfileReady())) return;
     await this.ensureServerProfileSynced();
 
-    if (!this.multiplayer) {
-      this.multiplayer = window.BridgeMultiplayerClient ? new BridgeMultiplayerClient() : new MultiplayerClient();
-      this.setupMultiplayerCallbacks();
+    if (!this.ensureMultiplayerClient()) {
+      this.showToast('Private rooms are unavailable on this platform.');
+      return;
     }
 
     try {
@@ -1793,7 +1946,7 @@ class App {
     const timerEl = document.getElementById('join-room-timer-display');
 
     if (codeEl) codeEl.textContent = roomCode;
-    if (timerEl) timerEl.textContent = timerMinutes ? timerMinutes + ' min' : 'No timer';
+    if (timerEl) timerEl.textContent = timerMinutes ? timerMinutes + ' min' : 'Confirmed on join';
 
     const joinBtn = document.getElementById('btn-confirm-join-room');
     if (joinBtn) joinBtn.onclick = () => this.confirmJoinRoom();
@@ -1808,6 +1961,10 @@ class App {
     this.pendingJoinData = null;
     this.privateRoom = true;
     this.opponentAvatarSrc = null;
+    if (!this.ensureMultiplayerClient()) {
+      this.showToast('Private rooms are unavailable on this platform.');
+      return;
+    }
     this.multiplayer.joinRoom(roomCode, this.selectedAbilities || ['swap', 'freeze'], this.avatarId);
   }
 
@@ -1880,6 +2037,10 @@ class App {
         this.isMatchmakingActive = false;
         console.log("onGameStart triggered with", color, opponent, timerMinutes);
         this.gameMode = 'online';
+        this.isBotMatch = !!(gameData.isBotMatch ||
+          (gameData.opponentProfile && gameData.opponentProfile.isBot) ||
+          (this.multiplayer && this.multiplayer._isBot));
+        this._opponentForfeitTriggered = false;
         this.playerColor = color;
         this.boardFlipped = color === 'black';
         this.engine = new ChessEngine();
@@ -1914,7 +2075,8 @@ class App {
           hintBtn.style.display = 'none';
         }
         const opponentMeta = gameData.opponentProfile || {};
-        const oppName = opponentMeta.username || opponent || 'Opponent';
+        const rawOppName = opponentMeta.username || opponent || 'Opponent';
+        const oppName = rawOppName;
         const oppRating = opponentMeta.rating || 1200;
         const oppAvatarId = opponentMeta.avatarId || gameData.opponentAvatarId;
         const oppAvatarSrc = opponentMeta.avatarSrc || (oppAvatarId ? this.getAvatarSrcById(oppAvatarId) : null) || (oppName ? this.buildUserAvatar(oppName) : this.getRandomAvatarSrc());
@@ -2070,8 +2232,10 @@ class App {
     };
 
     mp.onOpponentDisconnected = (data) => {
-      this.showConnectionStatus('disconnected', data && data.forfeitInMs);
-      this.showToast('Opponent disconnected');
+      const forfeitInMs = Number(data && data.forfeitInMs) > 0 ? Number(data.forfeitInMs) : 30000;
+      this._opponentForfeitTriggered = false;
+      this.showConnectionStatus('disconnected', forfeitInMs);
+      this.showToast('Opponent disconnected — win by forfeit if they do not return.');
       const rematchBtn = document.getElementById('victory-btn-rematch');
       if (rematchBtn) {
         rematchBtn.disabled = true;
@@ -2080,6 +2244,7 @@ class App {
     };
 
     mp.onOpponentReconnected = () => {
+      this._opponentForfeitTriggered = false;
       this.hideConnectionStatus();
       this.showToast('Opponent reconnected');
     };
@@ -2160,6 +2325,23 @@ class App {
       this.updatePlayerBars();
       this.startTimerTick();
       this.showToast('Reconnected!');
+    };
+
+    // Bridge full-state recovery: the host publishes FEN + timers + history.
+    mp.onStateSync = (state) => {
+      this.applyRemoteGameState(state);
+    };
+
+    mp.onHostChanged = (isHost) => {
+      if (isHost) {
+        this.showToast('You are now the host — the game will continue.');
+      }
+    };
+
+    mp.onRoomLeft = (reason, unexpected) => {
+      if (unexpected && this.gameMode === 'online' && this.engine && !this.engine.gameOver) {
+        this.handleOpponentForfeit();
+      }
     };
 
     mp.onChatMessage = (sender, senderName, text) => {
@@ -2296,6 +2478,7 @@ class App {
       this.hideModal('modal-afk-warning');
       this.hideConnectionStatus();
       this.gameMode = 'online';
+      this._opponentForfeitTriggered = false;
       this.showScreen('screen-game');
       setTimeout(() => this.startBgMusic(), 500);
 
@@ -2364,6 +2547,58 @@ class App {
         this.showConnectionStatus(status);
       }
     };
+  }
+
+  /**
+   * Rebuild the live board from an authoritative host snapshot. Used when the
+   * relay drops a move or when a player rejoins/host-migrates mid-game.
+   */
+  applyRemoteGameState(state) {
+    if (!state || this.gameMode !== 'online' || !this.engine) return;
+    const remotePly = Number.isFinite(Number(state.ply)) ? Number(state.ply) : null;
+    const localPly = Array.isArray(this.engine.moveHistory) ? this.engine.moveHistory.length : 0;
+    if (remotePly !== null && remotePly <= localPly) {
+      this.applySyncedTimers(state);
+      return;
+    }
+
+    if (state.fen && typeof this.engine.loadFEN === 'function' && this.engine.loadFEN(state.fen)) {
+      if (Array.isArray(state.moves)) {
+        this.engine.moveHistory = state.moves.map((entry) => Object.assign({}, entry));
+      }
+      if (state.abilitiesUsed && typeof state.abilitiesUsed === 'object') {
+        this.engine.abilitiesUsed = state.abilitiesUsed;
+      }
+      if (Array.isArray(state.frozenPieces)) {
+        this.engine.frozenPieces = state.frozenPieces;
+      }
+      if (Number.isFinite(Number(state.completedTurns))) {
+        this.engine.completedTurns = Number(state.completedTurns);
+      }
+      this.lastMove = state.lastMove
+        ? { from: state.lastMove.from, to: state.lastMove.to }
+        : null;
+      this.selectedSquare = null;
+      this.legalMoves = [];
+      this.applySyncedTimers(state);
+      this.renderBoard();
+      this.updateMoveHistoryUI();
+      this.updateCapturedPieces();
+      this.updatePlayerBars();
+      this.showToast('Game state synchronized');
+    }
+  }
+
+  applySyncedTimers(state) {
+    if (!state || !state.timers) return;
+    const white = Number(state.timers.white);
+    const black = Number(state.timers.black);
+    if (Number.isFinite(white) && Number.isFinite(black)) {
+      this.timers.white = white;
+      this.timers.black = black;
+      this.lastMoveTime = Date.now();
+      this.updateTimerDisplay();
+    }
   }
 
   cancelWaiting(navigateHome = true) {
@@ -4832,6 +5067,17 @@ class App {
     let outcome = 'draw';
     if (result.winner) outcome = result.winner === this.playerColor ? 'win' : 'loss';
 
+    // A Bridge matchmaking fallback bot is explicitly labelled in-game. It must
+    // never touch the player's rating, match stats or global leaderboard.
+    const botMatch = this.gameMode === 'online' && (this.isBotMatch || (this.multiplayer && this.multiplayer._isBot));
+    if (botMatch) {
+      this.awardMatchEconomy(outcome, 'ai', result.reason);
+      this.lastRatingChange = 0;
+      this.refreshRecapRating();
+      
+      return;
+    }
+
     // Award the match economy exactly once (the session guard above prevents
     // duplicate awards when the recap screen is re-rendered/reconnected).
     this.awardMatchEconomy(outcome, mode, result.reason);
@@ -5391,7 +5637,9 @@ class App {
   }
 
   startOpponentDisconnectCountdown(ms, textEl) {
+    this.stopOpponentDisconnectCountdown();
     let remaining = Math.ceil(ms / 1000);
+    this._opponentForfeitAt = Date.now() + ms;
     const render = () => {
       textEl.textContent = remaining > 0
         ? `Opponent disconnected - forfeit in ${remaining}s`
@@ -5403,10 +5651,25 @@ class App {
     this.opponentDisconnectInterval = setInterval(() => {
       if (remaining < 0) {
         this.stopOpponentDisconnectCountdown();
+        this.handleOpponentForfeit();
         return;
       }
       render();
     }, 1000);
+  }
+
+  handleOpponentForfeit() {
+    if (this.gameMode !== 'online' || !this.engine || this.engine.gameOver || this._opponentForfeitTriggered) {
+      return;
+    }
+    this._opponentForfeitTriggered = true;
+    this.engine.gameOver = true;
+    this.engine.gameResult = { winner: this.playerColor, reason: 'abandonment' };
+    this.stopTimerTick();
+    this.hideConnectionStatus();
+    this.playSound('gameover');
+    this.showToast('Opponent left — you win by forfeit.');
+    setTimeout(() => this.showGameOver(), 300);
   }
 
   stopOpponentDisconnectCountdown() {
@@ -5414,6 +5677,7 @@ class App {
       clearInterval(this.opponentDisconnectInterval);
       this.opponentDisconnectInterval = null;
     }
+    this._opponentForfeitAt = null;
   }
 
   hideConnectionStatus() {
@@ -5766,7 +6030,7 @@ class App {
     this.syncShopUI();
   }
   async showLeaderboardScreen() {
-    if (!this.externalCallsAllowed()) {
+    if (!this.canUseLeaderboards()) {
       this.showToast('Rankings need an online connection and are unavailable here.');
       return;
     }
@@ -5788,6 +6052,14 @@ class App {
     const list = document.getElementById('leaderboard-list');
     if (!list) return;
 
+    const externalAllowed = this.externalCallsAllowed();
+    const bridgeAvailable = this.hasBridgeLeaderboards();
+    if (!externalAllowed && !bridgeAvailable) {
+      const self = this.getLeaderboardSelfEntry();
+      this.renderLeaderboardData(self ? [self] : [], self ? 1 : 0);
+      return;
+    }
+
     // Load any cached leaderboard immediately so rankings are NEVER blank
     let cached = null;
     try {
@@ -5803,58 +6075,100 @@ class App {
     let loadedPlayers = null;
     let totalCount = 0;
 
-    // 1. Fetch authoritative full player list from central Render server
-    try {
-      const controller = new AbortController();
-      const fetchTimer = setTimeout(() => controller.abort(), 25000);
-      const listUrl = this.getServerApiUrl('api/leaderboard');
-      const response = await fetch(listUrl, {
-        headers: { Accept: 'application/json' },
-        signal: controller.signal
-      });
-      clearTimeout(fetchTimer);
-      if (response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data.players) && data.players.length > 0) {
-          loadedPlayers = data.players;
-          totalCount = Number(data.totalPlayers) || loadedPlayers.length;
-          try {
-            const cachePayload = JSON.stringify({ players: loadedPlayers, totalPlayers: totalCount });
-            if (window.SaveStore && typeof window.SaveStore.setItem === 'function') {
-              window.SaveStore.setItem('chessarena_cached_leaderboard', cachePayload);
-            } else if (typeof localStorage !== 'undefined') {
-              localStorage.setItem('chessarena_cached_leaderboard', cachePayload);
-            }
-          } catch (e) {}
+    // 1. Fetch the authoritative full player list from the central Render
+    // server, but only when the host permits arbitrary external requests.
+    if (externalAllowed) {
+      try {
+        const controller = new AbortController();
+        const fetchTimer = setTimeout(() => controller.abort(), 25000);
+        const listUrl = this.getServerApiUrl('api/leaderboard');
+        const response = await fetch(listUrl, {
+          headers: { Accept: 'application/json' },
+          signal: controller.signal
+        });
+        clearTimeout(fetchTimer);
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data.players) && data.players.length > 0) {
+            loadedPlayers = data.players;
+            totalCount = Number(data.totalPlayers) || loadedPlayers.length;
+          }
         }
+      } catch (err) {
+        console.warn('[Leaderboard] Central server fetch error:', err);
       }
-    } catch (err) {
-      console.warn('[Leaderboard] Central server fetch error:', err);
     }
 
-    // 2. Also check Playgama Bridge SaaS Leaderboards if available
-    if (window.bridge && window.bridge.leaderboards && typeof window.bridge.leaderboards.getEntries === 'function') {
+    // 2. PlayGama Bridge SaaS leaderboards. This is the primary (and on
+    // YouTube, the only) source. It is a host SDK call, not an external fetch.
+    if (bridgeAvailable) {
       try {
         const bridgeEntriesPromise = (async () => {
+          const primary = this.getBridgeLeaderboardId();
           try {
-            return await window.bridge.leaderboards.getEntries('LB 1');
+            return await window.bridge.leaderboards.getEntries(primary);
           } catch (e) {
             return await window.bridge.leaderboards.getEntries('1');
           }
         })();
-        const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 3000));
-        const entries = await Promise.race([bridgeEntriesPromise, timeoutPromise]);
+        const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 5000));
+        const raw = await Promise.race([bridgeEntriesPromise, timeoutPromise]);
+        const entries = Array.isArray(raw)
+          ? raw
+          : (raw && (raw.entries || raw.players || raw.leaderboard)) || [];
+
         if (Array.isArray(entries) && entries.length > 0) {
+          const bridgeSelfId = this.getBridgePlayerId();
+          const bridgePlayers = entries.map((entry, index) => {
+            const player = (entry && entry.player) || {};
+            const score = Number(entry && (entry.score != null ? entry.score : entry.rating)) ||
+              Number(player.score) || 1200;
+            // SaaS entries expose the player id as `id` (not playerId), and the
+            // display name is the platform guest name. Map our own entry onto
+            // the canonical cloud profile so it merges with the Render row and
+            // shows the player's chosen name instead of a random guest alias.
+            const rawPlayerId = (entry && entry.playerId) || player.id || (entry && entry.id) || null;
+            const isSelf = bridgeSelfId && rawPlayerId &&
+              String(bridgeSelfId) === String(rawPlayerId);
+            const self = isSelf ? this.cloudProfile : null;
+            return {
+              rank: Number(entry && (entry.rank != null ? entry.rank : entry.position)) || index + 1,
+              username: (self && self.username) ||
+                (entry && (entry.name || entry.username)) || player.name || 'Player',
+              rating: score,
+              elo: score,
+              wins: Math.max(0, Number(entry && entry.wins) || 0),
+              losses: Math.max(0, Number(entry && entry.losses) || 0),
+              avatarSrc: (self && self.avatarSrc) ||
+                (entry && (entry.photo || entry.avatar)) || player.photo || null,
+              playerId: (self && self.playerId) ? self.playerId : rawPlayerId
+            };
+          });
+
           if (!loadedPlayers || loadedPlayers.length === 0) {
-            loadedPlayers = entries.map(e => ({
-              rank: e.rank,
-              username: e.name || 'Player',
-              rating: Number(e.score) || 1200,
-              elo: Number(e.score) || 1200,
-              wins: 0,
-              avatarSrc: e.photo || null
-            }));
-            totalCount = entries.length;
+            loadedPlayers = bridgePlayers;
+            totalCount = bridgePlayers.length;
+          } else {
+            // Keep Render's richer stats but never lose a Bridge-only player.
+            const merged = new Map();
+            const keyOf = (p) => p && (p.playerId
+              ? 'id:' + String(p.playerId)
+              : 'name:' + String(p.username || '').toLowerCase());
+            [...loadedPlayers, ...bridgePlayers].forEach((p) => {
+              const key = keyOf(p);
+              if (!key) return;
+              if (!merged.has(key)) merged.set(key, p);
+              else {
+                const current = merged.get(key);
+                merged.set(key, Object.assign({}, p, current, {
+                  rank: current.rank || p.rank,
+                  rating: current.rating || p.rating
+                }));
+              }
+            });
+            loadedPlayers = Array.from(merged.values())
+              .sort((a, b) => (Number(a.rank) || 9999) - (Number(b.rank) || 9999));
+            totalCount = Math.max(totalCount, loadedPlayers.length, bridgePlayers.length);
           }
         }
       } catch (err) {
@@ -5863,6 +6177,14 @@ class App {
     }
 
     if (loadedPlayers && loadedPlayers.length > 0) {
+      try {
+        const cachePayload = JSON.stringify({ players: loadedPlayers, totalPlayers: totalCount });
+        if (window.SaveStore && typeof window.SaveStore.setItem === 'function') {
+          window.SaveStore.setItem('chessarena_cached_leaderboard', cachePayload);
+        } else if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('chessarena_cached_leaderboard', cachePayload);
+        }
+      } catch (e) {}
       this.renderLeaderboardData(loadedPlayers, totalCount);
     } else if (!cached || !cached.players || cached.players.length === 0) {
       // Local fallback: show self entry so the screen is never blank
@@ -5916,7 +6238,7 @@ class App {
       const wins = Number(player.wins) || 0;
       const losses = Number(player.losses) || 0;
       const titleBadge = this.getEloTitleBadgeHtml(rating);
-      const isMe = myId && player.playerId === myId;
+      const isMe = this.isOwnLeaderboardPlayer(player) || !!(myId && player.playerId === myId);
       const border = isMe ? '2px solid #E9D5FF' : (rank > 3 ? '1.5px solid #8C6538' : '');
       const youTag = isMe
         ? '<span style="font-size:10px; color:#FFFFFF; background:#8728E6; border-radius:9999px; padding:1px 6px; font-weight:800;">YOU</span>'

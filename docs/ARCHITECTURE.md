@@ -8,8 +8,9 @@ Chess Arena is a vanilla-JavaScript single-page app served by a small Node.js ba
 Browser
   index.html + CSS
   app.js ── chess-engine.js / ai-engine.js / pieces.js
-         ├─ multiplayer.js ── WebSocket ── server.js
-         ├─ platform.js ── PlayGama Bridge (identity only)
+         ├─ bridge-multiplayer.js ── PlayGama Bridge relay  (primary online)
+         ├─ multiplayer.js ── WebSocket ── server.js        (fallback online)
+         ├─ platform.js ── PlayGama Bridge (identity + lifecycle + capabilities)
          ├─ storage-service.js ── YouTube cloud / Bridge / localStorage
          └─ ad-service.js ── host ad adapter or mock
 
@@ -45,6 +46,26 @@ Home, AI difficulty, room, matchmaking, waiting, game, profile, shop, abilities,
 | `chessarena_board_theme` | Equipped board cosmetic mirror. |
 | `chessarena_stats_v1_<identity>` | Legacy rating and AI/online W/L/D. Read only for local-mode migration/fallback. |
 | `chessarena_platform_profile_v1` | Cached PlayGama identity (the `mock` adapter is ignored). |
+
+## Online multiplayer
+
+Two online transports and one offline fallback are possible. `App.createMultiplayerClient()` picks in this order:
+
+1. **Bridge relay** — `public/js/bridge-multiplayer.js` when `BridgeMultiplayerClient.isSupported()` is true. Support requires `bridge.isInitialized === true` and `bridge.multiplayer.isSupported === true`; the live SDK returns `false` for YouTube and Discord. Because the SDK exposes optimistic getters before its first handshake, capability is only trusted after initialization, and a one-shot watcher re-runs the UI capability pass when `_playgamaBridgeInitPromise` resolves or rejects.
+2. **Render WebSocket** — `public/js/multiplayer.js`, only when the Bridge relay is unavailable **and** `externalCallsAllowed()` is true. This keeps the hosted backend reachable for web/standalone play.
+3. **Offline bot** — when neither transport is available. Bot matches are labelled `(AI)` and never affect rating, stats or leaderboards (`recordGameResult()` short-circuits them with `lastRatingChange = 0`).
+
+### Bridge relay protocol
+
+- The **host** is the simulation authority. It publishes a full recovery snapshot through `setSyncState()` containing `fen`, the serialized move list, `ply`, the authoritative `colors` map (Bridge player id → `white`/`black`), clocks (`timers`), `moveTimeLeft`, used abilities, frozen pieces, completed turns and `updatedAt`.
+- The **joiner** requests a snapshot on join and whenever it detects a dropped move. Its color is taken from the snapshot `colors` map, so a reconnect or host migration preserves each player's side; `isHost` alone is never trusted for color.
+- **Moves** carry a `ply` counter. A message whose `ply` is not newer than the last applied ply is ignored (idempotent relay delivery). A gap (`ply > local + 1`) triggers a snapshot request instead of a force-apply.
+- **Clocks**: the host broadcasts `timer_sync` once per second; the joiner applies it with a lag correction. Snapshot clocks are only honored when the snapshot is a new publish and still fresh (`<= 2.5s`), because some SDK versions re-deliver the stored snapshot many times a second and a stale clock would otherwise freeze the joiner's timer.
+- **Disconnect/host change**: the remaining player starts a real forfeit countdown. A returning player clears it; a promoted host publishes a fresh snapshot and starts the timer broadcast. `multiplayer_room_left` without a local leave is treated as an abandonment so the clock cannot hang forever.
+
+### YouTube Playables
+
+Real-time multiplayer is unavailable on YouTube Playables: the bundled PlayGama SDK intentionally blocks multiplayer for `youtube` (and `discord`), and proxying/tunneling around that violates platform policy. The YouTube build therefore hides the online controls and ships AI/practice plus platform leaderboards only. Leaderboards are **not** gated on `externalCallsAllowed()` — they use the Bridge leaderboard API directly.
 
 ## Profile persistence
 
@@ -109,6 +130,8 @@ The local profile is updated with an Elo estimate against the difficulty's oppon
 
 ### Online games
 
+Bridge-relay games and Render-WebSocket games both finish through `recordGameResult()`. Bot-labelled online matches are excluded from rating, stats and leaderboards before any of the steps below.
+
 1. The client syncs its cloud totals with `POST /api/leaderboard/sync` before matchmaking/room join when the last sync is stale.
 2. The server updates both players' MongoDB rows in `finishGame()` using Elo K=32 and increments wins/losses/draws, total matches, win streak, and best streak.
 3. The server sends `stats_update` with `gameId` and authoritative totals to both players.
@@ -116,6 +139,7 @@ The local profile is updated with an Elo estimate against the difficulty's oppon
 5. `recordGameResult()` records the match exactly once per `gameId`, appends the sanitized match-history entry, and refreshes rank/leaderboard. `gameId` matching plus a profile revision guard prevent stale async writes from double-counting or overwriting a newer authoritative result.
 6. The sync response also carries canonical server stats. On startup/reconnect, the client adopts them when the server total is equal to or higher than the cloud total, so a match finished after the tab closed still appears locally.
 7. If MongoDB is unavailable, the client keeps its cloud/local Elo estimate and retries the leaderboard sync in the background. `online` events also trigger a retry.
+8. When the Bridge is available, the resulting rating is additionally submitted to the PlayGama Bridge leaderboard (`LB 1`) through `setScore`; the Bridge API is the primary scoreboard on hosted platforms and the backend remains the fallback.
 
 ## Server
 
@@ -187,7 +211,9 @@ On startup, `migrateUserIndexes()` drops the pre-rebrand `walletAddress_1` uniqu
 
 ## Platform adapter
 
-`platform.js` loads the PlayGama Bridge, waits briefly for authorization, and caches name/avatar/platform metadata. It never blocks gameplay and ignores the Bridge `mock` adapter. YouTube Playables does not provide player authorization, so identity comes from the cloud profile/name modal, not a platform account. Profile persistence is handled separately by `storage-service.js`.
+`platform.js` loads the PlayGama Bridge, waits briefly for authorization, and caches name/avatar/platform metadata. It never blocks gameplay and ignores the Bridge `mock` adapter for identity. YouTube Playables does not provide player authorization, so identity comes from the cloud profile/name modal, not a platform account. Profile persistence is handled separately by `storage-service.js`.
+
+The adapter also surfaces capability state to `App.applyPlatformCapabilities()`, which shows or hides the online controls. `hasBridgeMultiplayerSupport()` and `hasBridgeLeaderboards()` both require `bridge.isInitialized === true` before trusting the SDK getters. Online play additionally requires either Bridge support or (external calls + the Render transport); leaderboards are independent of external calls and work through the Bridge on YouTube.
 
 ## Coins
 
@@ -196,13 +222,15 @@ Coins are a soft, non-purchasable currency. The starting balance is 1,000. Hints
 ## Playables deployment checklist
 
 - Validate `YT.getCloudStorage()` availability and behavior inside the actual Playables runtime. It cannot be exercised on localhost; localhost uses `localStorage`.
+- Real-time multiplayer is not offered on YouTube: the SDK blocks it and bypassing it is a policy violation. Ship AI/practice plus Bridge leaderboards; the online controls are hidden automatically.
+- Keep the Bridge multiplayer adapter in the build. It is inert on YouTube but enables real PvP on other PlayGama hosts (web/sandbox/standalone) without a separate build.
 - Replace the external PlayGama Bridge CDN with the approved Playables integration/build step if the final distribution requires it.
 - Replace `ad-service.js` mock adapter with the host ad adapter.
-- Provide a hosted WebSocket backend for multiplayer; AI and local profile saves work without a backend.
+- Provide the hosted WebSocket backend for the fallback transport; AI and local profile saves work without a backend.
 - Validate portrait orientation and story requirements against the current Playables checklist.
 - Check the final bundle against the Playables size limit (large PNGs under `public/assets` are the main weight).
 - Keep the PlayGama `mock` platform ignored for identity and cloud data.
 
 ## Tests
 
-`npm test` runs 14 characterization tests covering board setup, pawn/knight movement, castling, en passant, checkmate, Freeze, Swap, Second Chance, Divine Shield, Pegasus Jump, and the turn-based Freeze/Shield interactions with instant abilities and undo, plus 12 economy tests. Browser-level verification additionally covers onboarding, profile hydration, AI and PvP stat updates, leaderboard rank rendering, cloud-adapter simulation, and sync retry behavior.
+`npm test` runs 30 tests: 14 characterization tests covering board setup, pawn/knight movement, castling, en passant, checkmate, Freeze, Swap, Second Chance, Divine Shield, Pegasus Jump, and the turn-based Freeze/Shield interactions with instant abilities and undo; 13 economy tests; and 3 rematch handshake/color-swap tests. Browser-level verification additionally covers onboarding, profile hydration, AI and PvP stat updates, leaderboard rank rendering, Bridge relay matchmaking/move-sync/reconnect/host-migration, bot-match exclusion from rating and leaderboards, stale-snapshot clock handling, YouTube capability gating, cloud-adapter simulation, and sync retry behavior.

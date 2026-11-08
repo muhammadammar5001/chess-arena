@@ -98,6 +98,53 @@ class ChessEngine {
     return true;
   }
 
+  /**
+   * Export the current position as a standard FEN string. Used by the online
+   * client to publish an authoritative recovery snapshot after every move.
+   */
+  toFEN() {
+    const pieceChar = { pawn: 'p', knight: 'n', bishop: 'b', rook: 'r', queen: 'q', king: 'k' };
+    const rows = [];
+    for (let row = 0; row < 8; row++) {
+      let encoded = '';
+      let empty = 0;
+      for (let col = 0; col < 8; col++) {
+        const piece = this.board[row][col];
+        if (!piece) {
+          empty += 1;
+          continue;
+        }
+        if (empty > 0) {
+          encoded += String(empty);
+          empty = 0;
+        }
+        const letter = pieceChar[piece.type] || 'p';
+        encoded += piece.color === 'white' ? letter.toUpperCase() : letter;
+      }
+      if (empty > 0) encoded += String(empty);
+      rows.push(encoded);
+    }
+
+    const castling = [
+      this.castlingRights.white.kingSide ? 'K' : '',
+      this.castlingRights.white.queenSide ? 'Q' : '',
+      this.castlingRights.black.kingSide ? 'k' : '',
+      this.castlingRights.black.queenSide ? 'q' : ''
+    ].join('') || '-';
+    const enPassant = this.enPassantTarget
+      ? ChessEngine.toAlgebraic(this.enPassantTarget.row, this.enPassantTarget.col)
+      : '-';
+
+    return [
+      rows.join('/'),
+      this.currentTurn === 'black' ? 'b' : 'w',
+      castling,
+      enPassant,
+      Math.max(0, Number(this.halfMoveClock) || 0),
+      Math.max(1, Number(this.fullMoveNumber) || 1)
+    ].join(' ');
+  }
+
   createInitialBoard() {
     const board = Array(8).fill(null).map(() => Array(8).fill(null));
     const backRank = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
