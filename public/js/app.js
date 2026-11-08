@@ -667,21 +667,9 @@ class App {
     const bridgeAvailable = this.hasBridgeLeaderboards();
     if (!externalAllowed && !bridgeAvailable) return false;
 
-    if (!externalAllowed) {
-      // YouTube Playables: the host Bridge is the only ranking transport. It
-      // is a first-party SDK call, not an arbitrary external request.
-      const submitted = await this.submitBridgeLeaderboardScore(profile.rating);
-      this.lastLeaderboardSyncAt = Date.now();
-      if (!submitted) {
-        this.scheduleLeaderboardRetry();
-        return false;
-      }
-      this.leaderboardSyncAttempts = 0;
-      if (this.leaderboardRetryTimer) {
-        clearTimeout(this.leaderboardRetryTimer);
-        this.leaderboardRetryTimer = null;
-      }
-      return true;
+    // Always attempt central server sync, and also submit to Bridge
+    if (bridgeAvailable) {
+      this.submitBridgeLeaderboardScore(profile.rating).catch(() => {});
     }
 
     if (this._leaderboardSyncInFlight) {
@@ -6052,14 +6040,6 @@ class App {
     const list = document.getElementById('leaderboard-list');
     if (!list) return;
 
-    const externalAllowed = this.externalCallsAllowed();
-    const bridgeAvailable = this.hasBridgeLeaderboards();
-    if (!externalAllowed && !bridgeAvailable) {
-      const self = this.getLeaderboardSelfEntry();
-      this.renderLeaderboardData(self ? [self] : [], self ? 1 : 0);
-      return;
-    }
-
     // Load any cached leaderboard immediately so rankings are NEVER blank
     let cached = null;
     try {
@@ -6075,104 +6055,83 @@ class App {
     let loadedPlayers = null;
     let totalCount = 0;
 
-    // 1. Fetch the authoritative full player list from the central Render
-    // server, but only when the host permits arbitrary external requests.
-    if (externalAllowed) {
-      try {
-        const controller = new AbortController();
-        const fetchTimer = setTimeout(() => controller.abort(), 25000);
-        const listUrl = this.getServerApiUrl('api/leaderboard');
-        const response = await fetch(listUrl, {
-          headers: { Accept: 'application/json' },
-          signal: controller.signal
-        });
-        clearTimeout(fetchTimer);
-        if (response.ok) {
-          const data = await response.json();
-          if (Array.isArray(data.players) && data.players.length > 0) {
-            loadedPlayers = data.players;
-            totalCount = Number(data.totalPlayers) || loadedPlayers.length;
-          }
+    // 1. Authoritative source: ALWAYS query the central database (Render) first!
+    // This holds all real human players (ammar, Munir, Ammarz, Psdaniel, etc.)
+    try {
+      const controller = new AbortController();
+      const fetchTimer = setTimeout(() => controller.abort(), 20000);
+      const listUrl = this.getServerApiUrl('api/leaderboard');
+      const response = await fetch(listUrl, {
+        headers: { Accept: 'application/json' },
+        signal: controller.signal
+      });
+      clearTimeout(fetchTimer);
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data.players) && data.players.length > 0) {
+          loadedPlayers = data.players;
+          totalCount = Number(data.totalPlayers) || loadedPlayers.length;
         }
-      } catch (err) {
-        console.warn('[Leaderboard] Central server fetch error:', err);
       }
+    } catch (err) {
+      console.warn('[Leaderboard] Central server fetch error:', err);
     }
 
-    // 2. PlayGama Bridge SaaS leaderboards. This is the primary (and on
-    // YouTube, the only) source. It is a host SDK call, not an external fetch.
-    if (bridgeAvailable) {
-      try {
-        const bridgeEntriesPromise = (async () => {
-          const primary = this.getBridgeLeaderboardId();
-          try {
-            return await window.bridge.leaderboards.getEntries(primary);
-          } catch (e) {
-            return await window.bridge.leaderboards.getEntries('1');
-          }
-        })();
-        const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 5000));
-        const raw = await Promise.race([bridgeEntriesPromise, timeoutPromise]);
-        const entries = Array.isArray(raw)
-          ? raw
-          : (raw && (raw.entries || raw.players || raw.leaderboard)) || [];
-
-        if (Array.isArray(entries) && entries.length > 0) {
-          const bridgeSelfId = this.getBridgePlayerId();
-          const bridgePlayers = entries.map((entry, index) => {
-            const player = (entry && entry.player) || {};
-            const score = Number(entry && (entry.score != null ? entry.score : entry.rating)) ||
-              Number(player.score) || 1200;
-            // SaaS entries expose the player id as `id` (not playerId), and the
-            // display name is the platform guest name. Map our own entry onto
-            // the canonical cloud profile so it merges with the Render row and
-            // shows the player's chosen name instead of a random guest alias.
-            const rawPlayerId = (entry && entry.playerId) || player.id || (entry && entry.id) || null;
-            const isSelf = bridgeSelfId && rawPlayerId &&
-              String(bridgeSelfId) === String(rawPlayerId);
-            const self = isSelf ? this.cloudProfile : null;
-            return {
-              rank: Number(entry && (entry.rank != null ? entry.rank : entry.position)) || index + 1,
-              username: (self && self.username) ||
-                (entry && (entry.name || entry.username)) || player.name || 'Player',
-              rating: score,
-              elo: score,
-              wins: Math.max(0, Number(entry && entry.wins) || 0),
-              losses: Math.max(0, Number(entry && entry.losses) || 0),
-              avatarSrc: (self && self.avatarSrc) ||
-                (entry && (entry.photo || entry.avatar)) || player.photo || null,
-              playerId: (self && self.playerId) ? self.playerId : rawPlayerId
-            };
-          });
-
-          if (!loadedPlayers || loadedPlayers.length === 0) {
-            loadedPlayers = bridgePlayers;
-            totalCount = bridgePlayers.length;
-          } else {
-            // Keep Render's richer stats but never lose a Bridge-only player.
-            const merged = new Map();
-            const keyOf = (p) => p && (p.playerId
-              ? 'id:' + String(p.playerId)
-              : 'name:' + String(p.username || '').toLowerCase());
-            [...loadedPlayers, ...bridgePlayers].forEach((p) => {
-              const key = keyOf(p);
-              if (!key) return;
-              if (!merged.has(key)) merged.set(key, p);
-              else {
-                const current = merged.get(key);
-                merged.set(key, Object.assign({}, p, current, {
-                  rank: current.rank || p.rank,
-                  rating: current.rating || p.rating
-                }));
-              }
-            });
-            loadedPlayers = Array.from(merged.values())
-              .sort((a, b) => (Number(a.rank) || 9999) - (Number(b.rank) || 9999));
-            totalCount = Math.max(totalCount, loadedPlayers.length, bridgePlayers.length);
-          }
+    // If Render returned real players, ensure self profile is cleanly included
+    if (loadedPlayers && loadedPlayers.length > 0) {
+      const self = this.getLeaderboardSelfEntry();
+      if (self) {
+        const existingIdx = loadedPlayers.findIndex((p) => this.isOwnLeaderboardPlayer(p));
+        if (existingIdx >= 0) {
+          loadedPlayers[existingIdx] = Object.assign({}, loadedPlayers[existingIdx], self);
+        } else {
+          loadedPlayers.push(self);
+          totalCount += 1;
         }
-      } catch (err) {
-        console.warn('[Leaderboard] Bridge getEntries fallback:', err);
+      }
+    } else {
+      // 2. Fallback only when central server is unreachable (e.g. offline YouTube sandbox)
+      if (this.hasBridgeLeaderboards()) {
+        try {
+          const bridgeEntriesPromise = (async () => {
+            const primary = this.getBridgeLeaderboardId();
+            try {
+              return await window.bridge.leaderboards.getEntries(primary);
+            } catch (e) {
+              return await window.bridge.leaderboards.getEntries('1');
+            }
+          })();
+          const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 4000));
+          const raw = await Promise.race([bridgeEntriesPromise, timeoutPromise]);
+          const entries = Array.isArray(raw)
+            ? raw
+            : (raw && (raw.entries || raw.players || raw.leaderboard)) || [];
+
+          if (Array.isArray(entries) && entries.length > 0) {
+            const bridgeSelfId = this.getBridgePlayerId();
+            loadedPlayers = entries.map((entry, index) => {
+              const player = (entry && entry.player) || {};
+              const score = Number(entry && (entry.score != null ? entry.score : entry.rating)) ||
+                Number(player.score) || 1200;
+              const rawPlayerId = (entry && entry.playerId) || player.id || (entry && entry.id) || null;
+              const isSelf = bridgeSelfId && rawPlayerId && String(bridgeSelfId) === String(rawPlayerId);
+              const self = isSelf ? this.cloudProfile : null;
+              return {
+                rank: index + 1,
+                username: (self && self.username) || (entry && (entry.name || entry.username)) || player.name || 'Player',
+                rating: score,
+                elo: score,
+                wins: Math.max(0, Number(entry && entry.wins) || 0),
+                losses: Math.max(0, Number(entry && entry.losses) || 0),
+                avatarSrc: (self && self.avatarSrc) || (entry && (entry.photo || entry.avatar)) || player.photo || null,
+                playerId: (self && self.playerId) ? self.playerId : rawPlayerId
+              };
+            });
+            totalCount = loadedPlayers.length;
+          }
+        } catch (err) {
+          console.warn('[Leaderboard] Bridge getEntries fallback error:', err);
+        }
       }
     }
 
@@ -6187,18 +6146,30 @@ class App {
       } catch (e) {}
       this.renderLeaderboardData(loadedPlayers, totalCount);
     } else if (!cached || !cached.players || cached.players.length === 0) {
-      // Local fallback: show self entry so the screen is never blank
       const self = this.getLeaderboardSelfEntry();
-      const fallbackList = self ? [self] : [];
-      this.renderLeaderboardData(fallbackList, fallbackList.length);
+      this.renderLeaderboardData(self ? [self] : [], self ? 1 : 0);
     }
   }
 
   renderLeaderboardData(players, totalPlayers) {
     const list = document.getElementById('leaderboard-list');
     if (!list) return;
-    this.leaderboardTopPlayers = Array.isArray(players) ? players : [];
-    this.leaderboardTotalPlayers = Math.max(0, Number(totalPlayers) || this.leaderboardTopPlayers.length);
+
+    let listToRender = Array.isArray(players) ? [...players] : [];
+
+    // Sort strictly: Rating DESC, Wins DESC, Total Matches DESC
+    listToRender.sort((a, b) => {
+      const ratingA = Number(a.rating != null ? a.rating : a.elo) || 1200;
+      const ratingB = Number(b.rating != null ? b.rating : b.elo) || 1200;
+      if (ratingB !== ratingA) return ratingB - ratingA;
+      const winsA = Number(a.wins) || 0;
+      const winsB = Number(b.wins) || 0;
+      if (winsB !== winsA) return winsB - winsA;
+      return (Number(b.totalMatches) || 0) - (Number(a.totalMatches) || 0);
+    });
+
+    this.leaderboardTopPlayers = listToRender;
+    this.leaderboardTotalPlayers = Math.max(listToRender.length, Number(totalPlayers) || listToRender.length);
 
     if (this.leaderboardTopPlayers.length === 0) {
       const self = this.getLeaderboardSelfEntry();
@@ -6211,6 +6182,62 @@ class App {
           '<p style="margin: 0 0 6px; color: #FDF7EC; font-weight: 700;">No ranked players yet</p>' +
           '<p style="margin: 0; font-size: 13px;">Play a match to claim the first spot.</p></div>';
         this.renderLeaderboardMyRank();
+        return;
+      }
+    }
+
+    const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch]));
+
+    const visiblePlayers = this.leaderboardTopPlayers;
+    const myId = this.cloudProfile && this.cloudProfile.playerId;
+
+    list.innerHTML = visiblePlayers.map((player, i) => {
+      // Strictly unique sequential rank: 1, 2, 3, 4, 5... (Only ONE Gold Champion #1)
+      const rank = i + 1;
+      const crownHtml = rank === 1
+        ? '<div class="ranking-crown" aria-label="1st Place Champion"><img src="assets/crown-rank-1.webp" alt="Champion Crown" class="ranking-crown-img" /></div>'
+        : '';
+      let rankTierClass = '';
+      if (rank === 1) rankTierClass = 'rank-gold rank-top-1';
+      else if (rank === 2) rankTierClass = 'rank-silver rank-top-2';
+      else if (rank === 3) rankTierClass = 'rank-bronze rank-top-3';
+
+      const rankNumColor = rank === 1 ? '#20120B' : rank === 2 ? '#151B26' : rank === 3 ? '#200E05' : '#C99700';
+      const name = escapeHtml(player.username || 'Player');
+      const rating = Number(player.rating != null ? player.rating : player.elo) || 1200;
+      const wins = Number(player.wins) || 0;
+      const losses = Number(player.losses) || 0;
+      const titleBadge = this.getEloTitleBadgeHtml(rating);
+      const isMe = this.isOwnLeaderboardPlayer(player) || !!(myId && player.playerId === myId);
+      const border = isMe ? '2px solid #E9D5FF' : (rank > 3 ? '1.5px solid #8C6538' : '');
+      const youTag = isMe
+        ? '<span style="font-size:10px; color:#FFFFFF; background:#8728E6; border-radius:9999px; padding:1px 6px; font-weight:800;">YOU</span>'
+        : '';
+      const cardStyle = rank > 3
+        ? `background: linear-gradient(180deg, #4A2E1B 0%, #2A170C 100%); border: ${border}; border-radius: 12px; padding: 12px 18px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(32, 18, 11, 0.15); display: flex; align-items: center; justify-content: space-between;`
+        : 'margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;';
+
+      return `<div class="ranking-card ${rankTierClass}" style="${cardStyle}">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="font-size: 20px; font-weight: 800; color: ${rankNumColor}; min-width: 24px; text-align: center;">${rank}</div>
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 15px; font-weight: 700; color: #FFFFFF;">${name}</span>
+              ${titleBadge}
+              ${youTag}
+            </div>
+            <div style="font-size: 12px; color: rgba(255, 255, 255, 0.6);">
+              Rating: <strong style="color: #F5D36C;">${rating}</strong> &middot; ${wins}W / ${losses}L
+            </div>
+          </div>
+        </div>
+        ${crownHtml}
+      </div>`;
+    }).join('');
+
+    this.renderLeaderboardMyRank();
         return;
       }
     }
