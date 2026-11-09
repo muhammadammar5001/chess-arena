@@ -1966,10 +1966,11 @@ class App {
     const text = input ? input.value.trim() : '';
     if (!text) return;
 
+    // Always immediately display own message in local chat box
+    this.displayLocalChatMessage(this.playerColor || 'white', 'You', text);
+
     if (this.gameMode === 'online' && this.multiplayer && (this.multiplayer.isConnected || (this.multiplayer.ws && this.multiplayer.ws.readyState === 1))) {
       this.multiplayer.sendChatMessage(text);
-    } else {
-      this.displayLocalChatMessage(this.playerColor || 'white', 'You', text);
     }
     if (input) input.value = '';
   }
@@ -2135,8 +2136,10 @@ class App {
 
     
       mp.onAbilityUsed = (ability, args, color) => {
+        // If ability was used by ourselves, it was already validated and executed locally
+        if (color === this.playerColor) return;
+
         if (this.engine.validateAbility(ability, args, color)) {
-            if (color === this.playerColor) this.pendingAbilityCharge = null;
             let abilityName = ability;
             if (ability === 'second') abilityName = 'Second Chance';
             if (ability === 'freeze') abilityName = 'Piece Freeze';
@@ -2144,17 +2147,14 @@ class App {
             if (ability === 'shield') abilityName = 'Divine Shield';
             if (ability === 'jump') abilityName = 'Pegasus Jump';
             
-            this.showToast((color === this.playerColor ? 'You' : 'Opponent') + ' used ' + abilityName + '!');
+            this.showToast('Opponent used ' + abilityName + '!');
             if (ability === 'freeze') {
                 this.playSound('freeze');
             }
             
-            if (ability === 'second' || ability === 'freeze' || ability === 'swap' || ability === 'jump' || ability === 'shield') {
-                if (ability === 'second') this.lastMove = null;
-                // Move history is rolled back inside engine
-                this.updateMoveHistoryUI();
-                this.updatePlayerBars();
-            }
+            if (ability === 'second') this.lastMove = null;
+            this.updateMoveHistoryUI();
+            this.updatePlayerBars();
             this.hintCountInMatch = 0;
             this.undoCountInMatch = 0;
             this.hasUndoneCurrentMove = false;
@@ -2163,17 +2163,6 @@ class App {
             this.renderBoard();
             this.updateCapturedPieces();
             this.updatePlayerBars();
-        } else {
-          // If ability failed validation, refund the skill charge safely
-          if (color === this.playerColor && this.pendingAbilityCharge) {
-            this.restoreSkillCharge(this.pendingAbilityCharge);
-            this.pendingAbilityCharge = null;
-            if (this.abilitiesActivatedThisMatch) {
-              this.abilitiesActivatedThisMatch.delete(ability);
-            }
-            this.setupAbilitiesUI();
-            this.showToast('Could not use ability.');
-          }
         }
       };
       
@@ -2968,33 +2957,25 @@ class App {
     if (!this.canUseAbility(abilityId)) return;
 
     if (abilityId === 'second') {
-      if (this.gameMode === 'online') {
-        const lastMove = this.engine.moveHistory[this.engine.moveHistory.length - 1];
-        const lastMoveColor = lastMove ? (lastMove.color || (lastMove.piece && lastMove.piece.color)) : null;
-        const canUndo = (lastMoveColor === this.playerColor) || (this.engine.currentTurn === this.playerColor && this.engine.moveHistory.length >= 2);
-        if (!canUndo) {
-          this.showToast('No moves available to undo with Second Chance!');
-          return;
-        }
-        this.pendingAbilityCharge = 'second';
+      const ok = this.engine.validateAbility('second', null, this.playerColor);
+      if (ok) {
         this.markAbilityUsed('second');
-        this.multiplayer.send({ type: 'use_ability', ability: 'second' });
-        this.showToast('Second Chance used!');
-        this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
-      } else {
-        const ok = this.engine.validateAbility('second', null, this.playerColor);
-        if (ok) {
-          this.markAbilityUsed('second');
-          this.showToast('Second Chance used!');
-          this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
-          this.renderBoard();
-          this.updateMoveHistoryUI();
-          this.updateCapturedPieces();
-          this.updatePlayerBars();
-        } else {
-          this.showToast('Cannot undo');
+        if (this.gameMode === 'online' && this.multiplayer && typeof this.multiplayer.send === 'function') {
+          this.multiplayer.send({ type: 'use_ability', ability: 'second' });
         }
+        this.showToast('Second Chance used!');
+        this.undoCountInMatch = 0;
+        this.hasUndoneCurrentMove = false;
+        this.setupAbilitiesUI();
+        this.updateUndoButtonUI();
+        this.renderBoard();
+        this.updateMoveHistoryUI();
+        this.updateCapturedPieces();
+        this.updatePlayerBars();
+      } else {
+        this.showToast('No moves available to undo with Second Chance!');
       }
+      return;
     } else if (abilityId === 'freeze' || abilityId === 'swap' || abilityId === 'shield' || abilityId === 'jump') {
       this.activeAbility = abilityId;
       if (abilityId === 'swap') this.swapSelection = [];
@@ -3339,20 +3320,16 @@ class App {
                 this.showToast('Must select your own piece');
                 return;
             }
-            if (this.gameMode === 'online') {
-                this.pendingAbilityCharge = 'shield';
-                  this.markAbilityUsed('shield');
-                  this.multiplayer.send({ type: 'use_ability', ability: 'shield', args: { row, col } });
-                this.showToast('Divine Shield sent!');
-            } else {
-                const ok = this.engine.validateAbility('shield', { row, col }, this.playerColor);
-                if (ok) {
-                    this.markAbilityUsed('shield');
-                    this.showToast('Divine Shield active on ' + piece.type + '!');
-                    this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
-                } else {
-                    this.showToast('Cannot shield that piece');
+            const ok = this.engine.validateAbility('shield', { row, col }, this.playerColor);
+            if (ok) {
+                this.markAbilityUsed('shield');
+                if (this.gameMode === 'online' && this.multiplayer && typeof this.multiplayer.send === 'function') {
+                    this.multiplayer.send({ type: 'use_ability', ability: 'shield', args: { row, col } });
                 }
+                this.showToast('Divine Shield active on ' + piece.type + '!');
+                this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
+            } else {
+                this.showToast('Cannot shield that piece');
             }
             this.activeAbility = null;
             this.renderBoard();
@@ -3383,23 +3360,19 @@ class App {
                 const target = this.jumpPiece.validTargets && this.jumpPiece.validTargets.find(t => t.row === row && t.col === col);
                 if (target) {
                     const jumpArgs = { fromRow: this.jumpPiece.fromRow, fromCol: this.jumpPiece.fromCol, toRow: row, toCol: col };
-                    if (this.gameMode === 'online') {
-                        this.pendingAbilityCharge = 'jump';
-                          this.markAbilityUsed('jump');
-                          this.multiplayer.send({ type: 'use_ability', ability: 'jump', args: jumpArgs });
-                        this.showToast('Pegasus Jump sent!');
-                    } else {
-                        const ok = this.engine.validateAbility('jump', jumpArgs, this.playerColor);
-                        if (ok) {
-                            this.markAbilityUsed('jump');
-                            this.showToast('Pegasus Jump executed!');
-                            this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
-                            if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
-                                this.scheduleAIMove(500);
-                            }
-                        } else {
-                            this.showToast('Cannot jump to that square');
+                    const ok = this.engine.validateAbility('jump', jumpArgs, this.playerColor);
+                    if (ok) {
+                        this.markAbilityUsed('jump');
+                        if (this.gameMode === 'online' && this.multiplayer && typeof this.multiplayer.send === 'function') {
+                            this.multiplayer.send({ type: 'use_ability', ability: 'jump', args: jumpArgs });
                         }
+                        this.showToast('Pegasus Jump executed!');
+                        this.undoCountInMatch = 0; this.hasUndoneCurrentMove = false; this.setupAbilitiesUI(); this.updateUndoButtonUI();
+                        if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
+                            this.scheduleAIMove(500);
+                        }
+                    } else {
+                        this.showToast('Cannot jump to that square');
                     }
                     this.activeAbility = null;
                     this.jumpPiece = null;
@@ -3440,19 +3413,16 @@ class App {
                 this.showToast('Cannot freeze a King');
                 return;
             }
-            if (this.gameMode === 'online') {
-                this.pendingAbilityCharge = 'freeze';
-                  this.markAbilityUsed('freeze');
-                  this.multiplayer.send({ type: 'use_ability', ability: 'freeze', args: { row, col } });
-                this.showToast('Freeze sent!');
-            } else {
-                const ok = this.engine.validateAbility('freeze', { row, col }, this.playerColor);
-                if (ok) {
-                    this.markAbilityUsed('freeze');
-                    this.showToast('Piece frozen for its next full turn!');
-                } else {
-                    this.showToast('Cannot freeze that piece');
+            const ok = this.engine.validateAbility('freeze', { row, col }, this.playerColor);
+            if (ok) {
+                this.markAbilityUsed('freeze');
+                if (this.gameMode === 'online' && this.multiplayer && typeof this.multiplayer.send === 'function') {
+                    this.multiplayer.send({ type: 'use_ability', ability: 'freeze', args: { row, col } });
                 }
+                this.playSound('freeze');
+                this.showToast('Piece frozen for its next full turn!');
+            } else {
+                this.showToast('Cannot freeze that piece');
             }
             this.activeAbility = null;
             this.renderBoard(); // Clear selection UI
@@ -3506,26 +3476,22 @@ class App {
                 }
                 
                 const swapArgs = { row1, col1, row2, col2 };
-                if (this.gameMode === 'online') {
-                    this.pendingAbilityCharge = 'swap';
-                      this.markAbilityUsed('swap');
-                      this.multiplayer.send({
-                          type: 'use_ability',
-                          ability: 'swap',
-                        args: swapArgs
-                    });
-                    this.showToast('Tactical Swap sent!');
-                } else {
-                    const ok = this.engine.validateAbility('swap', swapArgs, this.playerColor);
-                    if (ok) {
-                        this.markAbilityUsed('swap');
-                        this.showToast('Tactical Swap executed!');
-                        if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
-                            this.scheduleAIMove(500);
-                        }
-                    } else {
-                        this.showToast('Cannot swap those pieces');
+                const ok = this.engine.validateAbility('swap', swapArgs, this.playerColor);
+                if (ok) {
+                    this.markAbilityUsed('swap');
+                    if (this.gameMode === 'online' && this.multiplayer && typeof this.multiplayer.send === 'function') {
+                        this.multiplayer.send({
+                            type: 'use_ability',
+                            ability: 'swap',
+                            args: swapArgs
+                        });
                     }
+                    this.showToast('Tactical Swap executed!');
+                    if (this.gameMode === 'ai' && this.engine.currentTurn !== this.playerColor) {
+                        this.scheduleAIMove(500);
+                    }
+                } else {
+                    this.showToast('Cannot swap those pieces');
                 }
                 this.activeAbility = null;
                 this.swapSelection = [];
@@ -5928,10 +5894,9 @@ class App {
 
   sendEmote(text) {
     if (!text) return;
+    this.displayLocalChatMessage(this.playerColor || 'white', 'You', text);
     if (this.gameMode === 'online' && this.multiplayer && (this.multiplayer.isConnected || (this.multiplayer.ws && this.multiplayer.ws.readyState === 1))) {
       this.multiplayer.sendChatMessage(text);
-    } else {
-      this.displayLocalChatMessage(this.playerColor || 'white', 'You', text);
     }
     this.showToast(text);
   }
@@ -6168,6 +6133,11 @@ class App {
       return (Number(b.totalMatches) || 0) - (Number(a.totalMatches) || 0);
     });
 
+    // Enforce sequential ranking on each object
+    listToRender.forEach((p, idx) => {
+      p.rank = idx + 1;
+    });
+
     this.leaderboardTopPlayers = listToRender;
     this.leaderboardTotalPlayers = Math.max(listToRender.length, Number(totalPlayers) || listToRender.length);
 
@@ -6238,56 +6208,7 @@ class App {
     }).join('');
 
     this.renderLeaderboardMyRank();
-        return;
-      }
-    }
-
-    const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (ch) => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    }[ch]));
-
-    const visiblePlayers = this.leaderboardTopPlayers;
-
-    const myId = this.cloudProfile && this.cloudProfile.playerId;
-    list.innerHTML = visiblePlayers.map((player, i) => {
-      const rank = Number(player.rank) > 0 ? Math.floor(Number(player.rank)) : i + 1;
-      const crownHtml = rank === 1
-        ? `<div class="ranking-crown" aria-label="1st Place Champion"><img src="assets/crown-rank-1.webp" alt="Champion Crown" class="ranking-crown-img" /></div>`
-        : '';
-      let rankTierClass = '';
-      if (rank === 1) rankTierClass = 'rank-gold rank-top-1';
-      else if (rank === 2) rankTierClass = 'rank-silver rank-top-2';
-      else if (rank === 3) rankTierClass = 'rank-bronze rank-top-3';
-
-      const rankNumColor = rank === 1 ? '#20120B' : rank === 2 ? '#151B26' : rank === 3 ? '#200E05' : '#C99700';
-      const name = escapeHtml(player.username || 'Player');
-      const rating = Number(player.rating != null ? player.rating : player.elo) || 1200;
-      const wins = Number(player.wins) || 0;
-      const losses = Number(player.losses) || 0;
-      const titleBadge = this.getEloTitleBadgeHtml(rating);
-      const isMe = this.isOwnLeaderboardPlayer(player) || !!(myId && player.playerId === myId);
-      const border = isMe ? '2px solid #E9D5FF' : (rank > 3 ? '1.5px solid #8C6538' : '');
-      const youTag = isMe
-        ? '<span style="font-size:10px; color:#FFFFFF; background:#8728E6; border-radius:9999px; padding:1px 6px; font-weight:800;">YOU</span>'
-        : '';
-      const cardStyle = rank > 3
-        ? `background: linear-gradient(180deg, #4A2E1B 0%, #2A170C 100%); border: ${border}; border-radius: 12px; padding: 12px 18px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(32, 18, 11, 0.15); display: flex; align-items: center; justify-content: space-between;`
-        : `margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;`;
-
-      return `<div class="ranking-card ${rankTierClass}" style="${cardStyle}">
-        <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
-          <div class="ranking-num" style="font-family: 'Georgia', serif; font-size: 20px; font-weight: 800; width: 32px; text-align: center; color: ${rankNumColor};">${rank}</div>
-          <div style="display: flex; flex-direction: column;">
-            <div class="ranking-name" style="font-family: 'Georgia', serif; font-weight: 700; color: #FDF7EC; font-size: 16px; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">${name}${titleBadge}${youTag}</div>
-            <div class="ranking-meta" style="font-size: 13px; color: #D6BD9B; font-weight: 600; margin-top: 2px;">Rating: <span class="ranking-rating-val" style="color: #FFD54F; font-weight: 800;">${rating}</span> · ${wins}W / ${losses}L</div>
-          </div>
-        </div>
-        ${crownHtml}
-      </div>`;
-    }).join('');
-    this.renderLeaderboardMyRank();
   }
-
 
   // --- Economy & Monetization Engine ---
   getEconomyDateKey() {
