@@ -3333,6 +3333,9 @@ class App {
             }
             this.activeAbility = null;
             this.renderBoard();
+            this.updateMoveHistoryUI();
+            this.updatePlayerBars();
+            this.updateCapturedPieces();
             return;
         }
 
@@ -3379,6 +3382,9 @@ class App {
                     this.selectedSquare = null;
                     this.legalMoves = [];
                     this.renderBoard();
+                    this.updateMoveHistoryUI();
+                    this.updatePlayerBars();
+                    this.updateCapturedPieces();
                     return;
                 } else {
                     // Check if player tapped another of their own pieces to switch jump piece
@@ -3426,6 +3432,9 @@ class App {
             }
             this.activeAbility = null;
             this.renderBoard(); // Clear selection UI
+            this.updateMoveHistoryUI();
+            this.updatePlayerBars();
+            this.updateCapturedPieces();
             return;
         }
         if (this.activeAbility === 'swap') {
@@ -3497,6 +3506,9 @@ class App {
                 this.swapSelection = [];
             }
             this.renderBoard();
+            this.updateMoveHistoryUI();
+            this.updatePlayerBars();
+            this.updateCapturedPieces();
             return;
         }
     }
