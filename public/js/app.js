@@ -2322,6 +2322,10 @@ class App {
     };
 
     mp.onChatMessage = (sender, senderName, text) => {
+      // Own messages are already displayed locally by sendChatMessage() / sendEmote()
+      // Skip here to prevent double display on both Bridge and WebSocket paths
+      if (sender === this.playerColor) return;
+
       const chatMessages = document.getElementById('chat-messages');
       if (!chatMessages) return;
 
@@ -2329,9 +2333,6 @@ class App {
       msgDiv.className = 'chat-message';
 
       let displaySender = senderName;
-      if (sender === this.playerColor) {
-        displaySender = 'You';
-      }
 
       const senderSpan = document.createElement('span');
       senderSpan.className = `chat-sender ${sender}`;
